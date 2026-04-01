@@ -192,6 +192,15 @@
             background-color: #2471a3; 
         }
         
+        .btn-whatsapp {
+            background-color: #25D366;
+            color: #fff;
+        }
+        
+        .btn-whatsapp:hover {
+            background-color: #128C7E;
+        }
+
         /* --- Tabelas --- */
         table { 
             width: 100%; 
@@ -223,12 +232,13 @@
         .acoes-flex { 
             display: flex; 
             gap: 5px; 
+            align-items: center;
         }
         
         /* --- Alerta de Estoque Baixo (Piscando Vermelho) --- */
         @keyframes piscarVermelho {
             0% { background-color: #3a4e61; }
-            50% { background-color: rgba(231, 76, 60, 0.6); } /* Fundo vermelho suave */
+            50% { background-color: rgba(231, 76, 60, 0.6); } 
             100% { background-color: #3a4e61; }
         }
         
@@ -267,7 +277,7 @@
             color: white; 
         }
 
-        /* --- Assinatura Digital Canvas --- */
+        /* --- Assinatura Digital Canvas (Apenas Remota agora) --- */
         .signature-pad { 
             border: 2px dashed #f1c40f; 
             background-color: #ecf0f1; 
@@ -363,25 +373,50 @@
 </head>
 <body>
 
-<div class="sidebar">
+<div id="telaAssinaturaRemota" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #2c3e50; padding: 20px; color: #ecf0f1; text-align: center; overflow-y: auto;">
+    <img src="https://image2url.com/r2/default/images/1774578957071-f27e2520-816d-436f-a537-ee8a160f90ca.jpeg" style="max-width: 150px; border-radius: 8px; margin-bottom: 20px;">
+    
+    <h2 style="color: #f1c40f;">Assinatura Digital de OS</h2>
+    
+    <div style="background-color: #34495e; padding: 15px; border-radius: 8px; border: 1px solid #7f8c8d; margin-bottom: 20px; width: 100%; max-width: 500px; text-align: left;">
+        <p style="margin: 5px 0;"><strong>Cliente:</strong> <span id="remoteClienteNome">Carregando...</span></p>
+        <p style="margin: 5px 0;"><strong>Ordem de Serviço (OS):</strong> Nº <span id="remoteOSNum">...</span></p>
+        <p style="margin: 5px 0;"><strong>Vencimento:</strong> <span id="remoteVencimento">...</span></p>
+        <p style="margin: 5px 0; color: #2ecc71; font-size: 18px;"><strong>Valor Total:</strong> <span id="remoteTotal">...</span></p>
+    </div>
+
+    <p style="font-size: 13px; color: #bdc3c7; max-width: 500px;">Por favor, assine no quadro abaixo confirmando a ciência e recebimento da Ordem de Serviço descrita.</p>
+    
+    <div style="width: 100%; max-width: 500px;">
+        <canvas id="assinaturaCanvasRemota" class="signature-pad"></canvas>
+        <button class="btn-secundario" onclick="limparAssinaturaRemota()" style="margin-top: 10px; width: 100%;">🗑️ Limpar e Refazer</button>
+        <button class="btn-primary" onclick="salvarAssinaturaRemota()" style="margin-top: 15px; background-color: #27ae60; padding: 15px; font-size: 18px;">✅ Confirmar e Enviar Assinatura</button>
+    </div>
+
+    <div id="msgSucessoRemoto" style="display:none; margin-top:20px; color: #2ecc71; font-size: 18px; font-weight:bold; background-color: #1e2a35; padding: 20px; border-radius: 8px; border: 2px solid #2ecc71;">
+        ✅ Assinatura registrada com sucesso!<br><br><span style="font-size: 14px; color: #ecf0f1;">Você já pode fechar esta página.</span>
+    </div>
+</div>
+
+
+<div class="sidebar" id="appSidebar">
     <div class="sidebar-logo">
         <img src="https://image2url.com/r2/default/images/1774578957071-f27e2520-816d-436f-a537-ee8a160f90ca.jpeg" alt="Logo FH">
     </div>
     <button class="menu-btn active" onclick="abrirAba('tabClientes', this)">👥 Clientes</button>
     <button class="menu-btn" onclick="abrirAba('tabEstoque', this)">📦 Estoque</button>
-    <button class="menu-btn" onclick="abrirAba('tabVendas', this)">🛒 Venda / PDV</button>
+    <button class="menu-btn" onclick="abrirAba('tabVendas', this)">🛒 Venda / PDV / OS</button>
     <button class="menu-btn" onclick="abrirAba('tabCaixa', this)">💰 Caixa / Relatórios</button>
     <button class="menu-btn" onclick="abrirAba('tabConfig', this)">⚙️ Backups</button>
 </div>
 
-<div class="main-content">
+<div class="main-content" id="appMainContent">
 
     <div id="tabClientes" class="tab-content active">
         
         <div class="container">
             <h2 id="tituloCliente">Cadastro de Cliente</h2>
             <form id="formCliente">
-                
                 <div class="form-group">
                     <label for="nome">Nome Completo / Razão Social</label>
                     <input type="text" id="nome" required>
@@ -451,7 +486,6 @@
                     <button type="submit" class="btn-primary" id="btnSalvarCli">Salvar Cliente</button>
                     <button type="button" class="btn-secundario" style="margin-top: 10px; display: none;" id="btnCancelarCli" onclick="cancelarEdicaoCli()">Cancelar Edição (ESC)</button>
                 </div>
-
             </form>
         </div>
 
@@ -537,7 +571,6 @@
                     <button type="submit" class="btn-primary" id="btnSalvarProd">Salvar Produto</button>
                     <button type="button" class="btn-secundario" style="margin-top: 10px; display: none;" id="btnCancelarProd" onclick="cancelarEdicaoProd()">Cancelar Edição (ESC)</button>
                 </div>
-
             </form>
         </div>
 
@@ -578,35 +611,53 @@
     <div id="tabVendas" class="tab-content">
         
         <div class="container">
-            <h2>Novo Orçamento / Venda</h2>
+            <h2>Nova Ordem de Serviço (OS) / Venda</h2>
             
+            <div class="row form-group" style="background-color: #1a252f; padding: 15px; border-radius: 8px; border: 1px solid #7f8c8d;">
+                <div class="col" style="flex: 0.5;">
+                    <label style="color: #f1c40f;">Nº da OS / Pedido</label>
+                    <input type="number" id="vendaOS" style="background-color: #ecf0f1; font-weight: bold; font-size: 16px; color: #e74c3c;" title="Pode ser editado se necessário">
+                </div>
+                <div class="col" style="flex: 1;">
+                    <label style="color: #f1c40f;">Data de Vencimento</label>
+                    <input type="date" id="vendaVencimento" required style="font-weight: bold; font-size: 16px;">
+                </div>
+            </div>
+
             <div class="row form-group">
                 <div class="col" style="flex: 2;">
-                    <label>1. Selecionar Cliente</label>
-                    <select id="vendaCliente">
-                        </select>
+                    <label>1. Buscar e Selecionar Cliente</label>
+                    <input type="text" id="vendaClienteBusca" list="listaClientesNomes" placeholder="Digite para buscar o nome do cliente...">
+                    <datalist id="listaClientesNomes"></datalist>
                 </div>
             </div>
             
             <div class="row form-group" style="align-items: flex-end;">
                 <div class="col" style="flex: 2;">
-                    <label>2. Adicionar Produto do Estoque (Dá baixa automática na Qtd)</label>
-                    <select id="vendaProdutoEstoque">
-                        </select>
+                    <label>2. Adicionar Produto do Estoque (Dá baixa automática)</label>
+                    <select id="vendaProdutoEstoque"></select>
+                </div>
+                <div class="col" style="flex: 0.5;">
+                    <label>Qtd.</label>
+                    <input type="number" id="vendaProdutoQtd" value="1" min="1">
                 </div>
                 <div class="col">
-                    <button type="button" class="btn-secundario" onclick="addAoCarrinhoEstoque()">➕ Adicionar 1 un</button>
+                    <button type="button" class="btn-secundario" onclick="addAoCarrinhoEstoque()">➕ Adicionar</button>
                 </div>
             </div>
 
             <div class="row form-group" style="align-items: flex-end; border-top: 1px solid #7f8c8d; padding-top: 15px;">
                 <div class="col" style="flex: 2;">
-                    <label>3. Adicionar Item Avulso (Ex: Serviço, Mão de Obra ou Peça que não está no sistema)</label>
-                    <input type="text" id="vendaAvulsoNome" placeholder="Ex: Mão de Obra de Troca de Peça">
+                    <label>3. Adicionar Item Avulso (Ex: Mão de Obra ou Serviço Extra)</label>
+                    <input type="text" id="vendaAvulsoNome" placeholder="Ex: Mão de Obra de Instalação">
                 </div>
                 <div class="col">
                     <label>Valor (R$)</label>
                     <input type="number" step="0.01" id="vendaAvulsoValor" placeholder="Ex: 150.00">
+                </div>
+                <div class="col" style="flex: 0.5;">
+                    <label>Acréscimo (%)</label>
+                    <input type="number" step="0.1" id="vendaAvulsoPerc" value="0" placeholder="Ex: 10">
                 </div>
                 <div class="col">
                     <button type="button" class="btn-secundario" onclick="addAoCarrinhoAvulso()">➕ Adicionar</button>
@@ -617,24 +668,11 @@
         <div class="container">
             <h2>Carrinho de Compras / Itens da Venda</h2>
             
-            <div id="listaCarrinho">
-                Nenhum item adicionado no momento.
-            </div>
+            <div id="listaCarrinho">Nenhum item adicionado no momento.</div>
             
-            <div class="cart-total" id="vendaTotal">
-                Total: R$ 0,00
-            </div>
+            <div class="cart-total" id="vendaTotal">Total: R$ 0,00</div>
             
-            <hr style="border-color: #7f8c8d; margin: 20px 0;">
-
-            <h3 style="color: #f1c40f;">Assinatura Digital do Cliente</h3>
-            <p style="font-size: 13px; color: #bdc3c7;">Solicite ao cliente que assine abaixo confirmando o recebimento das mercadorias/serviços descritos acima.</p>
-            
-            <canvas id="assinaturaCanvas" class="signature-pad"></canvas>
-            
-            <button type="button" class="btn-secundario" style="margin-top: 10px;" onclick="limparAssinatura()">🗑️ Limpar Assinatura (Refazer)</button>
-
-            <button type="button" class="btn-primary" style="margin-top: 30px; background-color: #27ae60; padding: 15px; font-size: 18px;" onclick="finalizarVenda()">✅ FINALIZAR VENDA E SALVAR NO CAIXA</button>
+            <button type="button" class="btn-primary" style="margin-top: 30px; background-color: #27ae60; padding: 15px; font-size: 18px;" onclick="finalizarVenda()">✅ FINALIZAR VENDA E GERAR OS</button>
         </div>
 
     </div>
@@ -642,15 +680,18 @@
 
     <div id="tabCaixa" class="tab-content">
         <div class="container">
-            <h2>Fechamento de Caixa (Vendas Realizadas)</h2>
-            <p style="font-size: 14px; color: #bdc3c7;">Aqui ficam registradas todas as vendas finalizadas, mostrando o total arrecadado e se houve assinatura do cliente.</p>
+            <h2>Fechamento de Caixa e Histórico de OS</h2>
+            <p style="font-size: 14px; color: #bdc3c7;">Controle de todas as Ordens de Serviço finalizadas. Use os botões para enviar a cobrança/assinatura e caso precise, você pode CANCELAR a venda para retornar os itens ao estoque.</p>
             <table>
                 <thead>
                     <tr>
-                        <th>Data e Hora</th>
-                        <th>Nome do Cliente</th>
-                        <th>Valor Total (R$)</th>
-                        <th>Assinatura Virtual</th>
+                        <th>Nº OS</th>
+                        <th>Data Lançamento</th>
+                        <th>Cliente</th>
+                        <th>Vencimento</th>
+                        <th>Valor Total</th>
+                        <th>Status</th>
+                        <th>Ações e Exclusão</th>
                     </tr>
                 </thead>
                 <tbody id="tabelaCaixa">
@@ -667,15 +708,11 @@
             
             <div class="row" style="margin-top: 30px;">
                 <div class="col">
-                    <button class="btn-primary" style="background-color: #2980b9; padding: 15px;" onclick="fazerBackupLocal()">
-                        📥 1. Baixar Backup Local (Seu Computador)
-                    </button>
+                    <button class="btn-primary" style="background-color: #2980b9; padding: 15px;" onclick="fazerBackupLocal()">📥 1. Baixar Backup Local (Seu Computador)</button>
                     <p style="font-size: 12px; color: #95a5a6; margin-top: 5px;">Gera um arquivo seguro que será salvo na pasta Downloads do seu computador.</p>
                 </div>
                 <div class="col">
-                    <button class="btn-primary" style="background-color: #8e44ad; padding: 15px;" onclick="fazerBackupNuvem()">
-                        ☁️ 2. Criar Cópia de Segurança na Nuvem
-                    </button>
+                    <button class="btn-primary" style="background-color: #8e44ad; padding: 15px;" onclick="fazerBackupNuvem()">☁️ 2. Criar Cópia de Segurança na Nuvem</button>
                     <p style="font-size: 12px; color: #95a5a6; margin-top: 5px;">Salva uma cópia exata do banco de dados atual dentro dos servidores do próprio Firebase.</p>
                 </div>
             </div>
@@ -686,10 +723,7 @@
             <p style="font-size: 14px; color: #bdc3c7;">Se você formatou o computador ou perdeu dados, selecione o arquivo de Backup Local que você baixou anteriormente e clique no botão vermelho.</p>
             
             <input type="file" id="arquivoRestore" accept=".json" style="margin-bottom: 15px;">
-            
-            <button class="btn-danger" style="padding: 12px;" onclick="restaurarBackupLocal()">
-                ⚠️ RESTAURAR SISTEMA A PARTIR DO ARQUIVO SELECIONADO
-            </button>
+            <button class="btn-danger" style="padding: 12px;" onclick="restaurarBackupLocal()">⚠️ RESTAURAR SISTEMA A PARTIR DO ARQUIVO SELECIONADO</button>
         </div>
     </div>
 
@@ -697,11 +731,10 @@
 
 
 <script type="module">
-    // Importações Oficiais do Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getDatabase, ref, push, set, update, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
-    // Configuração do seu Projeto Firebase
+    // --- CONFIGURAÇÃO FIREBASE ---
     const firebaseConfig = {
       apiKey: "AIzaSyDOgI0jOhTlxf2d_weEfCRiMSSsOVLcI7Y",
       authDomain: "fhcontroles-1ea1e.firebaseapp.com",
@@ -710,8 +743,6 @@
       messagingSenderId: "1093224290178",
       appId: "1:1093224290178:web:6aaead161795807e91e19b"
     };
-
-    // Inicializando o App e o Banco de Dados Realtime
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
@@ -719,827 +750,567 @@
     let clientesGlobais = [];
     let produtosGlobais = [];
     let vendasGlobais = [];
-    let carrinho = []; // Carrinho de compras do PDV
+    let carrinho = []; 
     
-    // Controles de Edição
     let editandoCliId = null;
     let editandoProdId = null;
+    let OS_IdAssinaturaRemota = null; // Armazena o ID da OS se a tela for de assinatura
 
-    // Controles de Paginação (Aba Clientes)
-    let paginaAtualCli = 1;
-    const itensPorPaginaCli = 8;
-    let termoBuscaCli = "";
-    
-    // Controles de Paginação (Aba Estoque)
-    let paginaAtualProd = 1;
-    const itensPorPaginaProd = 15;
-    let termoBuscaProd = "";
+    // Paginação
+    let paginaAtualCli = 1; const itensPorPaginaCli = 8; let termoBuscaCli = "";
+    let paginaAtualProd = 1; const itensPorPaginaProd = 15; let termoBuscaProd = "";
 
 
     // ================= SISTEMA DE ABAS E NAVEGAÇÃO =================
     window.abrirAba = function(idAba, elementoBotao) {
-        // Esconde todas as abas
-        const abas = document.querySelectorAll('.tab-content');
-        abas.forEach(function(tab) {
-            tab.classList.remove('active');
-        });
+        document.querySelectorAll('.tab-content').forEach(function(tab) { tab.classList.remove('active'); });
+        document.querySelectorAll('.menu-btn').forEach(function(btn) { btn.classList.remove('active'); });
 
-        // Remove a classe 'active' de todos os botões do menu
-        const botoes = document.querySelectorAll('.menu-btn');
-        botoes.forEach(function(btn) {
-            btn.classList.remove('active');
-        });
-
-        // Mostra a aba selecionada e marca o botão correspondente
         document.getElementById(idAba).classList.add('active');
         elementoBotao.classList.add('active');
 
-        // Se abriu a aba de Vendas, recarrega as listas de seleção (Comboboxes)
+        // Se abrir a tela de Vendas:
         if (idAba === 'tabVendas') {
             carregarSelectsVenda();
+            gerarProximaOS(); // Atualiza o numero da OS automatico
         }
     }
 
-    // Atalho de Teclado: Pressionar 'ESC' cancela edições ou fecha o Modal
     document.addEventListener('keydown', function(evento) { 
         if (evento.key === "Escape") {
-            if (editandoCliId) {
-                cancelarEdicaoCli();
-            }
-            if (editandoProdId) {
-                cancelarEdicaoProd();
-            }
+            if (editandoCliId) cancelarEdicaoCli();
+            if (editandoProdId) cancelarEdicaoProd();
             fecharModal();
         }
     });
 
 
     // ================================================================
-    // MÓDULO 1: CLIENTES (MÁSCARAS E BANCO DE DADOS)
+    // INTERCEPTADOR DE URL (TELA DE ASSINATURA REMOTA)
     // ================================================================
     
-    // Função utilitária para aplicar máscaras nos campos de texto
-    const formatarMascara = function(id, regra) { 
-        const campo = document.getElementById(id);
-        if (campo) {
-            campo.addEventListener('input', function() { 
-                this.value = regra(this.value); 
-            });
-        }
-    }
+    // Verifica se a URL tem o código do pedido (Ex: site.com/index.html?assinar=XXXXX)
+    const urlParams = new URLSearchParams(window.location.search);
+    const codigoDaOSParaAssinar = urlParams.get('assinar');
 
-    // Aplicando as Regras de Máscara (Regex)
-    formatarMascara('cpf', function(v) { 
-        v = v.replace(/\D/g, ''); 
-        if (v.length > 11) v = v.slice(0, 11); 
-        return v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); 
-    });
-    
-    formatarMascara('cnpj', function(v) { 
-        v = v.replace(/\D/g, ''); 
-        if (v.length > 14) v = v.slice(0, 14); 
-        return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2'); 
-    });
-    
-    formatarMascara('telefone', function(v) { 
-        v = v.replace(/\D/g, ''); 
-        if (v.length > 11) v = v.slice(0, 11); 
-        return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2'); 
-    });
-    
-    formatarMascara('cep', function(v) { 
-        v = v.replace(/\D/g, ''); 
-        if (v.length > 8) v = v.slice(0, 8); 
-        return v.replace(/^(\d{5})(\d)/, '$1-$2'); 
-    });
-    
-    // Escutando alterações no Banco de Dados de Clientes em Tempo Real
-    onValue(ref(db, 'clientes'), function(snapshot) {
-        clientesGlobais = [];
-        const dados = snapshot.val();
+    if (codigoDaOSParaAssinar) {
+        // MODO ASSINATURA REMOTA ATIVADO!
+        OS_IdAssinaturaRemota = codigoDaOSParaAssinar;
         
-        if (dados) {
-            Object.keys(dados).forEach(function(key) { 
-                clientesGlobais.push({ id: key, ...dados[key] }); 
-            });
-        }
-        renderizarTabelaClientes();
-    });
-
-    // Função disparada ao digitar no campo de Busca
-    window.filtrarClientes = function() { 
-        termoBuscaCli = document.getElementById('buscaCliente').value.toLowerCase(); 
-        paginaAtualCli = 1; // Reseta para a página 1 ao buscar
-        renderizarTabelaClientes(); 
-    }
-
-    // Controle dos Botões "Próxima" e "Anterior" da Paginação
-    window.mudarPaginaCli = function(direcao) {
-        const filtrados = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli) || (c.cpf && c.cpf.includes(termoBuscaCli)) || (c.cnpj && c.cnpj.includes(termoBuscaCli)));
-        const totalPags = Math.ceil(filtrados.length / itensPorPaginaCli);
+        // 1. Esconde todo o sistema padrão
+        document.getElementById('appSidebar').style.display = 'none';
+        document.getElementById('appMainContent').style.display = 'none';
         
-        if (paginaAtualCli + direcao >= 1 && paginaAtualCli + direcao <= totalPags) { 
-            paginaAtualCli += direcao; 
-            renderizarTabelaClientes(); 
-        }
-    }
-
-    // Desenha as linhas da Tabela de Clientes
-    function renderizarTabelaClientes() {
-        const tabela = document.getElementById('tabelaClientes');
-        tabela.innerHTML = ''; // Limpa a tabela
+        // 2. Mostra a Tela Limpa de Assinatura
+        document.getElementById('telaAssinaturaRemota').style.display = 'flex';
         
-        // Filtra os clientes pelo que está digitado na busca
-        let filtrados = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli) || (c.cpf && c.cpf.includes(termoBuscaCli)) || (c.cnpj && c.cnpj.includes(termoBuscaCli)));
-        
-        // Separa apenas os 8 clientes da página atual
-        const indiceInicio = (paginaAtualCli - 1) * itensPorPaginaCli;
-        const indiceFim = indiceInicio + itensPorPaginaCli;
-        const paginados = filtrados.slice(indiceInicio, indiceFim);
-        
-        // Atualiza o texto informando a página
-        const totalPaginasCalculado = Math.max(1, Math.ceil(filtrados.length / itensPorPaginaCli));
-        document.getElementById('infoPaginaCli').innerText = `Pág ${paginaAtualCli} de ${totalPaginasCalculado}`;
-        
-        // Cria o HTML para cada cliente
-        paginados.forEach(function(c) {
-            const tr = document.createElement('tr');
-            const documento = c.cpf ? c.cpf : (c.cnpj || '-');
+        // 3. Busca os dados da OS no banco de dados
+        get(ref(db, 'caixa/' + OS_IdAssinaturaRemota)).then(function(snapshot) {
+            const dadosOS = snapshot.val();
             
-            tr.innerHTML = `
-                <td>${c.nome}</td>
-                <td>${documento}</td>
-                <td>${c.telefone || '-'}</td>
-                <td>${c.cidade || '-'}</td>
-                <td class="acoes-flex">
-                    <button class="btn-ver" onclick="verCliente('${c.id}')" title="Ver Ficha Completa">🔍</button>
-                    <button class="btn-secundario" style="padding: 5px 10px;" onclick="editarCli('${c.id}')">Editar</button>
-                    <button class="btn-danger" style="padding: 5px 10px;" onclick="excluirCli('${c.id}')">X</button>
-                </td>
-            `;
-            tabela.appendChild(tr);
-        });
-    }
-
-    // Evento de SUBMIT (Salvar/Atualizar) do Formulário de Cliente
-    document.getElementById('formCliente').addEventListener('submit', function(e) {
-        e.preventDefault(); // Impede recarregar a página
-        
-        // Coleta todos os 12 campos
-        const dados = { 
-            nome: document.getElementById('nome').value, 
-            cpf: document.getElementById('cpf').value, 
-            cnpj: document.getElementById('cnpj').value, 
-            telefone: document.getElementById('telefone').value, 
-            pix: document.getElementById('pix').value, 
-            ie: document.getElementById('ie').value, 
-            cep: document.getElementById('cep').value, 
-            estado: document.getElementById('estado').value, 
-            cidade: document.getElementById('cidade').value, 
-            bairro: document.getElementById('bairro').value, 
-            rua: document.getElementById('rua').value, 
-            numero: document.getElementById('numero').value 
-        };
-        
-        if (editandoCliId) { 
-            // Atualiza existente
-            update(ref(db, 'clientes/' + editandoCliId), dados).then(function() {
-                cancelarEdicaoCli();
-            }); 
-        } else { 
-            // Cria um novo registro
-            set(push(ref(db, 'clientes')), dados).then(function() { 
-                document.getElementById('formCliente').reset(); 
-            }); 
-        }
-    });
-
-    // Função para puxar os dados do banco para os inputs de edição
-    window.editarCli = function(id) {
-        const cli = clientesGlobais.find(c => c.id === id); 
-        if (!cli) return;
-        
-        // Preenche os campos manual e explicitamente para evitar erros
-        document.getElementById('nome').value = cli.nome || '';
-        document.getElementById('cpf').value = cli.cpf || '';
-        document.getElementById('cnpj').value = cli.cnpj || '';
-        document.getElementById('telefone').value = cli.telefone || '';
-        document.getElementById('pix').value = cli.pix || '';
-        document.getElementById('ie').value = cli.ie || '';
-        document.getElementById('cep').value = cli.cep || '';
-        document.getElementById('estado').value = cli.estado || '';
-        document.getElementById('cidade').value = cli.cidade || '';
-        document.getElementById('bairro').value = cli.bairro || '';
-        document.getElementById('rua').value = cli.rua || '';
-        document.getElementById('numero').value = cli.numero || '';
-        
-        // Muda estado da tela para Modo Edição
-        editandoCliId = id; 
-        document.getElementById('tituloCliente').innerText = "Editando Cliente (Banco Nuvem)"; 
-        document.getElementById('btnSalvarCli').innerText = "Salvar Atualização"; 
-        document.getElementById('btnCancelarCli').style.display = "inline-block"; 
-        window.scrollTo(0,0);
-    }
-    
-    // Função para cancelar edição e limpar formulário
-    window.cancelarEdicaoCli = function() { 
-        editandoCliId = null; 
-        document.getElementById('formCliente').reset(); 
-        document.getElementById('tituloCliente').innerText = "Cadastro de Cliente"; 
-        document.getElementById('btnSalvarCli').innerText = "Salvar Cliente"; 
-        document.getElementById('btnCancelarCli').style.display = "none"; 
-    }
-    
-    // Excluir cliente do Firebase
-    window.excluirCli = function(id) { 
-        if(confirm("ATENÇÃO: Deseja realmente excluir este cliente do sistema?")) {
-            remove(ref(db, 'clientes/' + id)); 
-        }
-    }
-    
-    // Função para montar o HTML do Modal de visualização
-    window.verCliente = function(id) {
-        const c = clientesGlobais.find(x => x.id === id); 
-        if (!c) return;
-        
-        const documento = c.cpf ? c.cpf : (c.cnpj || 'Não informado');
-        
-        const html = `
-            <div class="detalhes-linha"><strong>Nome:</strong> ${c.nome}</div>
-            <div class="detalhes-linha"><strong>Documento (CPF/CNPJ):</strong> ${documento}</div>
-            <div class="detalhes-linha"><strong>Inscrição Estadual:</strong> ${c.ie || '-'}</div>
-            <div class="detalhes-linha"><strong>Telefone / WhatsApp:</strong> ${c.telefone}</div>
-            <div class="detalhes-linha"><strong>Chave Pix:</strong> ${c.pix || 'Não Cadastrado'}</div>
-            <div class="detalhes-linha"><strong>Endereço Completo:</strong> ${c.rua || '-'}, Nº ${c.numero || '-'}</div>
-            <div class="detalhes-linha"><strong>Bairro:</strong> ${c.bairro || '-'}</div>
-            <div class="detalhes-linha"><strong>Cidade e Estado:</strong> ${c.cidade || '-'} / ${c.estado || '-'}</div>
-            <div class="detalhes-linha"><strong>CEP:</strong> ${c.cep || '-'}</div>
-        `;
-        
-        document.getElementById('detalhesCliente').innerHTML = html;
-        document.getElementById('modalVisualizar').style.display = 'flex';
-    }
-    
-    window.fecharModal = function() { 
-        document.getElementById('modalVisualizar').style.display = 'none'; 
-    }
-    
-    // Fecha modal se clicar fora da janela central
-    window.onclick = function(evento) { 
-        if (evento.target === document.getElementById('modalVisualizar')) {
-            fecharModal();
-        } 
-    }
-
-
-    // ================================================================
-    // MÓDULO 2: ESTOQUE (CATEGORIA, PAGINAÇÃO E ALERTA PISCANTE)
-    // ================================================================
-    
-    const formProduto = document.getElementById('formProduto');
-    let fotoBase64Atual = ""; // Variável para armazenar a imagem convertida em texto
-
-    // Calcula o preço final automaticamente quando digita o custo ou a margem
-    document.getElementById('prodMargem').addEventListener('input', calcularVenda);
-    document.getElementById('prodCusto').addEventListener('input', calcularVenda);
-    
-    function calcularVenda() {
-        let custo = parseFloat(document.getElementById('prodCusto').value) || 0;
-        let margem = parseFloat(document.getElementById('prodMargem').value) || 0;
-        
-        let valorVenda = custo + (custo * (margem / 100));
-        document.getElementById('prodVenda').value = valorVenda.toFixed(2);
-    }
-
-    // Lógica para carregar a foto do Computador/Celular
-    document.getElementById('prodFoto').addEventListener('change', function(evento) {
-        const arquivo = evento.target.files; 
-        if (arquivo) { 
-            const leitor = new FileReader(); 
-            leitor.onload = function(e) { 
-                fotoBase64Atual = e.target.result; // Salva o código da imagem
-            }; 
-            leitor.readAsDataURL(arquivo); 
-        }
-    });
-
-    // Escutando Banco de Dados de Produtos
-    onValue(ref(db, 'produtos'), function(snapshot) {
-        produtosGlobais = []; 
-        const dados = snapshot.val();
-        
-        if (dados) {
-            Object.keys(dados).forEach(function(key) { 
-                produtosGlobais.push({ id: key, ...dados[key] }); 
-            });
-        }
-        renderizarTabelaEstoque();
-    });
-
-    // --- Lógica de Busca e Paginação do Estoque ---
-    window.filtrarProdutos = function() { 
-        termoBuscaProd = document.getElementById('buscaProduto').value.toLowerCase(); 
-        paginaAtualProd = 1; // Reseta para a página 1 ao buscar
-        renderizarTabelaEstoque(); 
-    }
-
-    window.mudarPaginaProd = function(direcao) {
-        // Encontra produtos baseados no termo de busca (Nome ou Categoria)
-        const filtrados = produtosGlobais.filter(p => 
-            p.nome.toLowerCase().includes(termoBuscaProd) || 
-            (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd))
-        );
-        
-        const totalPags = Math.ceil(filtrados.length / itensPorPaginaProd);
-        
-        if (paginaAtualProd + direcao >= 1 && paginaAtualProd + direcao <= totalPags) { 
-            paginaAtualProd += direcao; 
-            renderizarTabelaEstoque(); 
-        }
-    }
-
-    function renderizarTabelaEstoque() {
-        const tabela = document.getElementById('tabelaEstoque');
-        tabela.innerHTML = '';
-        
-        // Filtra pelo termo de busca (Nome ou Categoria)
-        let filtrados = produtosGlobais.filter(p => 
-            p.nome.toLowerCase().includes(termoBuscaProd) || 
-            (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd))
-        );
-        
-        // Aplica Paginação (15 itens)
-        const indiceInicio = (paginaAtualProd - 1) * itensPorPaginaProd;
-        const indiceFim = indiceInicio + itensPorPaginaProd;
-        const paginados = filtrados.slice(indiceInicio, indiceFim);
-        
-        // Atualiza a informação de página visualmente
-        const totalPaginasCalculado = Math.max(1, Math.ceil(filtrados.length / itensPorPaginaProd));
-        document.getElementById('infoPaginaProd').innerText = `Pág ${paginaAtualProd} de ${totalPaginasCalculado}`;
-        
-        // Desenha a tabela com os produtos paginados
-        paginados.forEach(function(p) {
-            let tagImagem = p.foto 
-                ? `<img src="${p.foto}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;">` 
-                : '<span style="color:#7f8c8d; font-size:11px;">Sem foto</span>';
-            
-            // VERIFICAÇÃO DE ESTOQUE BAIXO (A MÁGICA DO PISCAR)
-            let quantidadeAviso = p.quantidade || 0;
-            let classeAlertaCss = (quantidadeAviso <= 3) ? 'linha-alerta' : '';
-            
-            const tr = document.createElement('tr');
-            tr.className = classeAlertaCss; // Aplica a classe que faz a linha piscar
-            
-            tr.innerHTML = `
-                <td>${tagImagem}</td>
-                <td style="font-weight:bold;">${p.nome}</td>
-                <td><span style="background-color: #f1c40f; color: #2c3e50; padding: 3px 6px; border-radius: 4px; font-weight:bold; font-size:11px;">${p.categoria || 'Geral'}</span></td>
-                <td style="font-weight:bold; font-size:16px;">${quantidadeAviso}</td>
-                <td>R$ ${parseFloat(p.custo).toFixed(2)}</td>
-                <td style="color:#2ecc71; font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
-                <td class="acoes-flex">
-                    <button class="btn-secundario" style="padding: 5px 10px;" onclick="editarProd('${p.id}')">Editar</button>
-                    <button class="btn-danger" style="padding: 5px 10px;" onclick="excluirProd('${p.id}')">X</button>
-                </td>
-            `;
-            tabela.appendChild(tr);
-        });
-    }
-
-    // Salvar/Atualizar Produto
-    formProduto.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const dados = {
-            nome: document.getElementById('prodNome').value,
-            categoria: document.getElementById('prodCategoria').value, // Novo Campo
-            custo: document.getElementById('prodCusto').value,
-            margem: document.getElementById('prodMargem').value,
-            venda: document.getElementById('prodVenda').value,
-            quantidade: parseInt(document.getElementById('prodQtd').value) || 0,
-            foto: fotoBase64Atual // Envia a string gigante da imagem para o Firebase
-        };
-        
-        if (editandoProdId) { 
-            update(ref(db, 'produtos/' + editandoProdId), dados).then(function() {
-                cancelarEdicaoProd();
-            }); 
-        } else { 
-            set(push(ref(db, 'produtos')), dados).then(function() { 
-                formProduto.reset(); 
-                fotoBase64Atual = ""; 
-                document.getElementById('prodVenda').value = ""; // Limpa a venda
-            }); 
-        }
-    });
-
-    window.editarProd = function(id) {
-        const p = produtosGlobais.find(x => x.id === id); 
-        if (!p) return;
-        
-        document.getElementById('prodNome').value = p.nome;
-        document.getElementById('prodCategoria').value = p.categoria || ''; // Novo Campo
-        document.getElementById('prodCusto').value = p.custo;
-        document.getElementById('prodMargem').value = p.margem;
-        document.getElementById('prodVenda').value = p.venda;
-        document.getElementById('prodQtd').value = p.quantidade || 0;
-        
-        fotoBase64Atual = p.foto || ""; // Mantém a foto anterior se não trocar
-        
-        editandoProdId = id; 
-        document.getElementById('tituloProduto').innerText = "Editando Produto do Estoque"; 
-        document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; 
-        document.getElementById('btnCancelarProd').style.display = "inline-block"; 
-        window.scrollTo(0,0);
-    }
-
-    window.cancelarEdicaoProd = function() { 
-        editandoProdId = null; 
-        formProduto.reset(); 
-        fotoBase64Atual = ""; 
-        document.getElementById('prodVenda').value = ""; 
-        document.getElementById('tituloProduto').innerText = "Cadastro de Produto / Serviço"; 
-        document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; 
-        document.getElementById('btnCancelarProd').style.display = "none"; 
-    }
-    
-    window.excluirProd = function(id) { 
-        if(confirm("ATENÇÃO: Deseja remover este produto definitivamente do estoque?")) {
-            remove(ref(db, 'produtos/' + id)); 
-        }
-    }
-
-
-    // ================================================================
-    // MÓDULO 3: VENDAS, PDV, BAIXA AUTOMÁTICA E ASSINATURA
-    // ================================================================
-    
-    // Carrega as listas de opções (Combobox) da aba de Vendas
-    function carregarSelectsVenda() {
-        // Dropdown de Clientes
-        const selCli = document.getElementById('vendaCliente'); 
-        selCli.innerHTML = '<option value="">Selecione o Cliente do Orçamento...</option>'; 
-        
-        clientesGlobais.forEach(function(c) {
-            selCli.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
-        });
-        
-        // Dropdown de Produtos (Mostra preço e quantidade atual)
-        const selProd = document.getElementById('vendaProdutoEstoque'); 
-        selProd.innerHTML = '<option value="">Selecione uma Mercadoria...</option>'; 
-        
-        produtosGlobais.forEach(function(p) {
-            selProd.innerHTML += `<option value="${p.id}">${p.nome} - R$ ${parseFloat(p.venda).toFixed(2)} (Qtd em loja: ${p.quantidade || 0})</option>`;
-        });
-    }
-
-    // Botão Adicionar Item do Estoque ao Carrinho
-    window.addAoCarrinhoEstoque = function() {
-        const idProd = document.getElementById('vendaProdutoEstoque').value; 
-        if (!idProd) return;
-        
-        const p = produtosGlobais.find(x => x.id === idProd);
-        
-        // Verificação extra de segurança para não vender sem estoque
-        if ((p.quantidade || 0) <= 0) {
-            alert("Atenção: Este produto consta com Quantidade 0 (ZERO) no estoque!");
-        }
-        
-        // Empurra para a lista de itens. Marca "ehEstoque: true" para saber que precisa dar baixa
-        carrinho.push({ 
-            idProd: p.id, 
-            nome: p.nome, 
-            valor: parseFloat(p.venda), 
-            ehEstoque: true 
-        });
-        
-        atualizarCarrinho();
-    }
-
-    // Botão Adicionar Item Avulso/Serviço
-    window.addAoCarrinhoAvulso = function() {
-        const nomeAvulso = document.getElementById('vendaAvulsoNome').value; 
-        const valorAvulso = parseFloat(document.getElementById('vendaAvulsoValor').value);
-        
-        if (!nomeAvulso || isNaN(valorAvulso)) {
-            return alert("Por favor, preencha o Nome e o Valor numérico do serviço avulso.");
-        }
-        
-        // Empurra para a lista de itens. Marca "ehEstoque: false"
-        carrinho.push({ 
-            nome: nomeAvulso, 
-            valor: valorAvulso, 
-            ehEstoque: false 
-        });
-        
-        // Limpa os campos de digitação avulsa
-        document.getElementById('vendaAvulsoNome').value = ''; 
-        document.getElementById('vendaAvulsoValor').value = ''; 
-        
-        atualizarCarrinho();
-    }
-
-    // Remover um item específico da lista da compra atual
-    window.removerDoCarrinho = function(indexDaLista) { 
-        carrinho.splice(indexDaLista, 1); 
-        atualizarCarrinho(); 
-    }
-
-    // Atualiza o Visual do Carrinho e Soma o Total
-    function atualizarCarrinho() {
-        const divCarrinho = document.getElementById('listaCarrinho'); 
-        divCarrinho.innerHTML = ''; 
-        
-        let somaTotal = 0;
-        
-        if (carrinho.length === 0) {
-            divCarrinho.innerHTML = 'Nenhum item adicionado no momento.';
-        } else {
-            carrinho.forEach(function(item, indiceCorrente) { 
-                somaTotal += item.valor; 
+            if (dadosOS) {
+                // Preenche os textos na tela
+                document.getElementById('remoteClienteNome').innerText = dadosOS.clienteNome;
+                document.getElementById('remoteOSNum').innerText = dadosOS.os || "S/N";
                 
-                divCarrinho.innerHTML += `
-                    <div class="cart-item">
-                        <span>${item.nome}</span>
-                        <span>
-                            R$ ${item.valor.toFixed(2)} 
-                            <button class="btn-danger" style="padding:4px 8px; margin-left:15px; border-radius: 4px;" onclick="removerDoCarrinho(${indiceCorrente})">Remover</button>
-                        </span>
-                    </div>
-                `; 
-            });
-        }
-        
-        document.getElementById('vendaTotal').innerText = `TOTAL GERAL: R$ ${somaTotal.toFixed(2)}`;
+                // Formata Data
+                let dataVencFormatada = dadosOS.vencimento ? dadosOS.vencimento.split('-').reverse().join('/') : 'À vista';
+                document.getElementById('remoteVencimento').innerText = dataVencFormatada;
+                document.getElementById('remoteTotal').innerText = `R$ ${dadosOS.total.toFixed(2)}`;
+                
+                // Se já tiver assinatura, avisa
+                if (dadosOS.assinaturaBase64) {
+                    document.getElementById('msgSucessoRemoto').style.display = 'block';
+                    document.getElementById('msgSucessoRemoto').innerHTML = "Esta OS já foi assinada e confirmada anteriormente. ✅";
+                    document.querySelector('.signature-pad').style.display = 'none'; // esconde canvas
+                } else {
+                    // Configura o Canvas Remoto
+                    iniciarCanvasRemoto();
+                }
+                
+            } else {
+                alert("Ordem de Serviço não encontrada ou foi excluída do sistema.");
+            }
+        });
     }
 
-    // ================= LÓGICA DO CANVAS (DESENHO DA ASSINATURA) =================
-    const canvas = document.getElementById('assinaturaCanvas'); 
-    const ctx = canvas.getContext('2d'); 
-    let estadoDesenhando = false;
-    
-    // Configura o traço da caneta digital
-    canvas.width = canvas.offsetWidth; 
-    canvas.height = canvas.offsetHeight; 
-    ctx.lineWidth = 3; 
-    ctx.lineCap = 'round'; 
-    ctx.strokeStyle = '#2c3e50'; // Cor da tinta azul escuro
-    
-    const iniciarDesenho = function(evento) { 
-        estadoDesenhando = true; 
-        desenhar(evento); 
-    }; 
-    
-    const pararDesenho = function() { 
-        estadoDesenhando = false; 
-        ctx.beginPath(); // Reseta o caminho para o proximo traço não ligar com o anterior
-    };
-    
-    const desenhar = function(evento) { 
-        if (!estadoDesenhando) return; 
-        
-        evento.preventDefault(); // Evita scroll da tela do celular enquanto desenha
-        
-        const retangulo = canvas.getBoundingClientRect(); 
-        
-        // Pega as coordenadas dependendo se é Mouse ou Dedo (Touch)
-        const coordenadaX = evento.touches ? evento.touches.clientX : evento.clientX; 
-        const coordenadaY = evento.touches ? evento.touches.clientY : evento.clientY; 
-        
-        ctx.lineTo(coordenadaX - retangulo.left, coordenadaY - retangulo.top); 
-        ctx.stroke(); 
-        
-        ctx.beginPath(); 
-        ctx.moveTo(coordenadaX - retangulo.left, coordenadaY - retangulo.top); 
-    }
-    
-    // Eventos para Computador (Mouse)
-    canvas.addEventListener('mousedown', iniciarDesenho); 
-    canvas.addEventListener('mouseup', pararDesenho); 
-    canvas.addEventListener('mousemove', desenhar); 
-    
-    // Eventos para Celular/Tablet (Touch)
-    canvas.addEventListener('touchstart', iniciarDesenho, {passive: false}); 
-    canvas.addEventListener('touchend', pararDesenho); 
-    canvas.addEventListener('touchmove', desenhar, {passive: false});
-    
-    window.limparAssinatura = function() { 
-        ctx.clearRect(0, 0, canvas.width, canvas.height); 
-    }
+    // Configuração do Canvas específico da tela remota
+    let ctxRemoto;
+    let desenhandoRemoto = false;
 
-    // ================= A GRANDE FUNÇÃO FINALIZAR VENDA =================
-    window.finalizarVenda = async function() {
-        const idClienteSelecionado = document.getElementById('vendaCliente').value; 
+    function iniciarCanvasRemoto() {
+        const cRemoto = document.getElementById('assinaturaCanvasRemota');
+        const caixaPaiRemoto = cRemoto.parentElement;
         
-        if (!idClienteSelecionado) {
-            return alert("Por favor, selecione para qual cliente é esta venda.");
-        } 
+        cRemoto.width = caixaPaiRemoto.clientWidth - 4;
+        cRemoto.height = 250;
         
-        if (carrinho.length === 0) {
-            return alert("O carrinho está vazio! Adicione algum produto ou serviço.");
-        }
-        
-        // Encontra o nome do cliente baseado no ID selecionado
-        const nomeDoCliente = clientesGlobais.find(c => c.id === idClienteSelecionado).nome;
-        
-        // Calcula o total da venda
-        const valorTotalFinal = carrinho.reduce((acumulador, itemAtual) => acumulador + itemAtual.valor, 0);
-        
-        // Lógica matemática para testar se o Canvas (Assinatura) está vazio
-        const verificarSeCanvasEmBranco = function(c) { 
-            const canvasBranco = document.createElement('canvas'); 
-            canvasBranco.width = c.width; 
-            canvasBranco.height = c.height; 
-            return c.toDataURL() === canvasBranco.toDataURL(); 
-        }
-        
-        // Se assinou, pega a imagem Base64. Se não, grava null.
-        const assinaturaParaSalvar = verificarSeCanvasEmBranco(canvas) ? null : canvas.toDataURL();
+        ctxRemoto = cRemoto.getContext('2d');
+        ctxRemoto.lineWidth = 3; 
+        ctxRemoto.lineCap = 'round'; 
+        ctxRemoto.strokeStyle = '#2c3e50';
 
-        // Monta o Pacote de Dados da Venda
-        const dadosDaVenda = { 
-            dataStr: new Date().toLocaleString('pt-BR'), 
-            timestamp: Date.now(), 
-            clienteId: idClienteSelecionado, 
-            clienteNome: nomeDoCliente, 
-            itens: carrinho, 
-            total: valorTotalFinal, 
-            assinaturaBase64: assinaturaParaSalvar 
+        const comecarDesenho = function(e) { desenhandoRemoto = true; desenhar(e); };
+        const pararDesenho = function() { desenhandoRemoto = false; ctxRemoto.beginPath(); };
+        const desenhar = function(e) { 
+            if (!desenhandoRemoto) return; 
+            e.preventDefault(); 
+            const rect = cRemoto.getBoundingClientRect(); 
+            const X = e.touches ? e.touches.clientX : e.clientX; 
+            const Y = e.touches ? e.touches.clientY : e.clientY; 
+            ctxRemoto.lineTo(X - rect.left, Y - rect.top); 
+            ctxRemoto.stroke(); 
+            ctxRemoto.beginPath(); 
+            ctxRemoto.moveTo(X - rect.left, Y - rect.top); 
         };
 
+        cRemoto.addEventListener('mousedown', comecarDesenho); 
+        cRemoto.addEventListener('mouseup', pararDesenho); 
+        cRemoto.addEventListener('mousemove', desenhar); 
+        cRemoto.addEventListener('touchstart', comecarDesenho, {passive: false}); 
+        cRemoto.addEventListener('touchend', pararDesenho); 
+        cRemoto.addEventListener('touchmove', desenhar, {passive: false});
+    }
+
+    window.limparAssinaturaRemota = function() {
+        if(ctxRemoto) {
+            const cRemoto = document.getElementById('assinaturaCanvasRemota');
+            ctxRemoto.clearRect(0, 0, cRemoto.width, cRemoto.height);
+        }
+    }
+
+    window.salvarAssinaturaRemota = async function() {
+        const cRemoto = document.getElementById('assinaturaCanvasRemota');
+        
+        // Verifica se tá em branco
+        const canvasBranco = document.createElement('canvas'); 
+        canvasBranco.width = cRemoto.width; 
+        canvasBranco.height = cRemoto.height; 
+        if (cRemoto.toDataURL() === canvasBranco.toDataURL()) {
+            return alert("Por favor, assine no quadro tracejado antes de confirmar.");
+        }
+
+        const base64Assinatura = cRemoto.toDataURL();
+        
         try {
-            // 1. Grava a Venda no Histórico de CAIXA
-            await set(push(ref(db, 'caixa')), dadosDaVenda);
+            // Atualiza apenas o campo da assinatura lá na venda do caixa
+            await update(ref(db, 'caixa/' + OS_IdAssinaturaRemota), {
+                assinaturaBase64: base64Assinatura
+            });
             
-            // 2. LÓGICA DE BAIXA AUTOMÁTICA NO ESTOQUE
-            for (let i = 0; i < carrinho.length; i++) {
-                const itemVendido = carrinho[i];
+            document.getElementById('msgSucessoRemoto').style.display = 'block';
+            
+        } catch (erro) {
+            alert("Erro ao enviar assinatura: " + erro);
+        }
+    }
+
+
+    // ================================================================
+    // MÓDULO 1: CLIENTES
+    // ================================================================
+    
+    // (Apenas se NÃO estiver na tela de assinatura remota)
+    if (!codigoDaOSParaAssinar) {
+        
+        const formatarMascara = function(id, regra) { 
+            const campo = document.getElementById(id);
+            if (campo) { campo.addEventListener('input', function() { this.value = regra(this.value); }); }
+        }
+
+        formatarMascara('cpf', function(v) { 
+            v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); 
+            return v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); 
+        });
+        formatarMascara('cnpj', function(v) { 
+            v = v.replace(/\D/g, ''); if (v.length > 14) v = v.slice(0, 14); 
+            return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2'); 
+        });
+        formatarMascara('telefone', function(v) { 
+            v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); 
+            return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2'); 
+        });
+        formatarMascara('cep', function(v) { 
+            v = v.replace(/\D/g, ''); if (v.length > 8) v = v.slice(0, 8); 
+            return v.replace(/^(\d{5})(\d)/, '$1-$2'); 
+        });
+        
+        onValue(ref(db, 'clientes'), function(snapshot) {
+            clientesGlobais = [];
+            const dados = snapshot.val();
+            if (dados) { Object.keys(dados).forEach(function(key) { clientesGlobais.push({ id: key, ...dados[key] }); }); }
+            renderizarTabelaClientes();
+        });
+
+        window.filtrarClientes = function() { termoBuscaCli = document.getElementById('buscaCliente').value.toLowerCase(); paginaAtualCli = 1; renderizarTabelaClientes(); }
+        window.mudarPaginaCli = function(direcao) {
+            const filtrados = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli) || (c.cpf && c.cpf.includes(termoBuscaCli)) || (c.cnpj && c.cnpj.includes(termoBuscaCli)));
+            const totalPags = Math.ceil(filtrados.length / itensPorPaginaCli);
+            if (paginaAtualCli + direcao >= 1 && paginaAtualCli + direcao <= totalPags) { paginaAtualCli += direcao; renderizarTabelaClientes(); }
+        }
+
+        function renderizarTabelaClientes() {
+            const tabela = document.getElementById('tabelaClientes'); tabela.innerHTML = ''; 
+            let filtrados = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli) || (c.cpf && c.cpf.includes(termoBuscaCli)) || (c.cnpj && c.cnpj.includes(termoBuscaCli)));
+            const paginados = filtrados.slice((paginaAtualCli - 1) * itensPorPaginaCli, ((paginaAtualCli - 1) * itensPorPaginaCli) + itensPorPaginaCli);
+            document.getElementById('infoPaginaCli').innerText = `Pág ${paginaAtualCli} de ${Math.max(1, Math.ceil(filtrados.length / itensPorPaginaCli))}`;
+            
+            paginados.forEach(function(c) {
+                const tr = document.createElement('tr'); const documento = c.cpf ? c.cpf : (c.cnpj || '-');
+                tr.innerHTML = `<td>${c.nome}</td><td>${documento}</td><td>${c.telefone || '-'}</td><td>${c.cidade || '-'}</td>
+                    <td class="acoes-flex"><button class="btn-ver" onclick="verCliente('${c.id}')" title="Ver Ficha Completa">🔍</button>
+                    <button class="btn-secundario" style="padding: 5px 10px;" onclick="editarCli('${c.id}')">Editar</button>
+                    <button class="btn-danger" style="padding: 5px 10px;" onclick="excluirCli('${c.id}')">X</button></td>`;
+                tabela.appendChild(tr);
+            });
+        }
+
+        document.getElementById('formCliente').addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            const dados = { nome: document.getElementById('nome').value, cpf: document.getElementById('cpf').value, cnpj: document.getElementById('cnpj').value, telefone: document.getElementById('telefone').value, pix: document.getElementById('pix').value, ie: document.getElementById('ie').value, cep: document.getElementById('cep').value, estado: document.getElementById('estado').value, cidade: document.getElementById('cidade').value, bairro: document.getElementById('bairro').value, rua: document.getElementById('rua').value, numero: document.getElementById('numero').value };
+            if (editandoCliId) { update(ref(db, 'clientes/' + editandoCliId), dados).then(function() { cancelarEdicaoCli(); }); } 
+            else { set(push(ref(db, 'clientes')), dados).then(function() { document.getElementById('formCliente').reset(); }); }
+        });
+
+        window.editarCli = function(id) {
+            const cli = clientesGlobais.find(c => c.id === id); if (!cli) return;
+            document.getElementById('nome').value = cli.nome || ''; document.getElementById('cpf').value = cli.cpf || ''; document.getElementById('cnpj').value = cli.cnpj || ''; document.getElementById('telefone').value = cli.telefone || ''; document.getElementById('pix').value = cli.pix || ''; document.getElementById('ie').value = cli.ie || ''; document.getElementById('cep').value = cli.cep || ''; document.getElementById('estado').value = cli.estado || ''; document.getElementById('cidade').value = cli.cidade || ''; document.getElementById('bairro').value = cli.bairro || ''; document.getElementById('rua').value = cli.rua || ''; document.getElementById('numero').value = cli.numero || '';
+            editandoCliId = id; document.getElementById('tituloCliente').innerText = "Editando Cliente"; document.getElementById('btnSalvarCli').innerText = "Salvar Atualização"; document.getElementById('btnCancelarCli').style.display = "inline-block"; window.scrollTo(0,0);
+        }
+        window.cancelarEdicaoCli = function() { editandoCliId = null; document.getElementById('formCliente').reset(); document.getElementById('tituloCliente').innerText = "Cadastro de Cliente"; document.getElementById('btnSalvarCli').innerText = "Salvar Cliente"; document.getElementById('btnCancelarCli').style.display = "none"; }
+        window.excluirCli = function(id) { if(confirm("ATENÇÃO: Deseja realmente excluir este cliente do sistema?")) { remove(ref(db, 'clientes/' + id)); } }
+        window.verCliente = function(id) {
+            const c = clientesGlobais.find(x => x.id === id); if (!c) return; const documento = c.cpf ? c.cpf : (c.cnpj || 'Não informado');
+            const html = `<div class="detalhes-linha"><strong>Nome:</strong> ${c.nome}</div><div class="detalhes-linha"><strong>Documento:</strong> ${documento}</div><div class="detalhes-linha"><strong>I.E.:</strong> ${c.ie || '-'}</div><div class="detalhes-linha"><strong>Telefone:</strong> ${c.telefone}</div><div class="detalhes-linha"><strong>Pix:</strong> ${c.pix || 'Não Cadastrado'}</div><div class="detalhes-linha"><strong>Endereço:</strong> ${c.rua || '-'}, Nº ${c.numero || '-'}</div><div class="detalhes-linha"><strong>Bairro:</strong> ${c.bairro || '-'}</div><div class="detalhes-linha"><strong>Cidade/UF:</strong> ${c.cidade || '-'} / ${c.estado || '-'}</div><div class="detalhes-linha"><strong>CEP:</strong> ${c.cep || '-'}</div>`;
+            document.getElementById('detalhesCliente').innerHTML = html; document.getElementById('modalVisualizar').style.display = 'flex';
+        }
+        window.fecharModal = function() { document.getElementById('modalVisualizar').style.display = 'none'; }
+        window.onclick = function(evento) { if (evento.target === document.getElementById('modalVisualizar')) { fecharModal(); } }
+
+
+        // ================================================================
+        // MÓDULO 2: ESTOQUE
+        // ================================================================
+        
+        const formProduto = document.getElementById('formProduto');
+        let fotoBase64Atual = ""; 
+
+        document.getElementById('prodMargem').addEventListener('input', calcularVenda);
+        document.getElementById('prodCusto').addEventListener('input', calcularVenda);
+        function calcularVenda() { let custo = parseFloat(document.getElementById('prodCusto').value) || 0; let margem = parseFloat(document.getElementById('prodMargem').value) || 0; document.getElementById('prodVenda').value = (custo + (custo * (margem / 100))).toFixed(2); }
+
+        document.getElementById('prodFoto').addEventListener('change', function(evento) {
+            const arquivo = evento.target.files; if (arquivo) { const leitor = new FileReader(); leitor.onload = function(e) { fotoBase64Atual = e.target.result; }; leitor.readAsDataURL(arquivo); }
+        });
+
+        onValue(ref(db, 'produtos'), function(snapshot) {
+            produtosGlobais = []; const dados = snapshot.val();
+            if (dados) { Object.keys(dados).forEach(function(key) { produtosGlobais.push({ id: key, ...dados[key] }); }); }
+            renderizarTabelaEstoque();
+        });
+
+        window.filtrarProdutos = function() { termoBuscaProd = document.getElementById('buscaProduto').value.toLowerCase(); paginaAtualProd = 1; renderizarTabelaEstoque(); }
+        window.mudarPaginaProd = function(direcao) {
+            const filtrados = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)));
+            const totalPags = Math.ceil(filtrados.length / itensPorPaginaProd);
+            if (paginaAtualProd + direcao >= 1 && paginaAtualProd + direcao <= totalPags) { paginaAtualProd += direcao; renderizarTabelaEstoque(); }
+        }
+
+        function renderizarTabelaEstoque() {
+            const tabela = document.getElementById('tabelaEstoque'); tabela.innerHTML = '';
+            let filtrados = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)));
+            const paginados = filtrados.slice((paginaAtualProd - 1) * itensPorPaginaProd, ((paginaAtualProd - 1) * itensPorPaginaProd) + itensPorPaginaProd);
+            document.getElementById('infoPaginaProd').innerText = `Pág ${paginaAtualProd} de ${Math.max(1, Math.ceil(filtrados.length / itensPorPaginaProd))}`;
+            
+            paginados.forEach(function(p) {
+                let tagImagem = p.foto ? `<img src="${p.foto}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;">` : '<span style="color:#7f8c8d; font-size:11px;">Sem foto</span>';
+                let classeAlertaCss = ((p.quantidade || 0) <= 3) ? 'linha-alerta' : '';
+                const tr = document.createElement('tr'); tr.className = classeAlertaCss;
+                tr.innerHTML = `<td>${tagImagem}</td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color: #f1c40f; color: #2c3e50; padding: 3px 6px; border-radius: 4px; font-weight:bold; font-size:11px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold; font-size:16px;">${p.quantidade || 0}</td><td>R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71; font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td><td class="acoes-flex"><button class="btn-secundario" style="padding: 5px 10px;" onclick="editarProd('${p.id}')">Editar</button><button class="btn-danger" style="padding: 5px 10px;" onclick="excluirProd('${p.id}')">X</button></td>`;
+                tabela.appendChild(tr);
+            });
+        }
+
+        formProduto.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const dados = { nome: document.getElementById('prodNome').value, categoria: document.getElementById('prodCategoria').value, custo: document.getElementById('prodCusto').value, margem: document.getElementById('prodMargem').value, venda: document.getElementById('prodVenda').value, quantidade: parseInt(document.getElementById('prodQtd').value) || 0, foto: fotoBase64Atual };
+            if (editandoProdId) { update(ref(db, 'produtos/' + editandoProdId), dados).then(function() { cancelarEdicaoProd(); }); } 
+            else { set(push(ref(db, 'produtos')), dados).then(function() { formProduto.reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; }); }
+        });
+
+        window.editarProd = function(id) {
+            const p = produtosGlobais.find(x => x.id === id); if (!p) return;
+            document.getElementById('prodNome').value = p.nome; document.getElementById('prodCategoria').value = p.categoria || ''; document.getElementById('prodCusto').value = p.custo; document.getElementById('prodMargem').value = p.margem; document.getElementById('prodVenda').value = p.venda; document.getElementById('prodQtd').value = p.quantidade || 0;
+            fotoBase64Atual = p.foto || ""; editandoProdId = id; document.getElementById('tituloProduto').innerText = "Editando Produto do Estoque"; document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; document.getElementById('btnCancelarProd').style.display = "inline-block"; window.scrollTo(0,0);
+        }
+        window.cancelarEdicaoProd = function() { editandoProdId = null; formProduto.reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; document.getElementById('tituloProduto').innerText = "Cadastro de Produto / Serviço"; document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; document.getElementById('btnCancelarProd').style.display = "none"; }
+        window.excluirProd = function(id) { if(confirm("ATENÇÃO: Deseja remover este produto definitivamente do estoque?")) { remove(ref(db, 'produtos/' + id)); } }
+
+
+        // ================================================================
+        // MÓDULO 3: VENDAS E OS (SEM ASSINATURA LOCAL)
+        // ================================================================
+        
+        window.gerarProximaOS = function() {
+            let maxOS = 1000; 
+            vendasGlobais.forEach(function(v) {
+                if(v.os && v.os >= maxOS) { maxOS = v.os; }
+            });
+            document.getElementById('vendaOS').value = maxOS + 1;
+            document.getElementById('vendaVencimento').valueAsDate = new Date(); 
+        }
+
+        function carregarSelectsVenda() {
+            const listaNomes = document.getElementById('listaClientesNomes'); listaNomes.innerHTML = ''; 
+            clientesGlobais.forEach(function(c) { listaNomes.innerHTML += `<option value="${c.nome}">`; });
+            const selProd = document.getElementById('vendaProdutoEstoque'); selProd.innerHTML = '<option value="">Selecione uma Mercadoria...</option>'; 
+            produtosGlobais.forEach(function(p) { selProd.innerHTML += `<option value="${p.id}">${p.nome} - R$ ${parseFloat(p.venda).toFixed(2)} (Qtd em loja: ${p.quantidade || 0})</option>`; });
+        }
+
+        window.addAoCarrinhoEstoque = function() {
+            const idProd = document.getElementById('vendaProdutoEstoque').value; const qtdSolicitada = parseInt(document.getElementById('vendaProdutoQtd').value) || 1;
+            if (!idProd) return; const p = produtosGlobais.find(x => x.id === idProd);
+            if ((p.quantidade || 0) < qtdSolicitada) { alert(`Atenção: A quantidade solicitada é maior do que o estoque atual (${p.quantidade || 0}). O item será adicionado, mas verifique o estoque!`); }
+            
+            const valorTotalCalculado = parseFloat(p.venda) * qtdSolicitada;
+            carrinho.push({ idProd: p.id, nome: `${p.nome} (Qtd: ${qtdSolicitada})`, valor: valorTotalCalculado, qtdBaixa: qtdSolicitada, ehEstoque: true });
+            document.getElementById('vendaProdutoQtd').value = 1; atualizarCarrinho();
+        }
+
+        window.addAoCarrinhoAvulso = function() {
+            const nomeAvulso = document.getElementById('vendaAvulsoNome').value; const valorAvulso = parseFloat(document.getElementById('vendaAvulsoValor').value); const percAvulso = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
+            if (!nomeAvulso || isNaN(valorAvulso)) { return alert("Por favor, preencha o Nome e o Valor numérico do serviço avulso."); }
+            const valorFinalComAcrescimo = valorAvulso + (valorAvulso * (percAvulso / 100));
+            let nomeDoItemNoCarrinho = percAvulso > 0 ? `${nomeAvulso} (+${percAvulso}% tx)` : nomeAvulso;
+            
+            carrinho.push({ nome: nomeDoItemNoCarrinho, valor: valorFinalComAcrescimo, ehEstoque: false });
+            document.getElementById('vendaAvulsoNome').value = ''; document.getElementById('vendaAvulsoValor').value = ''; document.getElementById('vendaAvulsoPerc').value = '0'; atualizarCarrinho();
+        }
+
+        window.removerDoCarrinho = function(indexDaLista) { carrinho.splice(indexDaLista, 1); atualizarCarrinho(); }
+
+        function atualizarCarrinho() {
+            const divCarrinho = document.getElementById('listaCarrinho'); divCarrinho.innerHTML = ''; let somaTotal = 0;
+            if (carrinho.length === 0) { divCarrinho.innerHTML = 'Nenhum item adicionado no momento.'; } else {
+                carrinho.forEach(function(item, indiceCorrente) { 
+                    somaTotal += item.valor; 
+                    divCarrinho.innerHTML += `<div class="cart-item"><span>${item.nome}</span><span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:4px 8px; margin-left:15px; border-radius: 4px;" onclick="removerDoCarrinho(${indiceCorrente})">Remover</button></span></div>`; 
+                });
+            }
+            document.getElementById('vendaTotal').innerText = `TOTAL GERAL: R$ ${somaTotal.toFixed(2)}`;
+        }
+
+        window.finalizarVenda = async function() {
+            const numOS = parseInt(document.getElementById('vendaOS').value);
+            const vencimentoOS = document.getElementById('vendaVencimento').value; 
+            const nomeDigitado = document.getElementById('vendaClienteBusca').value; 
+            
+            if (!vencimentoOS) return alert("Selecione a Data de Vencimento.");
+            if (!nomeDigitado) return alert("Por favor, digite e selecione para qual cliente é esta venda."); 
+            if (carrinho.length === 0) return alert("O carrinho está vazio! Adicione algum produto ou serviço."); 
+            
+            const clienteEncontrado = clientesGlobais.find(c => c.nome === nomeDigitado);
+            if (!clienteEncontrado) return alert("Erro: Cliente não encontrado. Selecione um nome exato da lista.");
+            
+            const valorTotalFinal = carrinho.reduce((acumulador, itemAtual) => acumulador + itemAtual.valor, 0);
+
+            // A assinatura local foi removida. O campo salva null inicialmente para que a assinatura seja feita online depois
+            const dadosDaVenda = { 
+                os: numOS, 
+                vencimento: vencimentoOS, 
+                dataStr: new Date().toLocaleString('pt-BR'), 
+                timestamp: Date.now(), 
+                clienteId: clienteEncontrado.id, 
+                clienteNome: clienteEncontrado.nome, 
+                itens: carrinho, 
+                total: valorTotalFinal, 
+                assinaturaBase64: null 
+            };
+
+            try {
+                await set(push(ref(db, 'caixa')), dadosDaVenda); 
                 
-                // Só desconta se for um produto de loja (ignora serviços avulsos)
-                if (itemVendido.ehEstoque && itemVendido.idProd) {
-                    
-                    // Busca a quantidade exata lá no servidor do Firebase naquele exato momento
-                    const consultaFirebase = await get(ref(db, 'produtos/' + itemVendido.idProd));
-                    const produtoBanco = consultaFirebase.val();
-                    
-                    if (produtoBanco && produtoBanco.quantidade > 0) {
-                        // Subtrai 1 da quantidade existente
-                        await update(ref(db, 'produtos/' + itemVendido.idProd), { 
-                            quantidade: produtoBanco.quantidade - 1 
-                        });
+                // Dá baixa no estoque
+                for (let i = 0; i < carrinho.length; i++) {
+                    const itemVendido = carrinho[i];
+                    if (itemVendido.ehEstoque && itemVendido.idProd) {
+                        const consultaFirebase = await get(ref(db, 'produtos/' + itemVendido.idProd));
+                        const produtoBanco = consultaFirebase.val();
+                        if (produtoBanco && produtoBanco.quantidade > 0) {
+                            let novoEstoque = produtoBanco.quantidade - itemVendido.qtdBaixa;
+                            if (novoEstoque < 0) novoEstoque = 0; 
+                            await update(ref(db, 'produtos/' + itemVendido.idProd), { quantidade: novoEstoque });
+                        }
                     }
                 }
-            }
 
-            alert("SUCESSO! Venda Registrada no Caixa e Estoque Atualizado!");
-            
-            // Reseta a tela de Vendas para o próximo Orçamento
-            carrinho = []; 
-            atualizarCarrinho(); 
-            limparAssinatura(); 
-            document.getElementById('vendaCliente').value = '';
-            carregarSelectsVenda(); // Atualiza as quantidades nos dropdowns
-            
-        } catch(erroDoFirebase) { 
-            alert("Aconteceu um Erro ao tentar finalizar a venda: " + erroDoFirebase); 
+                alert("SUCESSO! Ordem de Serviço Registrada no Caixa! (Vá na aba de Caixa para enviar o link de assinatura).");
+                carrinho = []; atualizarCarrinho(); document.getElementById('vendaClienteBusca').value = ''; 
+                gerarProximaOS(); carregarSelectsVenda(); 
+                
+            } catch(erroDoFirebase) { alert("Erro ao tentar finalizar a venda: " + erroDoFirebase); }
         }
-    }
 
 
-    // ================================================================
-    // MÓDULO 4: CAIXA E HISTÓRICO DE VENDAS
-    // ================================================================
-    
-    // Escuta a tabela de CAIXA em tempo real
-    onValue(ref(db, 'caixa'), function(snapshot) {
-        vendasGlobais = []; 
-        const dados = snapshot.val();
+        // ================================================================
+        // MÓDULO 4: CAIXA, ENVIO WHATSAPP E EXCLUSÃO (ESTORNO)
+        // ================================================================
         
-        if (dados) {
-            Object.keys(dados).forEach(function(key) { 
-                vendasGlobais.push({ id: key, ...dados[key] }); 
+        onValue(ref(db, 'caixa'), function(snapshot) {
+            vendasGlobais = []; const dados = snapshot.val();
+            if (dados) { Object.keys(dados).forEach(function(key) { vendasGlobais.push({ id: key, ...dados[key] }); }); }
+            vendasGlobais.sort(function(a, b) { return b.timestamp - a.timestamp; }); renderizarTabelaCaixa();
+        });
+        
+        function renderizarTabelaCaixa() {
+            const tabela = document.getElementById('tabelaCaixa'); tabela.innerHTML = '';
+            if (vendasGlobais.length === 0) { tabela.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma OS realizada ainda.</td></tr>'; return; }
+
+            vendasGlobais.forEach(function(vendaHistorico) {
+                const tr = document.createElement('tr'); 
+                const temAssinatura = vendaHistorico.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pendente</span>';
+                
+                let dataVencForm = vendaHistorico.vencimento ? vendaHistorico.vencimento.split('-').reverse().join('/') : '-';
+
+                let acoesHtml = `<button class="btn-primary btn-whatsapp" style="margin-top:0; padding: 5px 10px;" onclick="enviarOSWhatsApp('${vendaHistorico.id}')" title="Enviar Relatório WhatsApp">📱 Enviar OS</button>`;
+                
+                if (!vendaHistorico.assinaturaBase64) {
+                    acoesHtml += `<button class="btn-secundario" style="margin-left:5px; padding: 5px 10px;" onclick="copiarLinkAssinatura('${vendaHistorico.id}')" title="Copiar Link para o Cliente Assinar Online">🔗 Copiar Link Assinar</button>`;
+                }
+
+                // Novo Botão de Cancelar / Excluir (Vermelho Escuro)
+                acoesHtml += `<button class="btn-danger" style="margin-left:5px; padding: 5px 10px; background-color: #c0392b;" onclick="cancelarVenda('${vendaHistorico.id}')" title="Cancelar Venda e Estornar Estoque">🗑️ Cancelar</button>`;
+
+                tr.innerHTML = `
+                    <td style="font-weight: bold; color: #f1c40f;">${vendaHistorico.os || '-'}</td>
+                    <td>${vendaHistorico.dataStr.split(' ')}</td>
+                    <td style="font-weight: bold;">${vendaHistorico.clienteNome}</td>
+                    <td>${dataVencForm}</td>
+                    <td style="color:#2ecc71; font-weight:bold;">R$ ${vendaHistorico.total.toFixed(2)}</td>
+                    <td style="font-size: 11px;">${temAssinatura}</td>
+                    <td class="acoes-flex">${acoesHtml}</td>
+                `; 
+                tabela.appendChild(tr);
             });
         }
-        
-        // Ordena da venda mais recente (hoje) para a mais antiga
-        vendasGlobais.sort(function(a, b) { return b.timestamp - a.timestamp; }); 
-        
-        renderizarTabelaCaixa();
-    });
-    
-    function renderizarTabelaCaixa() {
-        const tabela = document.getElementById('tabelaCaixa'); 
-        tabela.innerHTML = '';
-        
-        if (vendasGlobais.length === 0) {
-            tabela.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhuma venda realizada ainda.</td></tr>';
-            return;
-        }
 
-        vendasGlobais.forEach(function(vendaHistorico) {
-            const tr = document.createElement('tr'); 
-            const temAssinatura = vendaHistorico.assinaturaBase64 ? '✍️ Registrada' : '❌ Não Assinado';
-            
-            tr.innerHTML = `
-                <td>${vendaHistorico.dataStr}</td>
-                <td style="font-weight: bold;">${vendaHistorico.clienteNome}</td>
-                <td style="color:#2ecc71; font-weight:bold;">R$ ${vendaHistorico.total.toFixed(2)}</td>
-                <td style="font-size: 11px;">${temAssinatura}</td>
-            `; 
-            
-            tabela.appendChild(tr);
-        });
-    }
+        // FUNÇÃO ESTORNO DE ESTOQUE E CANCELAMENTO DA OS
+        window.cancelarVenda = async function(idDaVenda) {
+            const aviso = confirm("ATENÇÃO MÁXIMA: Tem certeza que deseja CANCELAR esta OS?\n\n- Esta ação apagará a OS do caixa.\n- Todos os itens desta OS voltarão automaticamente para o estoque.");
+            if (!aviso) return;
 
+            try {
+                // 1. Busca os dados da venda que estamos querendo cancelar
+                const snapshotVenda = await get(ref(db, 'caixa/' + idDaVenda));
+                const vendaCancelada = snapshotVenda.val();
 
-    // ================================================================
-    // MÓDULO 5: ROTINAS DE SEGURANÇA (BACKUP E RESTAURAÇÃO)
-    // ================================================================
-    
-    window.fazerBackupLocal = async function() { 
-        try { 
-            // Puxa TODO o banco de dados da raiz "/"
-            const snapshot = await get(ref(db, '/')); 
-            
-            // Transforma o banco de dados inteiro em um grande texto estruturado (JSON)
-            const estruturaDados = JSON.stringify(snapshot.val(), null, 2); 
-            
-            // Gera um arquivo virtual na memória do navegador
-            const arquivoBlob = new Blob([estruturaDados], { type: "application/json" }); 
-            const urlArquivo = URL.createObjectURL(arquivoBlob); 
-            
-            // Cria um link invisível e clica nele para forçar o Download pro PC do usuário
-            const linkInvisivel = document.createElement('a'); 
-            linkInvisivel.href = urlArquivo; 
-            
-            const dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-            linkInvisivel.download = `FH_Controle_Backup_${dataHoje}.json`; 
-            
-            linkInvisivel.click(); 
-            alert("Backup Local finalizado! O arquivo foi enviado para a sua pasta Downloads."); 
-            
-        } catch (erroDoBackup) { 
-            alert("Falha grave ao tentar baixar os dados: " + erroDoBackup); 
-        } 
-    }
-    
-    window.fazerBackupNuvem = async function() { 
-        try { 
-            const snapshot = await get(ref(db, '/')); 
-            const todosOsDados = snapshot.val(); 
-            
-            // Remove o histórico antigo de backups para não criar um loop infinito e gastar todo o armazenamento do Google
-            if (todosOsDados && todosOsDados.backups) {
-                delete todosOsDados.backups; 
+                if (vendaCancelada && vendaCancelada.itens) {
+                    // 2. Navega pelos itens e devolve pro estoque
+                    for (let i = 0; i < vendaCancelada.itens.length; i++) {
+                        let item = vendaCancelada.itens[i];
+                        
+                        // Só devolve o que foi tirado do estoque (ignora mão de obra avulsa)
+                        if (item.ehEstoque && item.idProd) {
+                            const snapshotProduto = await get(ref(db, 'produtos/' + item.idProd));
+                            let produtoDoEstoque = snapshotProduto.val();
+                            
+                            if (produtoDoEstoque) {
+                                // Soma a quantidade devolvida com o que já tem no estoque atual
+                                let novaQtdEstoque = (produtoDoEstoque.quantidade || 0) + item.qtdBaixa;
+                                await update(ref(db, 'produtos/' + item.idProd), { quantidade: novaQtdEstoque });
+                            }
+                        }
+                    }
+                }
+
+                // 3. Remove a venda do histórico de Caixa
+                await remove(ref(db, 'caixa/' + idDaVenda));
+                alert("Venda Cancelada com sucesso! Os itens já retornaram ao seu estoque.");
+
+            } catch(erro) {
+                alert("Ocorreu um erro ao tentar cancelar e estornar o estoque: " + erro);
             }
-            
-            // Salva uma pasta chamada "backups" dentro do próprio banco com tudo o que ele tem agora
-            await set(ref(db, 'backups/backup_' + Date.now()), { 
-                dataDeCriacao: new Date().toLocaleString('pt-BR'), 
-                conteudoSalvo: todosOsDados 
-            }); 
-            
-            alert("Sucesso absoluto! Cópia de Segurança guardada dentro dos servidores da nuvem."); 
-            
-        } catch(erroDeNuvem) { 
-            alert("Ocorreu um erro ao salvar remotamente: " + erroDeNuvem); 
-        } 
-    }
-    
-    window.restaurarBackupLocal = function() { 
-        const inputArquivo = document.getElementById('arquivoRestore');
-        const arquivo = inputArquivo.files; 
-        
-        if (!arquivo) {
-            return alert("Erro: Você não selecionou nenhum arquivo. Clique em 'Escolher Arquivo' primeiro."); 
         }
-        
-        const confirmacaoAviso = confirm("RISCO DE PERDA DE DADOS: Esta ação vai apagar o banco atual e substituir pelos dados deste arquivo. Tem certeza absoluta?");
-        
-        if (!confirmacaoAviso) {
-            return; // Usuário cancelou
+
+        window.copiarLinkAssinatura = function(idDaVenda) {
+            const linkLimpo = window.location.origin + window.location.pathname + "?assinar=" + idDaVenda;
+            navigator.clipboard.writeText(linkLimpo).then(function() {
+                alert("Link de Assinatura copiado com sucesso! Você já pode colar (CTRL+V) no WhatsApp do cliente.");
+            }).catch(function(err) {
+                alert("Erro ao copiar. Seu navegador pode estar bloqueando a ação. O Link é: " + linkLimpo);
+            });
         }
+
+        window.enviarOSWhatsApp = function(idDaVenda) {
+            const venda = vendasGlobais.find(v => v.id === idDaVenda);
+            if (!venda) return;
+            const clienteDaOS = clientesGlobais.find(c => c.id === venda.clienteId);
+            
+            let numeroTelefone = '';
+            if (clienteDaOS && clienteDaOS.telefone) {
+                numeroTelefone = clienteDaOS.telefone.replace(/\D/g, '');
+                if (numeroTelefone.length === 11 || numeroTelefone.length === 10) { numeroTelefone = '55' + numeroTelefone; }
+            }
+
+            let dataVencimentoStr = venda.vencimento ? venda.vencimento.split('-').reverse().join('/') : 'À vista';
+
+            let textoMensagem = `Olá *${venda.clienteNome}*, tudo bem?\n\n`;
+            textoMensagem += `Aqui está sua nota de compra/ordem de serviço *OS Nº ${venda.os || 'S/N'}* com vencimento para o dia *${dataVencimentoStr}*.\n\n`;
+            textoMensagem += `*Resumo dos Itens:*\n`;
+            venda.itens.forEach(item => { textoMensagem += `- ${item.nome}: R$ ${item.valor.toFixed(2)}\n`; });
+            textoMensagem += `\n*Valor Total: R$ ${venda.total.toFixed(2)}*\n\n`;
+
+            if (!venda.assinaturaBase64) {
+                const linkAssinatura = window.location.origin + window.location.pathname + "?assinar=" + venda.id;
+                textoMensagem += `⚠️ Solicitamos por gentileza que confirme a ciência desta OS através de sua assinatura digital acessando o link seguro abaixo:\n\n${linkAssinatura}\n\n`;
+            } else {
+                textoMensagem += `✅ Ordem de Serviço confirmada com assinatura digital.\n\n`;
+            }
+
+            textoMensagem += `Agradecemos a preferência! Equipe FH Construções.`;
+            const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroTelefone}&text=${encodeURIComponent(textoMensagem)}`;
+            window.open(urlWhatsApp, '_blank');
+        }
+
+
+        // ================================================================
+        // MÓDULO 5: ROTINAS DE SEGURANÇA (BACKUP E RESTAURAÇÃO)
+        // ================================================================
         
-        // Se confirmou, começa a leitura do arquivo .json selecionado
-        const leitorDeArquivos = new FileReader(); 
-        
-        leitorDeArquivos.onload = async function(eventoDeLeitura) { 
+        window.fazerBackupLocal = async function() { 
             try { 
-                const dadosParaRestaurar = JSON.parse(eventoDeLeitura.target.result); 
-                
-                // Sobrescreve toda a raiz "/" com os dados do arquivo
-                await set(ref(db, '/'), dadosParaRestaurar); 
-                
-                alert("A Restauração do Banco de Dados foi um sucesso! O sistema será recarregado agora."); 
-                window.location.reload(); // Atualiza a página
-                
-            } catch (erroDeLeitura) { 
-                alert("Falha na restauração. O arquivo selecionado pode estar corrompido. Detalhe: " + erroDeLeitura); 
-            } 
-        }; 
+                const snapshot = await get(ref(db, '/')); const estruturaDados = JSON.stringify(snapshot.val(), null, 2); 
+                const arquivoBlob = new Blob([estruturaDados], { type: "application/json" }); const urlArquivo = URL.createObjectURL(arquivoBlob); 
+                const linkInvisivel = document.createElement('a'); linkInvisivel.href = urlArquivo; 
+                linkInvisivel.download = `FH_Controle_Backup_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.json`; 
+                linkInvisivel.click(); alert("Backup Local finalizado! O arquivo foi enviado para a sua pasta Downloads."); 
+            } catch (erroDoBackup) { alert("Falha grave ao tentar baixar os dados: " + erroDoBackup); } 
+        }
         
-        leitorDeArquivos.readAsText(arquivo); 
-    }
+        window.fazerBackupNuvem = async function() { 
+            try { 
+                const snapshot = await get(ref(db, '/')); const todosOsDados = snapshot.val(); 
+                if (todosOsDados && todosOsDados.backups) { delete todosOsDados.backups; }
+                await set(ref(db, 'backups/backup_' + Date.now()), { dataDeCriacao: new Date().toLocaleString('pt-BR'), conteudoSalvo: todosOsDados }); 
+                alert("Sucesso absoluto! Cópia de Segurança guardada dentro dos servidores da nuvem."); 
+            } catch(erroDeNuvem) { alert("Ocorreu um erro ao salvar remotamente: " + erroDeNuvem); } 
+        }
+        
+        window.restaurarBackupLocal = function() { 
+            const arquivo = document.getElementById('arquivoRestore').files; 
+            if (!arquivo) { return alert("Erro: Você não selecionou nenhum arquivo."); }
+            if (!confirm("RISCO DE PERDA DE DADOS: Esta ação vai apagar o banco atual e substituir pelos dados deste arquivo. Tem certeza absoluta?")) return;
+            
+            const leitorDeArquivos = new FileReader(); 
+            leitorDeArquivos.onload = async function(eventoDeLeitura) { 
+                try { 
+                    await set(ref(db, '/'), JSON.parse(eventoDeLeitura.target.result)); 
+                    alert("A Restauração do Banco de Dados foi um sucesso! O sistema será recarregado agora."); window.location.reload(); 
+                } catch (erroDeLeitura) { alert("Falha na restauração. O arquivo selecionado pode estar corrompido. Detalhe: " + erroDeLeitura); } 
+            }; leitorDeArquivos.readAsText(arquivo); 
+        }
+        
+    } // Fim da checagem !codigoDaOSParaAssinar
 
 </script>
 
