@@ -5,70 +5,360 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FH Control - ERP & PDV</title>
     <style>
-        /* --- ESTILOS GERAIS E PALETA DE CORES --- */
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #34495e; color: #ecf0f1; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
+        /* =========================================
+           ESTILOS GERAIS E PALETA DE CORES
+           ========================================= */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #34495e; 
+            color: #ecf0f1; 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
         
-        /* Barra Lateral (Menu) */
-        .sidebar { width: 250px; background-color: #1a252f; padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 2px solid rgba(241, 196, 15, 0.2); }
-        .sidebar-logo img { width: 100%; border-radius: 8px; margin-bottom: 20px; background-color: #fff; padding: 5px; box-sizing: border-box; }
-        .menu-btn { background-color: transparent; color: #bdc3c7; border: 1px solid transparent; padding: 12px; text-align: left; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; transition: 0.3s; text-transform: uppercase; }
-        .menu-btn:hover { background-color: #2c3e50; color: #f1c40f; }
-        .menu-btn.active { background-color: #0056b3; color: #f8f9fa; border: 1px solid #f1c40f; }
+        /* --- Barra Lateral (Menu) --- */
+        .sidebar { 
+            width: 250px; 
+            background-color: #1a252f; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            border-right: 2px solid rgba(241, 196, 15, 0.2); 
+            overflow-y: auto;
+        }
+        
+        .sidebar-logo img { 
+            width: 100%; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            background-color: #fff; 
+            padding: 5px; 
+            box-sizing: border-box; 
+        }
+        
+        .menu-btn { 
+            background-color: transparent; 
+            color: #bdc3c7; 
+            border: 1px solid transparent; 
+            padding: 12px; 
+            text-align: left; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 6px; 
+            transition: background-color 0.3s, color 0.3s; 
+            text-transform: uppercase; 
+        }
+        
+        .menu-btn:hover { 
+            background-color: #2c3e50; 
+            color: #f1c40f; 
+        }
+        
+        .menu-btn.active { 
+            background-color: #0056b3; 
+            color: #f8f9fa; 
+            border: 1px solid #f1c40f; 
+        }
 
-        /* Área Principal */
-        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* --- Área Principal --- */
+        .main-content { 
+            flex: 1; 
+            padding: 20px; 
+            overflow-y: auto; 
+        }
+        
+        .tab-content { 
+            display: none; 
+        }
+        
+        .tab-content.active { 
+            display: block; 
+            animation: fadeIn 0.3s ease-in-out; 
+        }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
 
-        /* Contêineres */
-        .container { background-color: #2c3e50; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); margin-bottom: 20px; border: 1px solid rgba(241, 196, 15, 0.1); }
-        h2 { color: #f1c40f; text-transform: uppercase; margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        /* --- Contêineres --- */
+        .container { 
+            background-color: #2c3e50; 
+            padding: 25px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+            margin-bottom: 20px; 
+            border: 1px solid rgba(241, 196, 15, 0.1); 
+        }
         
-        /* Formulários */
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; color: #bdc3c7; }
-        input, select { width: 100%; padding: 10px; border: 2px solid #7f8c8d; border-radius: 6px; box-sizing: border-box; background-color: #ecf0f1; color: #2c3e50; }
-        input:focus, select:focus { border-color: #f1c40f; outline: none; }
-        .row { display: flex; gap: 10px; }
-        .col { flex: 1; }
+        h2 { 
+            color: #f1c40f; 
+            text-transform: uppercase; 
+            margin-top: 0; 
+            border-bottom: 1px solid rgba(255,255,255,0.1); 
+            padding-bottom: 10px; 
+        }
         
-        /* Botoes */
-        button { padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
-        .btn-primary { background-color: #0056b3; color: #f8f9fa; width: 100%; font-size: 16px; margin-top: 10px; }
-        .btn-primary:hover { background-color: #004494; }
-        .btn-secundario { background-color: #f39c12; color: #2c3e50; }
-        .btn-danger { background-color: #e74c3c; color: #fff; }
-        .btn-ver { background-color: #2980b9; color: #f8f9fa; }
+        /* --- Formulários --- */
+        .form-group { 
+            margin-bottom: 15px; 
+        }
         
-        /* Tabelas */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background-color: #34495e; border-radius: 5px; overflow: hidden; }
-        th, td { padding: 10px; text-align: left; font-size: 13px; border-bottom: 1px solid #7f8c8d; }
-        th { background-color: #0056b3; color: #f8f9fa; text-transform: uppercase; }
-        tr:nth-child(even) { background-color: #3a4e61; }
-        .acoes-flex { display: flex; gap: 5px; }
+        label { 
+            display: block; 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            font-size: 13px; 
+            color: #bdc3c7; 
+        }
         
-        /* Paginação e Buscas */
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .search-bar { width: 300px; }
-        .pagination { display: flex; gap: 10px; align-items: center; font-weight: bold; color: #f1c40f; }
-        .pagination button { padding: 5px 10px; background-color: #2980b9; color: white; }
+        input, select { 
+            width: 100%; 
+            padding: 10px; 
+            border: 2px solid #7f8c8d; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            background-color: #ecf0f1; 
+            color: #2c3e50; 
+            font-family: inherit;
+        }
+        
+        input:focus, select:focus { 
+            border-color: #f1c40f; 
+            outline: none; 
+        }
+        
+        .row { 
+            display: flex; 
+            gap: 15px; 
+        }
+        
+        .col { 
+            flex: 1; 
+        }
+        
+        /* --- Botões --- */
+        button { 
+            padding: 10px 15px; 
+            border: none; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            text-transform: uppercase; 
+        }
+        
+        .btn-primary { 
+            background-color: #0056b3; 
+            color: #f8f9fa; 
+            width: 100%; 
+            font-size: 16px; 
+            margin-top: 10px; 
+        }
+        
+        .btn-primary:hover { 
+            background-color: #004494; 
+        }
+        
+        .btn-secundario { 
+            background-color: #f39c12; 
+            color: #2c3e50; 
+        }
+        
+        .btn-secundario:hover { 
+            background-color: #d68910; 
+        }
+        
+        .btn-danger { 
+            background-color: #e74c3c; 
+            color: #fff; 
+        }
+        
+        .btn-danger:hover { 
+            background-color: #c0392b; 
+        }
+        
+        .btn-ver { 
+            background-color: #2980b9; 
+            color: #f8f9fa; 
+        }
+        
+        .btn-ver:hover { 
+            background-color: #2471a3; 
+        }
+        
+        /* --- Tabelas --- */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 15px; 
+            background-color: #34495e; 
+            border-radius: 5px; 
+            overflow: hidden; 
+        }
+        
+        th, td { 
+            padding: 12px; 
+            text-align: left; 
+            font-size: 13px; 
+            border-bottom: 1px solid #7f8c8d; 
+        }
+        
+        th { 
+            background-color: #0056b3; 
+            color: #f8f9fa; 
+            text-transform: uppercase; 
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) { 
+            background-color: #3a4e61; 
+        }
+        
+        .acoes-flex { 
+            display: flex; 
+            gap: 5px; 
+        }
+        
+        /* --- Alerta de Estoque Baixo (Piscando Vermelho) --- */
+        @keyframes piscarVermelho {
+            0% { background-color: #3a4e61; }
+            50% { background-color: rgba(231, 76, 60, 0.6); } /* Fundo vermelho suave */
+            100% { background-color: #3a4e61; }
+        }
+        
+        .linha-alerta { 
+            animation: piscarVermelho 1.5s infinite; 
+        }
+        
+        .linha-alerta td { 
+            color: #fff; 
+            font-weight: bold; 
+        }
 
-        /* Assinatura Canvas */
-        .signature-pad { border: 2px dashed #f1c40f; background-color: #ecf0f1; width: 100%; height: 200px; border-radius: 8px; cursor: crosshair; }
+        /* --- Paginação e Buscas --- */
+        .toolbar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+        }
         
-        /* Carrinho PDV */
-        .cart-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #7f8c8d; background: #3a4e61; margin-bottom: 5px; border-radius: 4px;}
-        .cart-total { font-size: 24px; color: #f1c40f; text-align: right; font-weight: bold; padding: 15px 0; }
+        .search-bar { 
+            width: 350px; 
+        }
+        
+        .pagination { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            font-weight: bold; 
+            color: #f1c40f; 
+        }
+        
+        .pagination button { 
+            padding: 5px 12px; 
+            background-color: #2980b9; 
+            color: white; 
+        }
 
-        /* Estilos do Modal (Janela Flutuante) */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background-color: #2c3e50; padding: 30px; border-radius: 10px; width: 90%; max-width: 550px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #ecf0f1; border: 2px solid #f1c40f; }
-        .close-btn { position: absolute; top: 20px; right: 25px; color: #f1c40f; font-size: 30px; font-weight: bold; cursor: pointer; transition: color 0.3s; }
-        .close-btn:hover { color: #e74c3c; }
-        #modalVisualizar h2 { color: #f1c40f; border-bottom: 2px solid #f1c40f; padding-bottom: 10px; margin-bottom: 20px;}
-        .detalhes-linha { margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #7f8c8d; padding-bottom: 8px; }
-        .detalhes-linha strong { color: #bdc3c7; margin-right: 5px; }
+        /* --- Assinatura Digital Canvas --- */
+        .signature-pad { 
+            border: 2px dashed #f1c40f; 
+            background-color: #ecf0f1; 
+            width: 100%; 
+            height: 250px; 
+            border-radius: 8px; 
+            cursor: crosshair; 
+        }
+        
+        /* --- Carrinho de Vendas (PDV) --- */
+        .cart-item { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 12px; 
+            border-bottom: 1px solid #7f8c8d; 
+            background: #3a4e61; 
+            margin-bottom: 5px; 
+            border-radius: 4px;
+            align-items: center;
+        }
+        
+        .cart-total { 
+            font-size: 26px; 
+            color: #f1c40f; 
+            text-align: right; 
+            font-weight: bold; 
+            padding: 15px 0; 
+        }
+
+        /* --- Estilos do Modal (Janela Flutuante) --- */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.85); 
+            align-items: center; 
+            justify-content: center; 
+            backdrop-filter: blur(5px); 
+        }
+        
+        .modal-content { 
+            background-color: #2c3e50; 
+            padding: 30px; 
+            border-radius: 10px; 
+            width: 90%; 
+            max-width: 600px; 
+            position: relative; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            color: #ecf0f1; 
+            border: 2px solid #f1c40f; 
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .close-btn { 
+            position: absolute; 
+            top: 15px; 
+            right: 25px; 
+            color: #f1c40f; 
+            font-size: 30px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: color 0.3s; 
+        }
+        
+        .close-btn:hover { 
+            color: #e74c3c; 
+        }
+        
+        #modalVisualizar h2 { 
+            color: #f1c40f; 
+            border-bottom: 2px solid #f1c40f; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px;
+        }
+        
+        .detalhes-linha { 
+            margin-bottom: 12px; 
+            font-size: 15px; 
+            border-bottom: 1px solid #7f8c8d; 
+            padding-bottom: 8px; 
+        }
+        
+        .detalhes-linha strong { 
+            color: #bdc3c7; 
+            margin-right: 5px; 
+        }
     </style>
 </head>
 <body>
@@ -87,9 +377,11 @@
 <div class="main-content">
 
     <div id="tabClientes" class="tab-content active">
+        
         <div class="container">
             <h2 id="tituloCliente">Cadastro de Cliente</h2>
             <form id="formCliente">
+                
                 <div class="form-group">
                     <label for="nome">Nome Completo / Razão Social</label>
                     <input type="text" id="nome" required>
@@ -159,6 +451,7 @@
                     <button type="submit" class="btn-primary" id="btnSalvarCli">Salvar Cliente</button>
                     <button type="button" class="btn-secundario" style="margin-top: 10px; display: none;" id="btnCancelarCli" onclick="cancelarEdicaoCli()">Cancelar Edição (ESC)</button>
                 </div>
+
             </form>
         </div>
 
@@ -173,78 +466,147 @@
                 </div>
             </div>
             <table>
-                <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr></thead>
-                <tbody id="tabelaClientes"></tbody>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>CPF/CNPJ</th>
+                        <th>Telefone</th>
+                        <th>Cidade</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaClientes">
+                    </tbody>
             </table>
         </div>
+
     </div>
 
     <div id="modalVisualizar" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="fecharModal()">&times;</span>
-            <h2 style="margin-top: 0;">Ficha do Cliente</h2>
-            <div id="detalhesCliente"></div>
+            <h2 style="margin-top: 0; color: #f1c40f;">Ficha Completa do Cliente</h2>
+            <div id="detalhesCliente">
+                </div>
         </div>
     </div>
 
+
     <div id="tabEstoque" class="tab-content">
+        
         <div class="container">
             <h2 id="tituloProduto">Cadastro de Produto / Serviço</h2>
             <form id="formProduto">
-                <div class="form-group"><label>Nome do Produto/Serviço</label><input type="text" id="prodNome" required></div>
+                
                 <div class="row form-group">
-                    <div class="col"><label>Preço de Custo (R$)</label><input type="number" step="0.01" id="prodCusto" required></div>
-                    <div class="col"><label>Margem de Lucro (%)</label><input type="number" step="0.1" id="prodMargem" required></div>
-                    <div class="col"><label>Preço de Venda Final (R$)</label><input type="number" step="0.01" id="prodVenda" readonly style="background-color: #bdc3c7; font-weight: bold;"></div>
+                    <div class="col" style="flex: 2;">
+                        <label>Nome do Produto/Serviço</label>
+                        <input type="text" id="prodNome" required>
+                    </div>
+                    <div class="col">
+                        <label>Categoria</label>
+                        <input type="text" id="prodCategoria" placeholder="Ex: Cabos, Eletrônica, Porta..." required>
+                    </div>
                 </div>
+                
+                <div class="row form-group">
+                    <div class="col">
+                        <label>Preço de Custo (R$)</label>
+                        <input type="number" step="0.01" id="prodCusto" required>
+                    </div>
+                    <div class="col">
+                        <label>Margem de Lucro (%)</label>
+                        <input type="number" step="0.1" id="prodMargem" required>
+                    </div>
+                    <div class="col">
+                        <label>Preço de Venda (R$)</label>
+                        <input type="number" step="0.01" id="prodVenda" readonly style="background-color: #bdc3c7; font-weight: bold; color: #2c3e50;">
+                    </div>
+                    <div class="col">
+                        <label style="color: #f1c40f;">Quantidade em Estoque</label>
+                        <input type="number" step="1" id="prodQtd" value="0" required>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Foto do Produto (Opcional)</label>
                     <input type="file" id="prodFoto" accept="image/*">
                 </div>
+                
                 <div class="row">
                     <button type="submit" class="btn-primary" id="btnSalvarProd">Salvar Produto</button>
                     <button type="button" class="btn-secundario" style="margin-top: 10px; display: none;" id="btnCancelarProd" onclick="cancelarEdicaoProd()">Cancelar Edição (ESC)</button>
                 </div>
+
             </form>
         </div>
 
         <div class="container">
             <h2>Produtos no Estoque</h2>
+            
+            <div class="toolbar">
+                <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar por Nome da Peça ou Categoria..." onkeyup="filtrarProdutos()">
+                <div class="pagination">
+                    <button onclick="mudarPaginaProd(-1)">◀ Anterior</button>
+                    <span id="infoPaginaProd">Pág 1</span>
+                    <button onclick="mudarPaginaProd(1)">Próxima ▶</button>
+                </div>
+            </div>
+            
+            <p style="font-size: 12px; color: #e74c3c;">Atenção: Produtos com quantidade igual ou inferior a 3 ficarão piscando em vermelho para solicitar reposição.</p>
+            
             <table>
-                <thead><tr><th>Foto</th><th>Nome</th><th>Custo</th><th>Venda</th><th>Lucro</th><th>Ações</th></tr></thead>
-                <tbody id="tabelaEstoque"></tbody>
+                <thead>
+                    <tr>
+                        <th>Foto</th>
+                        <th>Nome</th>
+                        <th>Categoria</th>
+                        <th>Qtd</th>
+                        <th>Custo</th>
+                        <th>Venda</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaEstoque">
+                    </tbody>
             </table>
         </div>
+
     </div>
 
+
     <div id="tabVendas" class="tab-content">
+        
         <div class="container">
             <h2>Novo Orçamento / Venda</h2>
+            
             <div class="row form-group">
                 <div class="col" style="flex: 2;">
-                    <label>Selecionar Cliente</label>
-                    <select id="vendaCliente"></select>
+                    <label>1. Selecionar Cliente</label>
+                    <select id="vendaCliente">
+                        </select>
                 </div>
             </div>
             
             <div class="row form-group" style="align-items: flex-end;">
                 <div class="col" style="flex: 2;">
-                    <label>Adicionar Produto do Estoque</label>
-                    <select id="vendaProdutoEstoque"></select>
+                    <label>2. Adicionar Produto do Estoque (Dá baixa automática na Qtd)</label>
+                    <select id="vendaProdutoEstoque">
+                        </select>
                 </div>
                 <div class="col">
-                    <button type="button" class="btn-secundario" onclick="addAoCarrinhoEstoque()">➕ Adicionar</button>
+                    <button type="button" class="btn-secundario" onclick="addAoCarrinhoEstoque()">➕ Adicionar 1 un</button>
                 </div>
             </div>
 
             <div class="row form-group" style="align-items: flex-end; border-top: 1px solid #7f8c8d; padding-top: 15px;">
                 <div class="col" style="flex: 2;">
-                    <label>Adicionar Item Avulso (Não está no estoque)</label>
-                    <input type="text" id="vendaAvulsoNome" placeholder="Ex: Mão de Obra Extra">
+                    <label>3. Adicionar Item Avulso (Ex: Serviço, Mão de Obra ou Peça que não está no sistema)</label>
+                    <input type="text" id="vendaAvulsoNome" placeholder="Ex: Mão de Obra de Troca de Peça">
                 </div>
                 <div class="col">
                     <label>Valor (R$)</label>
-                    <input type="number" step="0.01" id="vendaAvulsoValor">
+                    <input type="number" step="0.01" id="vendaAvulsoValor" placeholder="Ex: 150.00">
                 </div>
                 <div class="col">
                     <button type="button" class="btn-secundario" onclick="addAoCarrinhoAvulso()">➕ Adicionar</button>
@@ -253,57 +615,93 @@
         </div>
 
         <div class="container">
-            <h2>Itens da Venda</h2>
-            <div id="listaCarrinho">Nenhum item adicionado.</div>
-            <div class="cart-total" id="vendaTotal">Total: R$ 0,00</div>
+            <h2>Carrinho de Compras / Itens da Venda</h2>
             
-            <h3 style="color: #f1c40f;">Assinatura do Cliente</h3>
-            <p style="font-size: 12px; color: #bdc3c7;">Assine abaixo confirmando o recebimento dos produtos/serviços:</p>
-            <canvas id="assinaturaCanvas" class="signature-pad"></canvas>
-            <button type="button" class="btn-secundario" style="margin-top: 5px;" onclick="limparAssinatura()">🗑️ Limpar Assinatura</button>
+            <div id="listaCarrinho">
+                Nenhum item adicionado no momento.
+            </div>
+            
+            <div class="cart-total" id="vendaTotal">
+                Total: R$ 0,00
+            </div>
+            
+            <hr style="border-color: #7f8c8d; margin: 20px 0;">
 
-            <button type="button" class="btn-primary" style="margin-top: 20px; background-color: #27ae60;" onclick="finalizarVenda()">✅ Finalizar Venda e Salvar no Caixa</button>
+            <h3 style="color: #f1c40f;">Assinatura Digital do Cliente</h3>
+            <p style="font-size: 13px; color: #bdc3c7;">Solicite ao cliente que assine abaixo confirmando o recebimento das mercadorias/serviços descritos acima.</p>
+            
+            <canvas id="assinaturaCanvas" class="signature-pad"></canvas>
+            
+            <button type="button" class="btn-secundario" style="margin-top: 10px;" onclick="limparAssinatura()">🗑️ Limpar Assinatura (Refazer)</button>
+
+            <button type="button" class="btn-primary" style="margin-top: 30px; background-color: #27ae60; padding: 15px; font-size: 18px;" onclick="finalizarVenda()">✅ FINALIZAR VENDA E SALVAR NO CAIXA</button>
         </div>
+
     </div>
+
 
     <div id="tabCaixa" class="tab-content">
         <div class="container">
             <h2>Fechamento de Caixa (Vendas Realizadas)</h2>
+            <p style="font-size: 14px; color: #bdc3c7;">Aqui ficam registradas todas as vendas finalizadas, mostrando o total arrecadado e se houve assinatura do cliente.</p>
             <table>
-                <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Visualizar</th></tr></thead>
-                <tbody id="tabelaCaixa"></tbody>
+                <thead>
+                    <tr>
+                        <th>Data e Hora</th>
+                        <th>Nome do Cliente</th>
+                        <th>Valor Total (R$)</th>
+                        <th>Assinatura Virtual</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCaixa">
+                    </tbody>
             </table>
         </div>
     </div>
 
+
     <div id="tabConfig" class="tab-content">
         <div class="container">
             <h2>Gestão de Dados e Backups</h2>
-            <p>Proteja seus dados. Faça backups regulares do seu sistema.</p>
+            <p style="font-size: 14px; color: #bdc3c7;">Proteja os dados da sua empresa. Faça backups regularmente para evitar perda de informações de clientes, estoque e caixa.</p>
             
-            <div class="row" style="margin-top: 20px;">
+            <div class="row" style="margin-top: 30px;">
                 <div class="col">
-                    <button class="btn-primary" style="background-color: #2980b9;" onclick="fazerBackupLocal()">📥 Baixar Backup Local</button>
+                    <button class="btn-primary" style="background-color: #2980b9; padding: 15px;" onclick="fazerBackupLocal()">
+                        📥 1. Baixar Backup Local (Seu Computador)
+                    </button>
+                    <p style="font-size: 12px; color: #95a5a6; margin-top: 5px;">Gera um arquivo seguro que será salvo na pasta Downloads do seu computador.</p>
                 </div>
                 <div class="col">
-                    <button class="btn-primary" style="background-color: #8e44ad;" onclick="fazerBackupNuvem()">☁️ Cópia na Nuvem</button>
+                    <button class="btn-primary" style="background-color: #8e44ad; padding: 15px;" onclick="fazerBackupNuvem()">
+                        ☁️ 2. Criar Cópia de Segurança na Nuvem
+                    </button>
+                    <p style="font-size: 12px; color: #95a5a6; margin-top: 5px;">Salva uma cópia exata do banco de dados atual dentro dos servidores do próprio Firebase.</p>
                 </div>
             </div>
 
-            <hr style="border-color: #7f8c8d; margin: 30px 0;">
+            <hr style="border-color: #7f8c8d; margin: 40px 0;">
 
-            <h3>Restaurar Backup</h3>
-            <input type="file" id="arquivoRestore" accept=".json">
-            <button class="btn-danger" style="margin-top: 10px;" onclick="restaurarBackupLocal()">⚠️ Restaurar Sistema a partir de Arquivo</button>
+            <h3 style="color: #e74c3c;">Área de Restauração de Sistema</h3>
+            <p style="font-size: 14px; color: #bdc3c7;">Se você formatou o computador ou perdeu dados, selecione o arquivo de Backup Local que você baixou anteriormente e clique no botão vermelho.</p>
+            
+            <input type="file" id="arquivoRestore" accept=".json" style="margin-bottom: 15px;">
+            
+            <button class="btn-danger" style="padding: 12px;" onclick="restaurarBackupLocal()">
+                ⚠️ RESTAURAR SISTEMA A PARTIR DO ARQUIVO SELECIONADO
+            </button>
         </div>
     </div>
 
 </div>
 
+
 <script type="module">
+    // Importações Oficiais do Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
     import { getDatabase, ref, push, set, update, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
+    // Configuração do seu Projeto Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDOgI0jOhTlxf2d_weEfCRiMSSsOVLcI7Y",
       authDomain: "fhcontroles-1ea1e.firebaseapp.com",
@@ -313,150 +711,215 @@
       appId: "1:1093224290178:web:6aaead161795807e91e19b"
     };
 
+    // Inicializando o App e o Banco de Dados Realtime
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Variáveis Globais
+    // ================= VARIÁVEIS GLOBAIS DE MEMÓRIA =================
     let clientesGlobais = [];
     let produtosGlobais = [];
     let vendasGlobais = [];
-    let carrinho = [];
+    let carrinho = []; // Carrinho de compras do PDV
     
+    // Controles de Edição
     let editandoCliId = null;
     let editandoProdId = null;
 
-    // Paginação Clientes
+    // Controles de Paginação (Aba Clientes)
     let paginaAtualCli = 1;
     const itensPorPaginaCli = 8;
     let termoBuscaCli = "";
+    
+    // Controles de Paginação (Aba Estoque)
+    let paginaAtualProd = 1;
+    const itensPorPaginaProd = 15;
+    let termoBuscaProd = "";
 
-    // --- SISTEMA DE ABAS ---
+
+    // ================= SISTEMA DE ABAS E NAVEGAÇÃO =================
     window.abrirAba = function(idAba, elementoBotao) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+        // Esconde todas as abas
+        const abas = document.querySelectorAll('.tab-content');
+        abas.forEach(function(tab) {
+            tab.classList.remove('active');
+        });
+
+        // Remove a classe 'active' de todos os botões do menu
+        const botoes = document.querySelectorAll('.menu-btn');
+        botoes.forEach(function(btn) {
+            btn.classList.remove('active');
+        });
+
+        // Mostra a aba selecionada e marca o botão correspondente
         document.getElementById(idAba).classList.add('active');
         elementoBotao.classList.add('active');
-        if(idAba === 'tabVendas') carregarSelectsVenda();
+
+        // Se abriu a aba de Vendas, recarrega as listas de seleção (Comboboxes)
+        if (idAba === 'tabVendas') {
+            carregarSelectsVenda();
+        }
     }
 
-    // Atalho ESC para fechar edições e modal
-    document.addEventListener('keydown', e => { 
-        if (e.key === "Escape") {
-            if(editandoCliId) cancelarEdicaoCli();
-            if(editandoProdId) cancelarEdicaoProd();
+    // Atalho de Teclado: Pressionar 'ESC' cancela edições ou fecha o Modal
+    document.addEventListener('keydown', function(evento) { 
+        if (evento.key === "Escape") {
+            if (editandoCliId) {
+                cancelarEdicaoCli();
+            }
+            if (editandoProdId) {
+                cancelarEdicaoProd();
+            }
             fecharModal();
         }
     });
 
-    // ==========================================
-    // MÓDULO: CLIENTES (MÁSCARAS E CAMPOS COMPLETOS)
-    // ==========================================
-    const formCliente = document.getElementById('formCliente');
 
-    // MÁSCARAS DE ENTRADA
-    const formatarMascara = (id, regra) => {
-        document.getElementById(id).addEventListener('input', function() {
-            this.value = regra(this.value);
-        });
-    }
-    formatarMascara('cpf', v => {
-        v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11);
-        return v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    });
-    formatarMascara('cnpj', v => {
-        v = v.replace(/\D/g, ''); if (v.length > 14) v = v.slice(0, 14);
-        return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
-    });
-    formatarMascara('telefone', v => {
-        v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11);
-        return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2');
-    });
-    formatarMascara('cep', v => {
-        v = v.replace(/\D/g, ''); if (v.length > 8) v = v.slice(0, 8);
-        return v.replace(/^(\d{5})(\d)/, '$1-$2');
-    });
+    // ================================================================
+    // MÓDULO 1: CLIENTES (MÁSCARAS E BANCO DE DADOS)
+    // ================================================================
     
-    // LISTAR E PAGINAR
-    onValue(ref(db, 'clientes'), (snapshot) => {
-        clientesGlobais = [];
-        const dados = snapshot.val();
-        if (dados) Object.keys(dados).forEach(key => clientesGlobais.push({ id: key, ...dados[key] }));
-        renderizarTabelaClientes();
-    });
-
-    window.filtrarClientes = function() {
-        termoBuscaCli = document.getElementById('buscaCliente').value.toLowerCase();
-        paginaAtualCli = 1; 
-        renderizarTabelaClientes();
-    }
-
-    window.mudarPaginaCli = function(direcao) {
-        const filtrados = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli) || (c.cpf && c.cpf.includes(termoBuscaCli)) || (c.cnpj && c.cnpj.includes(termoBuscaCli)));
-        const totalPags = Math.ceil(filtrados.length / itensPorPaginaCli);
-        if(paginaAtualCli + direcao >= 1 && paginaAtualCli + direcao <= totalPags) {
-            paginaAtualCli += direcao;
-            renderizarTabelaClientes();
+    // Função utilitária para aplicar máscaras nos campos de texto
+    const formatarMascara = function(id, regra) { 
+        const campo = document.getElementById(id);
+        if (campo) {
+            campo.addEventListener('input', function() { 
+                this.value = regra(this.value); 
+            });
         }
     }
 
+    // Aplicando as Regras de Máscara (Regex)
+    formatarMascara('cpf', function(v) { 
+        v = v.replace(/\D/g, ''); 
+        if (v.length > 11) v = v.slice(0, 11); 
+        return v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); 
+    });
+    
+    formatarMascara('cnpj', function(v) { 
+        v = v.replace(/\D/g, ''); 
+        if (v.length > 14) v = v.slice(0, 14); 
+        return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2'); 
+    });
+    
+    formatarMascara('telefone', function(v) { 
+        v = v.replace(/\D/g, ''); 
+        if (v.length > 11) v = v.slice(0, 11); 
+        return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2'); 
+    });
+    
+    formatarMascara('cep', function(v) { 
+        v = v.replace(/\D/g, ''); 
+        if (v.length > 8) v = v.slice(0, 8); 
+        return v.replace(/^(\d{5})(\d)/, '$1-$2'); 
+    });
+    
+    // Escutando alterações no Banco de Dados de Clientes em Tempo Real
+    onValue(ref(db, 'clientes'), function(snapshot) {
+        clientesGlobais = [];
+        const dados = snapshot.val();
+        
+        if (dados) {
+            Object.keys(dados).forEach(function(key) { 
+                clientesGlobais.push({ id: key, ...dados[key] }); 
+            });
+        }
+        renderizarTabelaClientes();
+    });
+
+    // Função disparada ao digitar no campo de Busca
+    window.filtrarClientes = function() { 
+        termoBuscaCli = document.getElementById('buscaCliente').value.toLowerCase(); 
+        paginaAtualCli = 1; // Reseta para a página 1 ao buscar
+        renderizarTabelaClientes(); 
+    }
+
+    // Controle dos Botões "Próxima" e "Anterior" da Paginação
+    window.mudarPaginaCli = function(direcao) {
+        const filtrados = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli) || (c.cpf && c.cpf.includes(termoBuscaCli)) || (c.cnpj && c.cnpj.includes(termoBuscaCli)));
+        const totalPags = Math.ceil(filtrados.length / itensPorPaginaCli);
+        
+        if (paginaAtualCli + direcao >= 1 && paginaAtualCli + direcao <= totalPags) { 
+            paginaAtualCli += direcao; 
+            renderizarTabelaClientes(); 
+        }
+    }
+
+    // Desenha as linhas da Tabela de Clientes
     function renderizarTabelaClientes() {
         const tabela = document.getElementById('tabelaClientes');
-        tabela.innerHTML = '';
+        tabela.innerHTML = ''; // Limpa a tabela
         
+        // Filtra os clientes pelo que está digitado na busca
         let filtrados = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli) || (c.cpf && c.cpf.includes(termoBuscaCli)) || (c.cnpj && c.cnpj.includes(termoBuscaCli)));
         
-        const inicio = (paginaAtualCli - 1) * itensPorPaginaCli;
-        const fim = inicio + itensPorPaginaCli;
-        const paginados = filtrados.slice(inicio, fim);
-
-        document.getElementById('infoPaginaCli').innerText = `Pág ${paginaAtualCli} de ${Math.max(1, Math.ceil(filtrados.length / itensPorPaginaCli))}`;
-
-        paginados.forEach((cliente) => {
+        // Separa apenas os 8 clientes da página atual
+        const indiceInicio = (paginaAtualCli - 1) * itensPorPaginaCli;
+        const indiceFim = indiceInicio + itensPorPaginaCli;
+        const paginados = filtrados.slice(indiceInicio, indiceFim);
+        
+        // Atualiza o texto informando a página
+        const totalPaginasCalculado = Math.max(1, Math.ceil(filtrados.length / itensPorPaginaCli));
+        document.getElementById('infoPaginaCli').innerText = `Pág ${paginaAtualCli} de ${totalPaginasCalculado}`;
+        
+        // Cria o HTML para cada cliente
+        paginados.forEach(function(c) {
             const tr = document.createElement('tr');
-            let documento = cliente.cpf ? cliente.cpf : cliente.cnpj;
+            const documento = c.cpf ? c.cpf : (c.cnpj || '-');
+            
             tr.innerHTML = `
-                <td>${cliente.nome}</td>
-                <td>${documento || '-'}</td>
-                <td>${cliente.telefone || '-'}</td>
-                <td>${cliente.cidade || '-'}</td>
+                <td>${c.nome}</td>
+                <td>${documento}</td>
+                <td>${c.telefone || '-'}</td>
+                <td>${c.cidade || '-'}</td>
                 <td class="acoes-flex">
-                    <button class="btn-ver" onclick="verCliente('${cliente.id}')">🔍</button>
-                    <button class="btn-secundario" style="padding: 5px 10px;" onclick="editarCli('${cliente.id}')">Editar</button>
-                    <button class="btn-danger" style="padding: 5px 10px;" onclick="excluirCli('${cliente.id}')">X</button>
+                    <button class="btn-ver" onclick="verCliente('${c.id}')" title="Ver Ficha Completa">🔍</button>
+                    <button class="btn-secundario" style="padding: 5px 10px;" onclick="editarCli('${c.id}')">Editar</button>
+                    <button class="btn-danger" style="padding: 5px 10px;" onclick="excluirCli('${c.id}')">X</button>
                 </td>
             `;
             tabela.appendChild(tr);
         });
     }
 
-    // SALVAR CLIENTE COM TODOS OS CAMPOS
-    formCliente.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const dados = {
-            nome: document.getElementById('nome').value,
-            cpf: document.getElementById('cpf').value,
-            cnpj: document.getElementById('cnpj').value,
-            telefone: document.getElementById('telefone').value,
-            pix: document.getElementById('pix').value,
-            ie: document.getElementById('ie').value,
-            cep: document.getElementById('cep').value,
-            estado: document.getElementById('estado').value,
-            cidade: document.getElementById('cidade').value,
-            bairro: document.getElementById('bairro').value,
-            rua: document.getElementById('rua').value,
-            numero: document.getElementById('numero').value
+    // Evento de SUBMIT (Salvar/Atualizar) do Formulário de Cliente
+    document.getElementById('formCliente').addEventListener('submit', function(e) {
+        e.preventDefault(); // Impede recarregar a página
+        
+        // Coleta todos os 12 campos
+        const dados = { 
+            nome: document.getElementById('nome').value, 
+            cpf: document.getElementById('cpf').value, 
+            cnpj: document.getElementById('cnpj').value, 
+            telefone: document.getElementById('telefone').value, 
+            pix: document.getElementById('pix').value, 
+            ie: document.getElementById('ie').value, 
+            cep: document.getElementById('cep').value, 
+            estado: document.getElementById('estado').value, 
+            cidade: document.getElementById('cidade').value, 
+            bairro: document.getElementById('bairro').value, 
+            rua: document.getElementById('rua').value, 
+            numero: document.getElementById('numero').value 
         };
-        if(editandoCliId) {
-            update(ref(db, 'clientes/' + editandoCliId), dados).then(cancelarEdicaoCli);
-        } else {
-            set(push(ref(db, 'clientes')), dados).then(() => formCliente.reset());
+        
+        if (editandoCliId) { 
+            // Atualiza existente
+            update(ref(db, 'clientes/' + editandoCliId), dados).then(function() {
+                cancelarEdicaoCli();
+            }); 
+        } else { 
+            // Cria um novo registro
+            set(push(ref(db, 'clientes')), dados).then(function() { 
+                document.getElementById('formCliente').reset(); 
+            }); 
         }
     });
 
-    // EDITAR CLIENTE (JOGA TUDO PRO FORMULÁRIO)
+    // Função para puxar os dados do banco para os inputs de edição
     window.editarCli = function(id) {
-        const cli = clientesGlobais.find(c => c.id === id);
-        if(!cli) return;
+        const cli = clientesGlobais.find(c => c.id === id); 
+        if (!cli) return;
+        
+        // Preenche os campos manual e explicitamente para evitar erros
         document.getElementById('nome').value = cli.nome || '';
         document.getElementById('cpf').value = cli.cpf || '';
         document.getElementById('cnpj').value = cli.cnpj || '';
@@ -469,95 +932,171 @@
         document.getElementById('bairro').value = cli.bairro || '';
         document.getElementById('rua').value = cli.rua || '';
         document.getElementById('numero').value = cli.numero || '';
-
-        editandoCliId = id;
-        document.getElementById('tituloCliente').innerText = "Editando Cliente";
-        document.getElementById('btnSalvarCli').innerText = "Atualizar Cadastro";
-        document.getElementById('btnCancelarCli').style.display = "inline-block";
+        
+        // Muda estado da tela para Modo Edição
+        editandoCliId = id; 
+        document.getElementById('tituloCliente').innerText = "Editando Cliente (Banco Nuvem)"; 
+        document.getElementById('btnSalvarCli').innerText = "Salvar Atualização"; 
+        document.getElementById('btnCancelarCli').style.display = "inline-block"; 
         window.scrollTo(0,0);
     }
-
-    window.cancelarEdicaoCli = function() {
-        editandoCliId = null;
-        formCliente.reset();
-        document.getElementById('tituloCliente').innerText = "Cadastro de Cliente";
-        document.getElementById('btnSalvarCli').innerText = "Salvar Cliente";
-        document.getElementById('btnCancelarCli').style.display = "none";
+    
+    // Função para cancelar edição e limpar formulário
+    window.cancelarEdicaoCli = function() { 
+        editandoCliId = null; 
+        document.getElementById('formCliente').reset(); 
+        document.getElementById('tituloCliente').innerText = "Cadastro de Cliente"; 
+        document.getElementById('btnSalvarCli').innerText = "Salvar Cliente"; 
+        document.getElementById('btnCancelarCli').style.display = "none"; 
     }
-
-    window.excluirCli = function(id) {
-        if(confirm("Excluir cliente?")) remove(ref(db, 'clientes/' + id));
+    
+    // Excluir cliente do Firebase
+    window.excluirCli = function(id) { 
+        if(confirm("ATENÇÃO: Deseja realmente excluir este cliente do sistema?")) {
+            remove(ref(db, 'clientes/' + id)); 
+        }
     }
-
-    // MODAL DE VISUALIZAÇÃO DA FICHA COMPLETA
+    
+    // Função para montar o HTML do Modal de visualização
     window.verCliente = function(id) {
-        const cliente = clientesGlobais.find(c => c.id === id);
-        if(!cliente) return;
-        const documento = cliente.cpf ? cliente.cpf : cliente.cnpj;
+        const c = clientesGlobais.find(x => x.id === id); 
+        if (!c) return;
         
-        const htmlDetalhes = `
-            <div class="detalhes-linha"><strong>Nome/Razão Social:</strong> ${cliente.nome}</div>
-            <div class="detalhes-linha"><strong>Documento:</strong> ${documento || 'Não informado'}</div>
-            <div class="detalhes-linha"><strong>Inscrição Estadual:</strong> ${cliente.ie || 'Não informada'}</div>
-            <div class="detalhes-linha"><strong>Telefone:</strong> ${cliente.telefone}</div>
-            <div class="detalhes-linha"><strong>Chave Pix:</strong> ${cliente.pix || 'Não informada'}</div>
-            <div class="detalhes-linha"><strong>Endereço:</strong> ${cliente.rua || '-'}, Nº ${cliente.numero || '-'}</div>
-            <div class="detalhes-linha"><strong>Bairro:</strong> ${cliente.bairro || '-'}</div>
-            <div class="detalhes-linha"><strong>Cidade/UF:</strong> ${cliente.cidade || '-'} - ${cliente.estado || '-'}</div>
-            <div class="detalhes-linha"><strong>CEP:</strong> ${cliente.cep || '-'}</div>
+        const documento = c.cpf ? c.cpf : (c.cnpj || 'Não informado');
+        
+        const html = `
+            <div class="detalhes-linha"><strong>Nome:</strong> ${c.nome}</div>
+            <div class="detalhes-linha"><strong>Documento (CPF/CNPJ):</strong> ${documento}</div>
+            <div class="detalhes-linha"><strong>Inscrição Estadual:</strong> ${c.ie || '-'}</div>
+            <div class="detalhes-linha"><strong>Telefone / WhatsApp:</strong> ${c.telefone}</div>
+            <div class="detalhes-linha"><strong>Chave Pix:</strong> ${c.pix || 'Não Cadastrado'}</div>
+            <div class="detalhes-linha"><strong>Endereço Completo:</strong> ${c.rua || '-'}, Nº ${c.numero || '-'}</div>
+            <div class="detalhes-linha"><strong>Bairro:</strong> ${c.bairro || '-'}</div>
+            <div class="detalhes-linha"><strong>Cidade e Estado:</strong> ${c.cidade || '-'} / ${c.estado || '-'}</div>
+            <div class="detalhes-linha"><strong>CEP:</strong> ${c.cep || '-'}</div>
         `;
-        document.getElementById('detalhesCliente').innerHTML = htmlDetalhes;
+        
+        document.getElementById('detalhesCliente').innerHTML = html;
         document.getElementById('modalVisualizar').style.display = 'flex';
     }
+    
+    window.fecharModal = function() { 
+        document.getElementById('modalVisualizar').style.display = 'none'; 
+    }
+    
+    // Fecha modal se clicar fora da janela central
+    window.onclick = function(evento) { 
+        if (evento.target === document.getElementById('modalVisualizar')) {
+            fecharModal();
+        } 
+    }
 
-    window.fecharModal = function() { document.getElementById('modalVisualizar').style.display = 'none'; }
-    window.onclick = e => { if (e.target === document.getElementById('modalVisualizar')) fecharModal(); }
 
-
-    // ==========================================
-    // MÓDULO: ESTOQUE E CÁLCULO DE MARGEM
-    // ==========================================
+    // ================================================================
+    // MÓDULO 2: ESTOQUE (CATEGORIA, PAGINAÇÃO E ALERTA PISCANTE)
+    // ================================================================
+    
     const formProduto = document.getElementById('formProduto');
-    let fotoBase64Atual = "";
+    let fotoBase64Atual = ""; // Variável para armazenar a imagem convertida em texto
 
+    // Calcula o preço final automaticamente quando digita o custo ou a margem
     document.getElementById('prodMargem').addEventListener('input', calcularVenda);
     document.getElementById('prodCusto').addEventListener('input', calcularVenda);
-
+    
     function calcularVenda() {
         let custo = parseFloat(document.getElementById('prodCusto').value) || 0;
         let margem = parseFloat(document.getElementById('prodMargem').value) || 0;
-        let venda = custo + (custo * (margem / 100));
-        document.getElementById('prodVenda').value = venda.toFixed(2);
+        
+        let valorVenda = custo + (custo * (margem / 100));
+        document.getElementById('prodVenda').value = valorVenda.toFixed(2);
     }
 
-    document.getElementById('prodFoto').addEventListener('change', function(e) {
-        const file = e.target.files;
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) { fotoBase64Atual = event.target.result; };
-            reader.readAsDataURL(file);
+    // Lógica para carregar a foto do Computador/Celular
+    document.getElementById('prodFoto').addEventListener('change', function(evento) {
+        const arquivo = evento.target.files; 
+        if (arquivo) { 
+            const leitor = new FileReader(); 
+            leitor.onload = function(e) { 
+                fotoBase64Atual = e.target.result; // Salva o código da imagem
+            }; 
+            leitor.readAsDataURL(arquivo); 
         }
     });
 
-    onValue(ref(db, 'produtos'), (snapshot) => {
-        produtosGlobais = [];
+    // Escutando Banco de Dados de Produtos
+    onValue(ref(db, 'produtos'), function(snapshot) {
+        produtosGlobais = []; 
         const dados = snapshot.val();
-        if (dados) Object.keys(dados).forEach(key => produtosGlobais.push({ id: key, ...dados[key] }));
+        
+        if (dados) {
+            Object.keys(dados).forEach(function(key) { 
+                produtosGlobais.push({ id: key, ...dados[key] }); 
+            });
+        }
         renderizarTabelaEstoque();
     });
+
+    // --- Lógica de Busca e Paginação do Estoque ---
+    window.filtrarProdutos = function() { 
+        termoBuscaProd = document.getElementById('buscaProduto').value.toLowerCase(); 
+        paginaAtualProd = 1; // Reseta para a página 1 ao buscar
+        renderizarTabelaEstoque(); 
+    }
+
+    window.mudarPaginaProd = function(direcao) {
+        // Encontra produtos baseados no termo de busca (Nome ou Categoria)
+        const filtrados = produtosGlobais.filter(p => 
+            p.nome.toLowerCase().includes(termoBuscaProd) || 
+            (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd))
+        );
+        
+        const totalPags = Math.ceil(filtrados.length / itensPorPaginaProd);
+        
+        if (paginaAtualProd + direcao >= 1 && paginaAtualProd + direcao <= totalPags) { 
+            paginaAtualProd += direcao; 
+            renderizarTabelaEstoque(); 
+        }
+    }
 
     function renderizarTabelaEstoque() {
         const tabela = document.getElementById('tabelaEstoque');
         tabela.innerHTML = '';
-        produtosGlobais.forEach(p => {
-            let imgTag = p.foto ? `<img src="${p.foto}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;">` : 'Sem foto';
+        
+        // Filtra pelo termo de busca (Nome ou Categoria)
+        let filtrados = produtosGlobais.filter(p => 
+            p.nome.toLowerCase().includes(termoBuscaProd) || 
+            (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd))
+        );
+        
+        // Aplica Paginação (15 itens)
+        const indiceInicio = (paginaAtualProd - 1) * itensPorPaginaProd;
+        const indiceFim = indiceInicio + itensPorPaginaProd;
+        const paginados = filtrados.slice(indiceInicio, indiceFim);
+        
+        // Atualiza a informação de página visualmente
+        const totalPaginasCalculado = Math.max(1, Math.ceil(filtrados.length / itensPorPaginaProd));
+        document.getElementById('infoPaginaProd').innerText = `Pág ${paginaAtualProd} de ${totalPaginasCalculado}`;
+        
+        // Desenha a tabela com os produtos paginados
+        paginados.forEach(function(p) {
+            let tagImagem = p.foto 
+                ? `<img src="${p.foto}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;">` 
+                : '<span style="color:#7f8c8d; font-size:11px;">Sem foto</span>';
+            
+            // VERIFICAÇÃO DE ESTOQUE BAIXO (A MÁGICA DO PISCAR)
+            let quantidadeAviso = p.quantidade || 0;
+            let classeAlertaCss = (quantidadeAviso <= 3) ? 'linha-alerta' : '';
+            
             const tr = document.createElement('tr');
+            tr.className = classeAlertaCss; // Aplica a classe que faz a linha piscar
+            
             tr.innerHTML = `
-                <td>${imgTag}</td>
-                <td>${p.nome}</td>
+                <td>${tagImagem}</td>
+                <td style="font-weight:bold;">${p.nome}</td>
+                <td><span style="background-color: #f1c40f; color: #2c3e50; padding: 3px 6px; border-radius: 4px; font-weight:bold; font-size:11px;">${p.categoria || 'Geral'}</span></td>
+                <td style="font-weight:bold; font-size:16px;">${quantidadeAviso}</td>
                 <td>R$ ${parseFloat(p.custo).toFixed(2)}</td>
-                <td>R$ ${parseFloat(p.venda).toFixed(2)}</td>
-                <td style="color:#2ecc71; font-weight:bold;">${p.margem}%</td>
+                <td style="color:#2ecc71; font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
                 <td class="acoes-flex">
                     <button class="btn-secundario" style="padding: 5px 10px;" onclick="editarProd('${p.id}')">Editar</button>
                     <button class="btn-danger" style="padding: 5px 10px;" onclick="excluirProd('${p.id}')">X</button>
@@ -567,252 +1106,441 @@
         });
     }
 
-    formProduto.addEventListener('submit', (e) => {
+    // Salvar/Atualizar Produto
+    formProduto.addEventListener('submit', function(e) {
         e.preventDefault();
+        
         const dados = {
             nome: document.getElementById('prodNome').value,
+            categoria: document.getElementById('prodCategoria').value, // Novo Campo
             custo: document.getElementById('prodCusto').value,
             margem: document.getElementById('prodMargem').value,
             venda: document.getElementById('prodVenda').value,
-            foto: fotoBase64Atual
+            quantidade: parseInt(document.getElementById('prodQtd').value) || 0,
+            foto: fotoBase64Atual // Envia a string gigante da imagem para o Firebase
         };
-        if(editandoProdId) {
-            update(ref(db, 'produtos/' + editandoProdId), dados).then(cancelarEdicaoProd);
-        } else {
-            set(push(ref(db, 'produtos')), dados).then(() => { formProduto.reset(); fotoBase64Atual = ""; });
+        
+        if (editandoProdId) { 
+            update(ref(db, 'produtos/' + editandoProdId), dados).then(function() {
+                cancelarEdicaoProd();
+            }); 
+        } else { 
+            set(push(ref(db, 'produtos')), dados).then(function() { 
+                formProduto.reset(); 
+                fotoBase64Atual = ""; 
+                document.getElementById('prodVenda').value = ""; // Limpa a venda
+            }); 
         }
     });
 
     window.editarProd = function(id) {
-        const p = produtosGlobais.find(x => x.id === id);
-        if(!p) return;
+        const p = produtosGlobais.find(x => x.id === id); 
+        if (!p) return;
+        
         document.getElementById('prodNome').value = p.nome;
+        document.getElementById('prodCategoria').value = p.categoria || ''; // Novo Campo
         document.getElementById('prodCusto').value = p.custo;
         document.getElementById('prodMargem').value = p.margem;
         document.getElementById('prodVenda').value = p.venda;
-        fotoBase64Atual = p.foto || "";
-        editandoProdId = id;
-        document.getElementById('tituloProduto').innerText = "Editando Produto";
-        document.getElementById('btnSalvarProd').innerText = "Atualizar";
-        document.getElementById('btnCancelarProd').style.display = "inline-block";
+        document.getElementById('prodQtd').value = p.quantidade || 0;
+        
+        fotoBase64Atual = p.foto || ""; // Mantém a foto anterior se não trocar
+        
+        editandoProdId = id; 
+        document.getElementById('tituloProduto').innerText = "Editando Produto do Estoque"; 
+        document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; 
+        document.getElementById('btnCancelarProd').style.display = "inline-block"; 
         window.scrollTo(0,0);
     }
 
-    window.cancelarEdicaoProd = function() {
-        editandoProdId = null;
-        formProduto.reset();
-        fotoBase64Atual = "";
-        document.getElementById('tituloProduto').innerText = "Cadastro de Produto / Serviço";
-        document.getElementById('btnSalvarProd').innerText = "Salvar Produto";
-        document.getElementById('btnCancelarProd').style.display = "none";
+    window.cancelarEdicaoProd = function() { 
+        editandoProdId = null; 
+        formProduto.reset(); 
+        fotoBase64Atual = ""; 
+        document.getElementById('prodVenda').value = ""; 
+        document.getElementById('tituloProduto').innerText = "Cadastro de Produto / Serviço"; 
+        document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; 
+        document.getElementById('btnCancelarProd').style.display = "none"; 
     }
-
-    window.excluirProd = function(id) {
-        if(confirm("Excluir produto do estoque?")) remove(ref(db, 'produtos/' + id));
-    }
-
-    // ==========================================
-    // MÓDULO: VENDAS, CARRINHO E ASSINATURA
-    // ==========================================
     
+    window.excluirProd = function(id) { 
+        if(confirm("ATENÇÃO: Deseja remover este produto definitivamente do estoque?")) {
+            remove(ref(db, 'produtos/' + id)); 
+        }
+    }
+
+
+    // ================================================================
+    // MÓDULO 3: VENDAS, PDV, BAIXA AUTOMÁTICA E ASSINATURA
+    // ================================================================
+    
+    // Carrega as listas de opções (Combobox) da aba de Vendas
     function carregarSelectsVenda() {
-        const selCli = document.getElementById('vendaCliente');
-        selCli.innerHTML = '<option value="">Selecione um Cliente...</option>';
-        clientesGlobais.forEach(c => selCli.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
-
-        const selProd = document.getElementById('vendaProdutoEstoque');
-        selProd.innerHTML = '<option value="">Selecione um Produto...</option>';
-        produtosGlobais.forEach(p => selProd.innerHTML += `<option value="${p.id}">${p.nome} - R$ ${parseFloat(p.venda).toFixed(2)}</option>`);
-    }
-
-    window.addAoCarrinhoEstoque = function() {
-        const idProd = document.getElementById('vendaProdutoEstoque').value;
-        if(!idProd) return;
-        const p = produtosGlobais.find(x => x.id === idProd);
-        carrinho.push({ nome: p.nome, valor: parseFloat(p.venda) });
-        atualizarCarrinho();
-    }
-
-    window.addAoCarrinhoAvulso = function() {
-        const nome = document.getElementById('vendaAvulsoNome').value;
-        const valor = parseFloat(document.getElementById('vendaAvulsoValor').value);
-        if(!nome || isNaN(valor)) return alert("Preencha nome e valor do item avulso.");
-        carrinho.push({ nome: nome, valor: valor });
-        document.getElementById('vendaAvulsoNome').value = '';
-        document.getElementById('vendaAvulsoValor').value = '';
-        atualizarCarrinho();
-    }
-
-    window.removerDoCarrinho = function(index) {
-        carrinho.splice(index, 1);
-        atualizarCarrinho();
-    }
-
-    function atualizarCarrinho() {
-        const div = document.getElementById('listaCarrinho');
-        div.innerHTML = '';
-        let total = 0;
-        carrinho.forEach((item, index) => {
-            total += item.valor;
-            div.innerHTML += `
-                <div class="cart-item">
-                    <span>${item.nome}</span>
-                    <span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:2px 5px; margin-left:10px;" onclick="removerDoCarrinho(${index})">X</button></span>
-                </div>`;
-        });
-        document.getElementById('vendaTotal').innerText = `Total: R$ ${total.toFixed(2)}`;
-    }
-
-    // CANVAS DE ASSINATURA
-    const canvas = document.getElementById('assinaturaCanvas');
-    const ctx = canvas.getContext('2d');
-    let desenhando = false;
-
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#2c3e50';
-
-    const iniciarDesenho = (e) => { desenhando = true; desenhar(e); }
-    const pararDesenho = () => { desenhando = false; ctx.beginPath(); }
-    const desenhar = (e) => {
-        if (!desenhando) return;
-        e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches.clientX : e.clientX;
-        const clientY = e.touches ? e.touches.clientY : e.clientY;
-        ctx.lineTo(clientX - rect.left, clientY - rect.top);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(clientX - rect.left, clientY - rect.top);
-    }
-
-    canvas.addEventListener('mousedown', iniciarDesenho);
-    canvas.addEventListener('mouseup', pararDesenho);
-    canvas.addEventListener('mousemove', desenhar);
-    canvas.addEventListener('touchstart', iniciarDesenho, {passive: false});
-    canvas.addEventListener('touchend', pararDesenho);
-    canvas.addEventListener('touchmove', desenhar, {passive: false});
-
-    window.limparAssinatura = function() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
-    // FINALIZAR VENDA
-    window.finalizarVenda = function() {
-        const clienteId = document.getElementById('vendaCliente').value;
-        if(!clienteId) return alert("Selecione um cliente.");
-        if(carrinho.length === 0) return alert("Carrinho vazio.");
-
-        const clienteNome = clientesGlobais.find(c => c.id === clienteId).nome;
-        const total = carrinho.reduce((acc, item) => acc + item.valor, 0);
+        // Dropdown de Clientes
+        const selCli = document.getElementById('vendaCliente'); 
+        selCli.innerHTML = '<option value="">Selecione o Cliente do Orçamento...</option>'; 
         
-        const isCanvasBlank = (canvas) => {
-            const blank = document.createElement('canvas');
-            blank.width = canvas.width; blank.height = canvas.height;
-            return canvas.toDataURL() === blank.toDataURL();
+        clientesGlobais.forEach(function(c) {
+            selCli.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+        });
+        
+        // Dropdown de Produtos (Mostra preço e quantidade atual)
+        const selProd = document.getElementById('vendaProdutoEstoque'); 
+        selProd.innerHTML = '<option value="">Selecione uma Mercadoria...</option>'; 
+        
+        produtosGlobais.forEach(function(p) {
+            selProd.innerHTML += `<option value="${p.id}">${p.nome} - R$ ${parseFloat(p.venda).toFixed(2)} (Qtd em loja: ${p.quantidade || 0})</option>`;
+        });
+    }
+
+    // Botão Adicionar Item do Estoque ao Carrinho
+    window.addAoCarrinhoEstoque = function() {
+        const idProd = document.getElementById('vendaProdutoEstoque').value; 
+        if (!idProd) return;
+        
+        const p = produtosGlobais.find(x => x.id === idProd);
+        
+        // Verificação extra de segurança para não vender sem estoque
+        if ((p.quantidade || 0) <= 0) {
+            alert("Atenção: Este produto consta com Quantidade 0 (ZERO) no estoque!");
         }
         
-        const assinatura = isCanvasBlank(canvas) ? null : canvas.toDataURL();
-
-        const vendaData = {
-            dataStr: new Date().toLocaleString('pt-BR'),
-            timestamp: Date.now(),
-            clienteId: clienteId,
-            clienteNome: clienteNome,
-            itens: carrinho,
-            total: total,
-            assinaturaBase64: assinatura
-        };
-
-        set(push(ref(db, 'caixa')), vendaData).then(() => {
-            alert("Venda registrada e enviada para o Caixa!");
-            carrinho = [];
-            atualizarCarrinho();
-            limparAssinatura();
-            document.getElementById('vendaCliente').value = '';
+        // Empurra para a lista de itens. Marca "ehEstoque: true" para saber que precisa dar baixa
+        carrinho.push({ 
+            idProd: p.id, 
+            nome: p.nome, 
+            valor: parseFloat(p.venda), 
+            ehEstoque: true 
         });
+        
+        atualizarCarrinho();
     }
 
-    // ==========================================
-    // MÓDULO: CAIXA / RELATÓRIOS
-    // ==========================================
-    onValue(ref(db, 'caixa'), (snapshot) => {
-        vendasGlobais = [];
-        const dados = snapshot.val();
-        if (dados) Object.keys(dados).forEach(key => vendasGlobais.push({ id: key, ...dados[key] }));
-        vendasGlobais.sort((a,b) => b.timestamp - a.timestamp);
-        renderizarCaixa();
-    });
+    // Botão Adicionar Item Avulso/Serviço
+    window.addAoCarrinhoAvulso = function() {
+        const nomeAvulso = document.getElementById('vendaAvulsoNome').value; 
+        const valorAvulso = parseFloat(document.getElementById('vendaAvulsoValor').value);
+        
+        if (!nomeAvulso || isNaN(valorAvulso)) {
+            return alert("Por favor, preencha o Nome e o Valor numérico do serviço avulso.");
+        }
+        
+        // Empurra para a lista de itens. Marca "ehEstoque: false"
+        carrinho.push({ 
+            nome: nomeAvulso, 
+            valor: valorAvulso, 
+            ehEstoque: false 
+        });
+        
+        // Limpa os campos de digitação avulsa
+        document.getElementById('vendaAvulsoNome').value = ''; 
+        document.getElementById('vendaAvulsoValor').value = ''; 
+        
+        atualizarCarrinho();
+    }
 
-    function renderizarCaixa() {
-        const tabela = document.getElementById('tabelaCaixa');
+    // Remover um item específico da lista da compra atual
+    window.removerDoCarrinho = function(indexDaLista) { 
+        carrinho.splice(indexDaLista, 1); 
+        atualizarCarrinho(); 
+    }
+
+    // Atualiza o Visual do Carrinho e Soma o Total
+    function atualizarCarrinho() {
+        const divCarrinho = document.getElementById('listaCarrinho'); 
+        divCarrinho.innerHTML = ''; 
+        
+        let somaTotal = 0;
+        
+        if (carrinho.length === 0) {
+            divCarrinho.innerHTML = 'Nenhum item adicionado no momento.';
+        } else {
+            carrinho.forEach(function(item, indiceCorrente) { 
+                somaTotal += item.valor; 
+                
+                divCarrinho.innerHTML += `
+                    <div class="cart-item">
+                        <span>${item.nome}</span>
+                        <span>
+                            R$ ${item.valor.toFixed(2)} 
+                            <button class="btn-danger" style="padding:4px 8px; margin-left:15px; border-radius: 4px;" onclick="removerDoCarrinho(${indiceCorrente})">Remover</button>
+                        </span>
+                    </div>
+                `; 
+            });
+        }
+        
+        document.getElementById('vendaTotal').innerText = `TOTAL GERAL: R$ ${somaTotal.toFixed(2)}`;
+    }
+
+    // ================= LÓGICA DO CANVAS (DESENHO DA ASSINATURA) =================
+    const canvas = document.getElementById('assinaturaCanvas'); 
+    const ctx = canvas.getContext('2d'); 
+    let estadoDesenhando = false;
+    
+    // Configura o traço da caneta digital
+    canvas.width = canvas.offsetWidth; 
+    canvas.height = canvas.offsetHeight; 
+    ctx.lineWidth = 3; 
+    ctx.lineCap = 'round'; 
+    ctx.strokeStyle = '#2c3e50'; // Cor da tinta azul escuro
+    
+    const iniciarDesenho = function(evento) { 
+        estadoDesenhando = true; 
+        desenhar(evento); 
+    }; 
+    
+    const pararDesenho = function() { 
+        estadoDesenhando = false; 
+        ctx.beginPath(); // Reseta o caminho para o proximo traço não ligar com o anterior
+    };
+    
+    const desenhar = function(evento) { 
+        if (!estadoDesenhando) return; 
+        
+        evento.preventDefault(); // Evita scroll da tela do celular enquanto desenha
+        
+        const retangulo = canvas.getBoundingClientRect(); 
+        
+        // Pega as coordenadas dependendo se é Mouse ou Dedo (Touch)
+        const coordenadaX = evento.touches ? evento.touches.clientX : evento.clientX; 
+        const coordenadaY = evento.touches ? evento.touches.clientY : evento.clientY; 
+        
+        ctx.lineTo(coordenadaX - retangulo.left, coordenadaY - retangulo.top); 
+        ctx.stroke(); 
+        
+        ctx.beginPath(); 
+        ctx.moveTo(coordenadaX - retangulo.left, coordenadaY - retangulo.top); 
+    }
+    
+    // Eventos para Computador (Mouse)
+    canvas.addEventListener('mousedown', iniciarDesenho); 
+    canvas.addEventListener('mouseup', pararDesenho); 
+    canvas.addEventListener('mousemove', desenhar); 
+    
+    // Eventos para Celular/Tablet (Touch)
+    canvas.addEventListener('touchstart', iniciarDesenho, {passive: false}); 
+    canvas.addEventListener('touchend', pararDesenho); 
+    canvas.addEventListener('touchmove', desenhar, {passive: false});
+    
+    window.limparAssinatura = function() { 
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    }
+
+    // ================= A GRANDE FUNÇÃO FINALIZAR VENDA =================
+    window.finalizarVenda = async function() {
+        const idClienteSelecionado = document.getElementById('vendaCliente').value; 
+        
+        if (!idClienteSelecionado) {
+            return alert("Por favor, selecione para qual cliente é esta venda.");
+        } 
+        
+        if (carrinho.length === 0) {
+            return alert("O carrinho está vazio! Adicione algum produto ou serviço.");
+        }
+        
+        // Encontra o nome do cliente baseado no ID selecionado
+        const nomeDoCliente = clientesGlobais.find(c => c.id === idClienteSelecionado).nome;
+        
+        // Calcula o total da venda
+        const valorTotalFinal = carrinho.reduce((acumulador, itemAtual) => acumulador + itemAtual.valor, 0);
+        
+        // Lógica matemática para testar se o Canvas (Assinatura) está vazio
+        const verificarSeCanvasEmBranco = function(c) { 
+            const canvasBranco = document.createElement('canvas'); 
+            canvasBranco.width = c.width; 
+            canvasBranco.height = c.height; 
+            return c.toDataURL() === canvasBranco.toDataURL(); 
+        }
+        
+        // Se assinou, pega a imagem Base64. Se não, grava null.
+        const assinaturaParaSalvar = verificarSeCanvasEmBranco(canvas) ? null : canvas.toDataURL();
+
+        // Monta o Pacote de Dados da Venda
+        const dadosDaVenda = { 
+            dataStr: new Date().toLocaleString('pt-BR'), 
+            timestamp: Date.now(), 
+            clienteId: idClienteSelecionado, 
+            clienteNome: nomeDoCliente, 
+            itens: carrinho, 
+            total: valorTotalFinal, 
+            assinaturaBase64: assinaturaParaSalvar 
+        };
+
+        try {
+            // 1. Grava a Venda no Histórico de CAIXA
+            await set(push(ref(db, 'caixa')), dadosDaVenda);
+            
+            // 2. LÓGICA DE BAIXA AUTOMÁTICA NO ESTOQUE
+            for (let i = 0; i < carrinho.length; i++) {
+                const itemVendido = carrinho[i];
+                
+                // Só desconta se for um produto de loja (ignora serviços avulsos)
+                if (itemVendido.ehEstoque && itemVendido.idProd) {
+                    
+                    // Busca a quantidade exata lá no servidor do Firebase naquele exato momento
+                    const consultaFirebase = await get(ref(db, 'produtos/' + itemVendido.idProd));
+                    const produtoBanco = consultaFirebase.val();
+                    
+                    if (produtoBanco && produtoBanco.quantidade > 0) {
+                        // Subtrai 1 da quantidade existente
+                        await update(ref(db, 'produtos/' + itemVendido.idProd), { 
+                            quantidade: produtoBanco.quantidade - 1 
+                        });
+                    }
+                }
+            }
+
+            alert("SUCESSO! Venda Registrada no Caixa e Estoque Atualizado!");
+            
+            // Reseta a tela de Vendas para o próximo Orçamento
+            carrinho = []; 
+            atualizarCarrinho(); 
+            limparAssinatura(); 
+            document.getElementById('vendaCliente').value = '';
+            carregarSelectsVenda(); // Atualiza as quantidades nos dropdowns
+            
+        } catch(erroDoFirebase) { 
+            alert("Aconteceu um Erro ao tentar finalizar a venda: " + erroDoFirebase); 
+        }
+    }
+
+
+    // ================================================================
+    // MÓDULO 4: CAIXA E HISTÓRICO DE VENDAS
+    // ================================================================
+    
+    // Escuta a tabela de CAIXA em tempo real
+    onValue(ref(db, 'caixa'), function(snapshot) {
+        vendasGlobais = []; 
+        const dados = snapshot.val();
+        
+        if (dados) {
+            Object.keys(dados).forEach(function(key) { 
+                vendasGlobais.push({ id: key, ...dados[key] }); 
+            });
+        }
+        
+        // Ordena da venda mais recente (hoje) para a mais antiga
+        vendasGlobais.sort(function(a, b) { return b.timestamp - a.timestamp; }); 
+        
+        renderizarTabelaCaixa();
+    });
+    
+    function renderizarTabelaCaixa() {
+        const tabela = document.getElementById('tabelaCaixa'); 
         tabela.innerHTML = '';
-        vendasGlobais.forEach(v => {
-            const tr = document.createElement('tr');
-            let hasAss = v.assinaturaBase64 ? '✍️ Sim' : '❌ Não';
+        
+        if (vendasGlobais.length === 0) {
+            tabela.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhuma venda realizada ainda.</td></tr>';
+            return;
+        }
+
+        vendasGlobais.forEach(function(vendaHistorico) {
+            const tr = document.createElement('tr'); 
+            const temAssinatura = vendaHistorico.assinaturaBase64 ? '✍️ Registrada' : '❌ Não Assinado';
+            
             tr.innerHTML = `
-                <td>${v.dataStr}</td>
-                <td>${v.clienteNome}</td>
-                <td style="color:#2ecc71; font-weight:bold;">R$ ${v.total.toFixed(2)}</td>
-                <td><span style="font-size:11px;">Assinado: ${hasAss}</span></td>
-            `;
+                <td>${vendaHistorico.dataStr}</td>
+                <td style="font-weight: bold;">${vendaHistorico.clienteNome}</td>
+                <td style="color:#2ecc71; font-weight:bold;">R$ ${vendaHistorico.total.toFixed(2)}</td>
+                <td style="font-size: 11px;">${temAssinatura}</td>
+            `; 
+            
             tabela.appendChild(tr);
         });
     }
 
-    // ==========================================
-    // MÓDULO: BACKUP E RESTAURAÇÃO
-    // ==========================================
-    window.fazerBackupLocal = async function() {
-        try {
-            const snapshot = await get(ref(db, '/'));
-            const data = JSON.stringify(snapshot.val(), null, 2);
-            const blob = new Blob([data], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `FH_Backup_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.json`;
-            a.click();
-            alert("Backup Local baixado com sucesso!");
-        } catch (e) { alert("Erro ao fazer backup: " + e); }
-    }
 
-    window.fazerBackupNuvem = async function() {
-        try {
-            const snapshot = await get(ref(db, '/'));
-            const fullData = snapshot.val();
-            if(fullData.backups) delete fullData.backups; 
+    // ================================================================
+    // MÓDULO 5: ROTINAS DE SEGURANÇA (BACKUP E RESTAURAÇÃO)
+    // ================================================================
+    
+    window.fazerBackupLocal = async function() { 
+        try { 
+            // Puxa TODO o banco de dados da raiz "/"
+            const snapshot = await get(ref(db, '/')); 
             
-            const timestamp = Date.now();
-            await set(ref(db, 'backups/backup_' + timestamp), {
-                data: new Date().toLocaleString('pt-BR'),
-                conteudo: fullData
-            });
-            alert("Cópia de segurança salva na nuvem do Firebase com sucesso!");
-        } catch(e) { alert("Erro ao salvar na nuvem: " + e); }
+            // Transforma o banco de dados inteiro em um grande texto estruturado (JSON)
+            const estruturaDados = JSON.stringify(snapshot.val(), null, 2); 
+            
+            // Gera um arquivo virtual na memória do navegador
+            const arquivoBlob = new Blob([estruturaDados], { type: "application/json" }); 
+            const urlArquivo = URL.createObjectURL(arquivoBlob); 
+            
+            // Cria um link invisível e clica nele para forçar o Download pro PC do usuário
+            const linkInvisivel = document.createElement('a'); 
+            linkInvisivel.href = urlArquivo; 
+            
+            const dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            linkInvisivel.download = `FH_Controle_Backup_${dataHoje}.json`; 
+            
+            linkInvisivel.click(); 
+            alert("Backup Local finalizado! O arquivo foi enviado para a sua pasta Downloads."); 
+            
+        } catch (erroDoBackup) { 
+            alert("Falha grave ao tentar baixar os dados: " + erroDoBackup); 
+        } 
     }
-
-    window.restaurarBackupLocal = function() {
-        const fileInput = document.getElementById('arquivoRestore');
-        const file = fileInput.files;
-        if(!file) return alert("Selecione um arquivo .json primeiro.");
-        if(!confirm("CUIDADO: Isso vai APAGAR o sistema atual e substituir pelos dados do arquivo. Tem certeza?")) return;
-
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-            try {
-                const dadosRestaurados = JSON.parse(e.target.result);
-                await set(ref(db, '/'), dadosRestaurados);
-                alert("Sistema restaurado com sucesso!");
-                window.location.reload(); 
-            } catch (erro) {
-                alert("Arquivo inválido ou erro na restauração: " + erro);
+    
+    window.fazerBackupNuvem = async function() { 
+        try { 
+            const snapshot = await get(ref(db, '/')); 
+            const todosOsDados = snapshot.val(); 
+            
+            // Remove o histórico antigo de backups para não criar um loop infinito e gastar todo o armazenamento do Google
+            if (todosOsDados && todosOsDados.backups) {
+                delete todosOsDados.backups; 
             }
-        };
-        reader.readAsText(file);
+            
+            // Salva uma pasta chamada "backups" dentro do próprio banco com tudo o que ele tem agora
+            await set(ref(db, 'backups/backup_' + Date.now()), { 
+                dataDeCriacao: new Date().toLocaleString('pt-BR'), 
+                conteudoSalvo: todosOsDados 
+            }); 
+            
+            alert("Sucesso absoluto! Cópia de Segurança guardada dentro dos servidores da nuvem."); 
+            
+        } catch(erroDeNuvem) { 
+            alert("Ocorreu um erro ao salvar remotamente: " + erroDeNuvem); 
+        } 
     }
+    
+    window.restaurarBackupLocal = function() { 
+        const inputArquivo = document.getElementById('arquivoRestore');
+        const arquivo = inputArquivo.files; 
+        
+        if (!arquivo) {
+            return alert("Erro: Você não selecionou nenhum arquivo. Clique em 'Escolher Arquivo' primeiro."); 
+        }
+        
+        const confirmacaoAviso = confirm("RISCO DE PERDA DE DADOS: Esta ação vai apagar o banco atual e substituir pelos dados deste arquivo. Tem certeza absoluta?");
+        
+        if (!confirmacaoAviso) {
+            return; // Usuário cancelou
+        }
+        
+        // Se confirmou, começa a leitura do arquivo .json selecionado
+        const leitorDeArquivos = new FileReader(); 
+        
+        leitorDeArquivos.onload = async function(eventoDeLeitura) { 
+            try { 
+                const dadosParaRestaurar = JSON.parse(eventoDeLeitura.target.result); 
+                
+                // Sobrescreve toda a raiz "/" com os dados do arquivo
+                await set(ref(db, '/'), dadosParaRestaurar); 
+                
+                alert("A Restauração do Banco de Dados foi um sucesso! O sistema será recarregado agora."); 
+                window.location.reload(); // Atualiza a página
+                
+            } catch (erroDeLeitura) { 
+                alert("Falha na restauração. O arquivo selecionado pode estar corrompido. Detalhe: " + erroDeLeitura); 
+            } 
+        }; 
+        
+        leitorDeArquivos.readAsText(arquivo); 
+    }
+
 </script>
 
 </body>
