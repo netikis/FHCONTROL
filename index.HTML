@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FH Control - ERP & PDV</title>
+    <style>
+        /* --- ESTILOS GERAIS E PALETA DE CORES --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #34495e; color: #ecf0f1; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Barra Lateral (Menu) */
+        .sidebar { width: 250px; background-color: #1a252f; padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 2px solid rgba(241, 196, 15, 0.2); }
+        .sidebar-logo img { width: 100%; border-radius: 8px; margin-bottom: 20px; background-color: #fff; padding: 5px; box-sizing: border-box; }
+        .menu-btn { background-color: transparent; color: #bdc3c7; border: 1px solid transparent; padding: 12px; text-align: left; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; transition: 0.3s; text-transform: uppercase; }
+        .menu-btn:hover { background-color: #2c3e50; color: #f1c40f; }
+        .menu-btn.active { background-color: #0056b3; color: #f8f9fa; border: 1px solid #f1c40f; }
+
+        /* Área Principal */
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Contêineres */
+        .container { background-color: #2c3e50; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); margin-bottom: 20px; border: 1px solid rgba(241, 196, 15, 0.1); }
+        h2 { color: #f1c40f; text-transform: uppercase; margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        
+        /* Formulários */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 13px; color: #bdc3c7; }
+        input, select { width: 100%; padding: 10px; border: 2px solid #7f8c8d; border-radius: 6px; box-sizing: border-box; background-color: #ecf0f1; color: #2c3e50; }
+        input:focus, select:focus { border-color: #f1c40f; outline: none; }
+        .row { display: flex; gap: 10px; }
+        .col { flex: 1; }
+        
+        /* Botoes */
+        button { padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        .btn-primary { background-color: #0056b3; color: #f8f9fa; width: 100%; font-size: 16px; margin-top: 10px; }
+        .btn-primary:hover { background-color: #004494; }
+        .btn-secundario { background-color: #f39c12; color: #2c3e50; }
+        .btn-danger { background-color: #e74c3c; color: #fff; }
+        .btn-ver { background-color: #2980b9; color: #f8f9fa; }
+        
+        /* Tabelas */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background-color: #34495e; border-radius: 5px; overflow: hidden; }
+        th, td { padding: 10px; text-align: left; font-size: 13px; border-bottom: 1px solid #7f8c8d; }
+        th { background-color: #0056b3; color: #f8f9fa; text-transform: uppercase; }
+        tr:nth-child(even) { background-color: #3a4e61; }
+        .acoes-flex { display: flex; gap: 5px; }
+        
+        /* Paginação e Buscas */
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .search-bar { width: 300px; }
+        .pagination { display: flex; gap: 10px; align-items: center; font-weight: bold; color: #f1c40f; }
+        .pagination button { padding: 5px 10px; background-color: #2980b9; color: white; }
+
+        /* Assinatura Canvas */
+        .signature-pad { border: 2px dashed #f1c40f; background-color: #ecf0f1; width: 100%; height: 200px; border-radius: 8px; cursor: crosshair; }
+        
+        /* Carrinho PDV */
+        .cart-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #7f8c8d; background: #3a4e61; margin-bottom: 5px; border-radius: 4px;}
+        .cart-total { font-size: 24px; color: #f1c40f; text-align: right; font-weight: bold; padding: 15px 0; }
+
+        /* Estilos do Modal (Janela Flutuante) */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background-color: #2c3e50; padding: 30px; border-radius: 10px; width: 90%; max-width: 550px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #ecf0f1; border: 2px solid #f1c40f; }
+        .close-btn { position: absolute; top: 20px; right: 25px; color: #f1c40f; font-size: 30px; font-weight: bold; cursor: pointer; transition: color 0.3s; }
+        .close-btn:hover { color: #e74c3c; }
+        #modalVisualizar h2 { color: #f1c40f; border-bottom: 2px solid #f1c40f; padding-bottom: 10px; margin-bottom: 20px;}
+        .detalhes-linha { margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #7f8c8d; padding-bottom: 8px; }
+        .detalhes-linha strong { color: #bdc3c7; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <img src="https://image2url.com/r2/default/images/1774578957071-f27e2520-816d-436f-a537-ee8a160f90ca.jpeg" alt="Logo FH">
+    </div>
+    <button class="menu-btn active" onclick="abrirAba('tabClientes', this)">👥 Clientes</button>
+    <button class="menu-btn" onclick="abrirAba('tabEstoque', this)">📦 Estoque</button>
+    <button class="menu-btn" onclick="abrirAba('tabVendas', this)">🛒 Venda / PDV</button>
+    <button class="menu-btn" onclick="abrirAba('tabCaixa', this)">💰 Caixa / Relatórios</button>
+    <button class="menu-btn" onclick="abrirAba('tabConfig', this)">⚙️ Backups</button>
+</div>
+
+<div class="main-content">
+
+    <div id="tabClientes" class="tab-content active">
+        <div class="container">
+            <h2 id="tituloCliente">Cadastro de Cliente</h2>
+            <form id="formCliente">
+                <div class="form-group">
+                    <label for="nome">Nome Completo / Razão Social</label>
+                    <input type="text" id="nome" required>
+                </div>
+
+                <div class="row form-group">
+                    <div class="col">
+                        <label for="cpf">CPF</label>
+                        <input type="text" id="cpf" maxlength="14" placeholder="000.000.000-00">
+                    </div>
+                    <div class="col">
+                        <label for="cnpj">CNPJ</label>
+                        <input type="text" id="cnpj" maxlength="18" placeholder="00.000.000/0000-00">
+                    </div>
+                </div>
+
+                <div class="row form-group">
+                    <div class="col">
+                        <label for="telefone">Telefone / WhatsApp</label>
+                        <input type="text" id="telefone" maxlength="15" placeholder="(00) 00000-0000" required>
+                    </div>
+                    <div class="col">
+                        <label for="pix">Chave Pix (Opcional)</label>
+                        <input type="text" id="pix" placeholder="CPF, E-mail, Telefone ou Aleatória">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ie">Inscrição Estadual (Opcional)</label>
+                    <input type="text" id="ie">
+                </div>
+
+                <div class="row form-group">
+                    <div class="col">
+                        <label for="cep">CEP</label>
+                        <input type="text" id="cep" maxlength="9" placeholder="00000-000">
+                    </div>
+                    <div class="col">
+                        <label for="estado">Estado</label>
+                        <input type="text" id="estado">
+                    </div>
+                </div>
+
+                <div class="row form-group">
+                    <div class="col">
+                        <label for="cidade">Cidade</label>
+                        <input type="text" id="cidade">
+                    </div>
+                    <div class="col">
+                        <label for="bairro">Bairro</label>
+                        <input type="text" id="bairro">
+                    </div>
+                </div>
+
+                <div class="row form-group">
+                    <div class="col" style="flex: 3;">
+                        <label for="rua">Rua/Logradouro</label>
+                        <input type="text" id="rua">
+                    </div>
+                    <div class="col" style="flex: 1;">
+                        <label for="numero">Número</label>
+                        <input type="text" id="numero">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <button type="submit" class="btn-primary" id="btnSalvarCli">Salvar Cliente</button>
+                    <button type="button" class="btn-secundario" style="margin-top: 10px; display: none;" id="btnCancelarCli" onclick="cancelarEdicaoCli()">Cancelar Edição (ESC)</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="container">
+            <h2>Clientes Cadastrados</h2>
+            <div class="toolbar">
+                <input type="text" id="buscaCliente" class="search-bar" placeholder="Buscar por nome ou documento..." onkeyup="filtrarClientes()">
+                <div class="pagination">
+                    <button onclick="mudarPaginaCli(-1)">◀ Anterior</button>
+                    <span id="infoPaginaCli">Pág 1</span>
+                    <button onclick="mudarPaginaCli(1)">Próxima ▶</button>
+                </div>
+            </div>
+            <table>
+                <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr></thead>
+                <tbody id="tabelaClientes"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="modalVisualizar" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="fecharModal()">&times;</span>
+            <h2 style="margin-top: 0;">Ficha do Cliente</h2>
+            <div id="detalhesCliente"></div>
+        </div>
+    </div>
+
+    <div id="tabEstoque" class="tab-content">
+        <div class="container">
+            <h2 id="tituloProduto">Cadastro de Produto / Serviço</h2>
+            <form id="formProduto">
+                <div class="form-group"><label>Nome do Produto/Serviço</label><input type="text" id="prodNome" required></div>
+                <div class="row form-group">
+                    <div class="col"><label>Preço de Custo (R$)</label><input type="number" step="0.01" id="prodCusto" required></div>
+                    <div class="col"><label>Margem de Lucro (%)</label><input type="number" step="0.1" id="prodMargem" required></div>
+                    <div class="col"><label>Preço de Venda Final (R$)</label><input type="number" step="0.01" id="prodVenda" readonly style="background-color: #bdc3c7; font-weight: bold;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Foto do Produto (Opcional)</label>
+                    <input type="file" id="prodFoto" accept="image/*">
+                </div>
+                <div class="row">
+                    <button type="submit" class="btn-primary" id="btnSalvarProd">Salvar Produto</button>
+                    <button type="button" class="btn-secundario" style="margin-top: 10px; display: none;" id="btnCancelarProd" onclick="cancelarEdicaoProd()">Cancelar Edição (ESC)</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="container">
+            <h2>Produtos no Estoque</h2>
+            <table>
+                <thead><tr><th>Foto</th><th>Nome</th><th>Custo</th><th>Venda</th><th>Lucro</th><th>Ações</th></tr></thead>
+                <tbody id="tabelaEstoque"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tabVendas" class="tab-content">
+        <div class="container">
+            <h2>Novo Orçamento / Venda</h2>
+            <div class="row form-group">
+                <div class="col" style="flex: 2;">
+                    <label>Selecionar Cliente</label>
+                    <select id="vendaCliente"></select>
+                </div>
+            </div>
+            
+            <div class="row form-group" style="align-items: flex-end;">
+                <div class="col" style="flex: 2;">
+                    <label>Adicionar Produto do Estoque</label>
+                    <select id="vendaProdutoEstoque"></select>
+                </div>
+                <div class="col">
+                    <button type="button" class="btn-secundario" onclick="addAoCarrinhoEstoque()">➕ Adicionar</button>
+                </div>
+            </div>
+
+            <div class="row form-group" style="align-items: flex-end; border-top: 1px solid #7f8c8d; padding-top: 15px;">
+                <div class="col" style="flex: 2;">
+                    <label>Adicionar Item Avulso (Não está no estoque)</label>
+                    <input type="text" id="vendaAvulsoNome" placeholder="Ex: Mão de Obra Extra">
+                </div>
+                <div class="col">
+                    <label>Valor (R$)</label>
+                    <input type="number" step="0.01" id="vendaAvulsoValor">
+                </div>
+                <div class="col">
+                    <button type="button" class="btn-secundario" onclick="addAoCarrinhoAvulso()">➕ Adicionar</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <h2>Itens da Venda</h2>
+            <div id="listaCarrinho">Nenhum item adicionado.</div>
+            <div class="cart-total" id="vendaTotal">Total: R$ 0,00</div>
+            
+            <h3 style="color: #f1c40f;">Assinatura do Cliente</h3>
+            <p style="font-size: 12px; color: #bdc3c7;">Assine abaixo confirmando o recebimento dos produtos/serviços:</p>
+            <canvas id="assinaturaCanvas" class="signature-pad"></canvas>
+            <button type="button" class="btn-secundario" style="margin-top: 5px;" onclick="limparAssinatura()">🗑️ Limpar Assinatura</button>
+
+            <button type="button" class="btn-primary" style="margin-top: 20px; background-color: #27ae60;" onclick="finalizarVenda()">✅ Finalizar Venda e Salvar no Caixa</button>
+        </div>
+    </div>
+
+    <div id="tabCaixa" class="tab-content">
+        <div class="container">
+            <h2>Fechamento de Caixa (Vendas Realizadas)</h2>
+            <table>
+                <thead><tr><th>Data</th><th>Cliente</th><th>Total</th><th>Visualizar</th></tr></thead>
+                <tbody id="tabelaCaixa"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tabConfig" class="tab-content">
+        <div class="container">
+            <h2>Gestão de Dados e Backups</h2>
+            <p>Proteja seus dados. Faça backups regulares do seu sistema.</p>
+            
+            <div class="row" style="margin-top: 20px;">
+                <div class="col">
+                    <button class="btn-primary" style="background-color: #2980b9;" onclick="fazerBackupLocal()">📥 Baixar Backup Local</button>
+                </div>
+                <div class="col">
+                    <button class="btn-primary" style="background-color: #8e44ad;" onclick="fazerBackupNuvem()">☁️ Cópia na Nuvem</button>
+                </div>
+            </div>
+
+            <hr style="border-color: #7f8c8d; margin: 30px 0;">
+
+            <h3>Restaurar Backup</h3>
+            <input type="file" id="arquivoRestore" accept=".json">
+            <button class="btn-danger" style="margin-top: 10px;" onclick="restaurarBackupLocal()">⚠️ Restaurar Sistema a partir de Arquivo</button>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, push, set, update, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDOgI0jOhTlxf2d_weEfCRiMSSsOVLcI7Y",
+      authDomain: "fhcontroles-1ea1e.firebaseapp.com",
+      projectId: "fhcontroles-1ea1e",
+      storageBucket: "fhcontroles-1ea1e.firebasestorage.app",
+      messagingSenderId: "1093224290178",
+      appId: "1:1093224290178:web:6aaead161795807e91e19b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Variáveis Globais
+    let clientesGlobais = [];
+    let produtosGlobais = [];
+    let vendasGlobais = [];
+    let carrinho = [];
+    
+    let editandoCliId = null;
+    let editandoProdId = null;
+
+    // Paginação Clientes
+    let paginaAtualCli = 1;
+    const itensPorPaginaCli = 8;
+    let termoBuscaCli = "";
+
+    // --- SISTEMA DE ABAS ---
+    window.abrirAba = function(idAba, elementoBotao) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(idAba).classList.add('active');
+        elementoBotao.classList.add('active');
+        if(idAba === 'tabVendas') carregarSelectsVenda();
+    }
+
+    // Atalho ESC para fechar edições e modal
+    document.addEventListener('keydown', e => { 
+        if (e.key === "Escape") {
+            if(editandoCliId) cancelarEdicaoCli();
+            if(editandoProdId) cancelarEdicaoProd();
+            fecharModal();
+        }
+    });
+
+    // ==========================================
+    // MÓDULO: CLIENTES (MÁSCARAS E CAMPOS COMPLETOS)
+    // ==========================================
+    const formCliente = document.getElementById('formCliente');
+
+    // MÁSCARAS DE ENTRADA
+    const formatarMascara = (id, regra) => {
+        document.getElementById(id).addEventListener('input', function() {
+            this.value = regra(this.value);
+        });
+    }
+    formatarMascara('cpf', v => {
+        v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11);
+        return v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    });
+    formatarMascara('cnpj', v => {
+        v = v.replace(/\D/g, ''); if (v.length > 14) v = v.slice(0, 14);
+        return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
+    });
+    formatarMascara('telefone', v => {
+        v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11);
+        return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2');
+    });
+    formatarMascara('cep', v => {
+        v = v.replace(/\D/g, ''); if (v.length > 8) v = v.slice(0, 8);
+        return v.replace(/^(\d{5})(\d)/, '$1-$2');
+    });
+    
+    // LISTAR E PAGINAR
+    onValue(ref(db, 'clientes'), (snapshot) => {
+        clientesGlobais = [];
+        const dados = snapshot.val();
+        if (dados) Object.keys(dados).forEach(key => clientesGlobais.push({ id: key, ...dados[key] }));
+        renderizarTabelaClientes();
+    });
+
+    window.filtrarClientes = function() {
+        termoBuscaCli = document.getElementById('buscaCliente').value.toLowerCase();
+        paginaAtualCli = 1; 
+        renderizarTabelaClientes();
+    }
+
+    window.mudarPaginaCli = function(direcao) {
+        const filtrados = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli) || (c.cpf && c.cpf.includes(termoBuscaCli)) || (c.cnpj && c.cnpj.includes(termoBuscaCli)));
+        const totalPags = Math.ceil(filtrados.length / itensPorPaginaCli);
+        if(paginaAtualCli + direcao >= 1 && paginaAtualCli + direcao <= totalPags) {
+            paginaAtualCli += direcao;
+            renderizarTabelaClientes();
+        }
+    }
+
+    function renderizarTabelaClientes() {
+        const tabela = document.getElementById('tabelaClientes');
+        tabela.innerHTML = '';
+        
+        let filtrados = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli) || (c.cpf && c.cpf.includes(termoBuscaCli)) || (c.cnpj && c.cnpj.includes(termoBuscaCli)));
+        
+        const inicio = (paginaAtualCli - 1) * itensPorPaginaCli;
+        const fim = inicio + itensPorPaginaCli;
+        const paginados = filtrados.slice(inicio, fim);
+
+        document.getElementById('infoPaginaCli').innerText = `Pág ${paginaAtualCli} de ${Math.max(1, Math.ceil(filtrados.length / itensPorPaginaCli))}`;
+
+        paginados.forEach((cliente) => {
+            const tr = document.createElement('tr');
+            let documento = cliente.cpf ? cliente.cpf : cliente.cnpj;
+            tr.innerHTML = `
+                <td>${cliente.nome}</td>
+                <td>${documento || '-'}</td>
+                <td>${cliente.telefone || '-'}</td>
+                <td>${cliente.cidade || '-'}</td>
+                <td class="acoes-flex">
+                    <button class="btn-ver" onclick="verCliente('${cliente.id}')">🔍</button>
+                    <button class="btn-secundario" style="padding: 5px 10px;" onclick="editarCli('${cliente.id}')">Editar</button>
+                    <button class="btn-danger" style="padding: 5px 10px;" onclick="excluirCli('${cliente.id}')">X</button>
+                </td>
+            `;
+            tabela.appendChild(tr);
+        });
+    }
+
+    // SALVAR CLIENTE COM TODOS OS CAMPOS
+    formCliente.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const dados = {
+            nome: document.getElementById('nome').value,
+            cpf: document.getElementById('cpf').value,
+            cnpj: document.getElementById('cnpj').value,
+            telefone: document.getElementById('telefone').value,
+            pix: document.getElementById('pix').value,
+            ie: document.getElementById('ie').value,
+            cep: document.getElementById('cep').value,
+            estado: document.getElementById('estado').value,
+            cidade: document.getElementById('cidade').value,
+            bairro: document.getElementById('bairro').value,
+            rua: document.getElementById('rua').value,
+            numero: document.getElementById('numero').value
+        };
+        if(editandoCliId) {
+            update(ref(db, 'clientes/' + editandoCliId), dados).then(cancelarEdicaoCli);
+        } else {
+            set(push(ref(db, 'clientes')), dados).then(() => formCliente.reset());
+        }
+    });
+
+    // EDITAR CLIENTE (JOGA TUDO PRO FORMULÁRIO)
+    window.editarCli = function(id) {
+        const cli = clientesGlobais.find(c => c.id === id);
+        if(!cli) return;
+        document.getElementById('nome').value = cli.nome || '';
+        document.getElementById('cpf').value = cli.cpf || '';
+        document.getElementById('cnpj').value = cli.cnpj || '';
+        document.getElementById('telefone').value = cli.telefone || '';
+        document.getElementById('pix').value = cli.pix || '';
+        document.getElementById('ie').value = cli.ie || '';
+        document.getElementById('cep').value = cli.cep || '';
+        document.getElementById('estado').value = cli.estado || '';
+        document.getElementById('cidade').value = cli.cidade || '';
+        document.getElementById('bairro').value = cli.bairro || '';
+        document.getElementById('rua').value = cli.rua || '';
+        document.getElementById('numero').value = cli.numero || '';
+
+        editandoCliId = id;
+        document.getElementById('tituloCliente').innerText = "Editando Cliente";
+        document.getElementById('btnSalvarCli').innerText = "Atualizar Cadastro";
+        document.getElementById('btnCancelarCli').style.display = "inline-block";
+        window.scrollTo(0,0);
+    }
+
+    window.cancelarEdicaoCli = function() {
+        editandoCliId = null;
+        formCliente.reset();
+        document.getElementById('tituloCliente').innerText = "Cadastro de Cliente";
+        document.getElementById('btnSalvarCli').innerText = "Salvar Cliente";
+        document.getElementById('btnCancelarCli').style.display = "none";
+    }
+
+    window.excluirCli = function(id) {
+        if(confirm("Excluir cliente?")) remove(ref(db, 'clientes/' + id));
+    }
+
+    // MODAL DE VISUALIZAÇÃO DA FICHA COMPLETA
+    window.verCliente = function(id) {
+        const cliente = clientesGlobais.find(c => c.id === id);
+        if(!cliente) return;
+        const documento = cliente.cpf ? cliente.cpf : cliente.cnpj;
+        
+        const htmlDetalhes = `
+            <div class="detalhes-linha"><strong>Nome/Razão Social:</strong> ${cliente.nome}</div>
+            <div class="detalhes-linha"><strong>Documento:</strong> ${documento || 'Não informado'}</div>
+            <div class="detalhes-linha"><strong>Inscrição Estadual:</strong> ${cliente.ie || 'Não informada'}</div>
+            <div class="detalhes-linha"><strong>Telefone:</strong> ${cliente.telefone}</div>
+            <div class="detalhes-linha"><strong>Chave Pix:</strong> ${cliente.pix || 'Não informada'}</div>
+            <div class="detalhes-linha"><strong>Endereço:</strong> ${cliente.rua || '-'}, Nº ${cliente.numero || '-'}</div>
+            <div class="detalhes-linha"><strong>Bairro:</strong> ${cliente.bairro || '-'}</div>
+            <div class="detalhes-linha"><strong>Cidade/UF:</strong> ${cliente.cidade || '-'} - ${cliente.estado || '-'}</div>
+            <div class="detalhes-linha"><strong>CEP:</strong> ${cliente.cep || '-'}</div>
+        `;
+        document.getElementById('detalhesCliente').innerHTML = htmlDetalhes;
+        document.getElementById('modalVisualizar').style.display = 'flex';
+    }
+
+    window.fecharModal = function() { document.getElementById('modalVisualizar').style.display = 'none'; }
+    window.onclick = e => { if (e.target === document.getElementById('modalVisualizar')) fecharModal(); }
+
+
+    // ==========================================
+    // MÓDULO: ESTOQUE E CÁLCULO DE MARGEM
+    // ==========================================
+    const formProduto = document.getElementById('formProduto');
+    let fotoBase64Atual = "";
+
+    document.getElementById('prodMargem').addEventListener('input', calcularVenda);
+    document.getElementById('prodCusto').addEventListener('input', calcularVenda);
+
+    function calcularVenda() {
+        let custo = parseFloat(document.getElementById('prodCusto').value) || 0;
+        let margem = parseFloat(document.getElementById('prodMargem').value) || 0;
+        let venda = custo + (custo * (margem / 100));
+        document.getElementById('prodVenda').value = venda.toFixed(2);
+    }
+
+    document.getElementById('prodFoto').addEventListener('change', function(e) {
+        const file = e.target.files;
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) { fotoBase64Atual = event.target.result; };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    onValue(ref(db, 'produtos'), (snapshot) => {
+        produtosGlobais = [];
+        const dados = snapshot.val();
+        if (dados) Object.keys(dados).forEach(key => produtosGlobais.push({ id: key, ...dados[key] }));
+        renderizarTabelaEstoque();
+    });
+
+    function renderizarTabelaEstoque() {
+        const tabela = document.getElementById('tabelaEstoque');
+        tabela.innerHTML = '';
+        produtosGlobais.forEach(p => {
+            let imgTag = p.foto ? `<img src="${p.foto}" style="width:40px; height:40px; border-radius:4px; object-fit:cover;">` : 'Sem foto';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${imgTag}</td>
+                <td>${p.nome}</td>
+                <td>R$ ${parseFloat(p.custo).toFixed(2)}</td>
+                <td>R$ ${parseFloat(p.venda).toFixed(2)}</td>
+                <td style="color:#2ecc71; font-weight:bold;">${p.margem}%</td>
+                <td class="acoes-flex">
+                    <button class="btn-secundario" style="padding: 5px 10px;" onclick="editarProd('${p.id}')">Editar</button>
+                    <button class="btn-danger" style="padding: 5px 10px;" onclick="excluirProd('${p.id}')">X</button>
+                </td>
+            `;
+            tabela.appendChild(tr);
+        });
+    }
+
+    formProduto.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const dados = {
+            nome: document.getElementById('prodNome').value,
+            custo: document.getElementById('prodCusto').value,
+            margem: document.getElementById('prodMargem').value,
+            venda: document.getElementById('prodVenda').value,
+            foto: fotoBase64Atual
+        };
+        if(editandoProdId) {
+            update(ref(db, 'produtos/' + editandoProdId), dados).then(cancelarEdicaoProd);
+        } else {
+            set(push(ref(db, 'produtos')), dados).then(() => { formProduto.reset(); fotoBase64Atual = ""; });
+        }
+    });
+
+    window.editarProd = function(id) {
+        const p = produtosGlobais.find(x => x.id === id);
+        if(!p) return;
+        document.getElementById('prodNome').value = p.nome;
+        document.getElementById('prodCusto').value = p.custo;
+        document.getElementById('prodMargem').value = p.margem;
+        document.getElementById('prodVenda').value = p.venda;
+        fotoBase64Atual = p.foto || "";
+        editandoProdId = id;
+        document.getElementById('tituloProduto').innerText = "Editando Produto";
+        document.getElementById('btnSalvarProd').innerText = "Atualizar";
+        document.getElementById('btnCancelarProd').style.display = "inline-block";
+        window.scrollTo(0,0);
+    }
+
+    window.cancelarEdicaoProd = function() {
+        editandoProdId = null;
+        formProduto.reset();
+        fotoBase64Atual = "";
+        document.getElementById('tituloProduto').innerText = "Cadastro de Produto / Serviço";
+        document.getElementById('btnSalvarProd').innerText = "Salvar Produto";
+        document.getElementById('btnCancelarProd').style.display = "none";
+    }
+
+    window.excluirProd = function(id) {
+        if(confirm("Excluir produto do estoque?")) remove(ref(db, 'produtos/' + id));
+    }
+
+    // ==========================================
+    // MÓDULO: VENDAS, CARRINHO E ASSINATURA
+    // ==========================================
+    
+    function carregarSelectsVenda() {
+        const selCli = document.getElementById('vendaCliente');
+        selCli.innerHTML = '<option value="">Selecione um Cliente...</option>';
+        clientesGlobais.forEach(c => selCli.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
+
+        const selProd = document.getElementById('vendaProdutoEstoque');
+        selProd.innerHTML = '<option value="">Selecione um Produto...</option>';
+        produtosGlobais.forEach(p => selProd.innerHTML += `<option value="${p.id}">${p.nome} - R$ ${parseFloat(p.venda).toFixed(2)}</option>`);
+    }
+
+    window.addAoCarrinhoEstoque = function() {
+        const idProd = document.getElementById('vendaProdutoEstoque').value;
+        if(!idProd) return;
+        const p = produtosGlobais.find(x => x.id === idProd);
+        carrinho.push({ nome: p.nome, valor: parseFloat(p.venda) });
+        atualizarCarrinho();
+    }
+
+    window.addAoCarrinhoAvulso = function() {
+        const nome = document.getElementById('vendaAvulsoNome').value;
+        const valor = parseFloat(document.getElementById('vendaAvulsoValor').value);
+        if(!nome || isNaN(valor)) return alert("Preencha nome e valor do item avulso.");
+        carrinho.push({ nome: nome, valor: valor });
+        document.getElementById('vendaAvulsoNome').value = '';
+        document.getElementById('vendaAvulsoValor').value = '';
+        atualizarCarrinho();
+    }
+
+    window.removerDoCarrinho = function(index) {
+        carrinho.splice(index, 1);
+        atualizarCarrinho();
+    }
+
+    function atualizarCarrinho() {
+        const div = document.getElementById('listaCarrinho');
+        div.innerHTML = '';
+        let total = 0;
+        carrinho.forEach((item, index) => {
+            total += item.valor;
+            div.innerHTML += `
+                <div class="cart-item">
+                    <span>${item.nome}</span>
+                    <span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:2px 5px; margin-left:10px;" onclick="removerDoCarrinho(${index})">X</button></span>
+                </div>`;
+        });
+        document.getElementById('vendaTotal').innerText = `Total: R$ ${total.toFixed(2)}`;
+    }
+
+    // CANVAS DE ASSINATURA
+    const canvas = document.getElementById('assinaturaCanvas');
+    const ctx = canvas.getContext('2d');
+    let desenhando = false;
+
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#2c3e50';
+
+    const iniciarDesenho = (e) => { desenhando = true; desenhar(e); }
+    const pararDesenho = () => { desenhando = false; ctx.beginPath(); }
+    const desenhar = (e) => {
+        if (!desenhando) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches.clientX : e.clientX;
+        const clientY = e.touches ? e.touches.clientY : e.clientY;
+        ctx.lineTo(clientX - rect.left, clientY - rect.top);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(clientX - rect.left, clientY - rect.top);
+    }
+
+    canvas.addEventListener('mousedown', iniciarDesenho);
+    canvas.addEventListener('mouseup', pararDesenho);
+    canvas.addEventListener('mousemove', desenhar);
+    canvas.addEventListener('touchstart', iniciarDesenho, {passive: false});
+    canvas.addEventListener('touchend', pararDesenho);
+    canvas.addEventListener('touchmove', desenhar, {passive: false});
+
+    window.limparAssinatura = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // FINALIZAR VENDA
+    window.finalizarVenda = function() {
+        const clienteId = document.getElementById('vendaCliente').value;
+        if(!clienteId) return alert("Selecione um cliente.");
+        if(carrinho.length === 0) return alert("Carrinho vazio.");
+
+        const clienteNome = clientesGlobais.find(c => c.id === clienteId).nome;
+        const total = carrinho.reduce((acc, item) => acc + item.valor, 0);
+        
+        const isCanvasBlank = (canvas) => {
+            const blank = document.createElement('canvas');
+            blank.width = canvas.width; blank.height = canvas.height;
+            return canvas.toDataURL() === blank.toDataURL();
+        }
+        
+        const assinatura = isCanvasBlank(canvas) ? null : canvas.toDataURL();
+
+        const vendaData = {
+            dataStr: new Date().toLocaleString('pt-BR'),
+            timestamp: Date.now(),
+            clienteId: clienteId,
+            clienteNome: clienteNome,
+            itens: carrinho,
+            total: total,
+            assinaturaBase64: assinatura
+        };
+
+        set(push(ref(db, 'caixa')), vendaData).then(() => {
+            alert("Venda registrada e enviada para o Caixa!");
+            carrinho = [];
+            atualizarCarrinho();
+            limparAssinatura();
+            document.getElementById('vendaCliente').value = '';
+        });
+    }
+
+    // ==========================================
+    // MÓDULO: CAIXA / RELATÓRIOS
+    // ==========================================
+    onValue(ref(db, 'caixa'), (snapshot) => {
+        vendasGlobais = [];
+        const dados = snapshot.val();
+        if (dados) Object.keys(dados).forEach(key => vendasGlobais.push({ id: key, ...dados[key] }));
+        vendasGlobais.sort((a,b) => b.timestamp - a.timestamp);
+        renderizarCaixa();
+    });
+
+    function renderizarCaixa() {
+        const tabela = document.getElementById('tabelaCaixa');
+        tabela.innerHTML = '';
+        vendasGlobais.forEach(v => {
+            const tr = document.createElement('tr');
+            let hasAss = v.assinaturaBase64 ? '✍️ Sim' : '❌ Não';
+            tr.innerHTML = `
+                <td>${v.dataStr}</td>
+                <td>${v.clienteNome}</td>
+                <td style="color:#2ecc71; font-weight:bold;">R$ ${v.total.toFixed(2)}</td>
+                <td><span style="font-size:11px;">Assinado: ${hasAss}</span></td>
+            `;
+            tabela.appendChild(tr);
+        });
+    }
+
+    // ==========================================
+    // MÓDULO: BACKUP E RESTAURAÇÃO
+    // ==========================================
+    window.fazerBackupLocal = async function() {
+        try {
+            const snapshot = await get(ref(db, '/'));
+            const data = JSON.stringify(snapshot.val(), null, 2);
+            const blob = new Blob([data], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `FH_Backup_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.json`;
+            a.click();
+            alert("Backup Local baixado com sucesso!");
+        } catch (e) { alert("Erro ao fazer backup: " + e); }
+    }
+
+    window.fazerBackupNuvem = async function() {
+        try {
+            const snapshot = await get(ref(db, '/'));
+            const fullData = snapshot.val();
+            if(fullData.backups) delete fullData.backups; 
+            
+            const timestamp = Date.now();
+            await set(ref(db, 'backups/backup_' + timestamp), {
+                data: new Date().toLocaleString('pt-BR'),
+                conteudo: fullData
+            });
+            alert("Cópia de segurança salva na nuvem do Firebase com sucesso!");
+        } catch(e) { alert("Erro ao salvar na nuvem: " + e); }
+    }
+
+    window.restaurarBackupLocal = function() {
+        const fileInput = document.getElementById('arquivoRestore');
+        const file = fileInput.files;
+        if(!file) return alert("Selecione um arquivo .json primeiro.");
+        if(!confirm("CUIDADO: Isso vai APAGAR o sistema atual e substituir pelos dados do arquivo. Tem certeza?")) return;
+
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const dadosRestaurados = JSON.parse(e.target.result);
+                await set(ref(db, '/'), dadosRestaurados);
+                alert("Sistema restaurado com sucesso!");
+                window.location.reload(); 
+            } catch (erro) {
+                alert("Arquivo inválido ou erro na restauração: " + erro);
+            }
+        };
+        reader.readAsText(file);
+    }
+</script>
+
+</body>
+</html>
