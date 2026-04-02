@@ -17,24 +17,31 @@
             display: flex; 
             height: 100vh; 
             overflow: hidden; 
+            font-size: 14px; 
         }
         
         /* --- Barra Lateral (Menu) --- */
         .sidebar { 
-            width: 250px; 
+            width: 220px; 
             background-color: #1a252f; 
-            padding: 20px; 
+            padding: 15px; 
             display: flex; 
             flex-direction: column; 
-            gap: 15px; 
+            gap: 10px; 
             border-right: 2px solid rgba(241, 196, 15, 0.2); 
             overflow-y: auto;
         }
         
+        .sidebar-logo {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
         .sidebar-logo img { 
             width: 100%; 
+            max-height: 120px;
+            object-fit: contain;
             border-radius: 8px; 
-            margin-bottom: 20px; 
             background-color: #fff; 
             padding: 5px; 
             box-sizing: border-box; 
@@ -44,9 +51,9 @@
             background-color: transparent; 
             color: #bdc3c7; 
             border: 1px solid transparent; 
-            padding: 12px; 
+            padding: 10px; 
             text-align: left; 
-            font-size: 16px; 
+            font-size: 13px; 
             font-weight: bold; 
             cursor: pointer; 
             border-radius: 6px; 
@@ -68,7 +75,7 @@
         /* --- Área Principal --- */
         .main-content { 
             flex: 1; 
-            padding: 20px; 
+            padding: 15px; 
             overflow-y: auto; 
         }
         
@@ -89,49 +96,68 @@
         /* --- Contêineres --- */
         .container { 
             background-color: #2c3e50; 
-            padding: 25px; 
-            border-radius: 10px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
             margin-bottom: 20px; 
             border: 1px solid rgba(241, 196, 15, 0.1); 
         }
         
+        .bloco-lancamento {
+            background-color: #1a252f;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #7f8c8d;
+            margin-bottom: 10px;
+        }
+
         h2 { 
             color: #f1c40f; 
             text-transform: uppercase; 
             margin-top: 0; 
             border-bottom: 1px solid rgba(255,255,255,0.1); 
-            padding-bottom: 10px; 
+            padding-bottom: 8px; 
+            font-size: 18px; 
         }
         
+        h3 {
+            font-size: 15px;
+            color: #bdc3c7;
+        }
+
         /* --- Formulários --- */
         .form-group { 
-            margin-bottom: 15px; 
+            margin-bottom: 12px; 
         }
         
         label { 
             display: block; 
             font-weight: bold; 
-            margin-bottom: 5px; 
-            font-size: 13px; 
+            margin-bottom: 4px; 
+            font-size: 11px;
             color: #bdc3c7; 
+            text-transform: uppercase;
         }
         
-        input, select { 
+        input, select, textarea { 
             width: 100%; 
-            padding: 10px; 
-            border: 2px solid #7f8c8d; 
-            border-radius: 6px; 
+            padding: 7px 10px; 
+            border: 1px solid #7f8c8d; 
+            border-radius: 4px; 
             box-sizing: border-box; 
             background-color: #ecf0f1; 
             color: #2c3e50; 
             font-family: inherit;
+            font-size: 13px;
         }
         
-        input:focus, select:focus { 
+        input:focus, select:focus, textarea:focus { 
             border-color: #f1c40f; 
             outline: none; 
+            box-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
         }
+
+        textarea { resize: vertical; }
         
         .row { 
             display: flex; 
@@ -144,78 +170,79 @@
         
         /* --- Botões --- */
         button { 
-            padding: 10px 15px; 
+            padding: 8px 12px; 
             border: none; 
-            border-radius: 6px; 
+            border-radius: 4px; 
             font-weight: bold; 
             cursor: pointer; 
             transition: 0.2s; 
             text-transform: uppercase; 
+            font-size: 12px;
         }
         
         .btn-primary { 
             background-color: #0056b3; 
             color: #f8f9fa; 
             width: 100%; 
-            font-size: 16px; 
-            margin-top: 10px; 
+            font-size: 14px; 
+            margin-top: 8px; 
         }
         
-        .btn-primary:hover { 
-            background-color: #004494; 
+        .btn-primary:hover { background-color: #004494; }
+        .btn-secundario { background-color: #f39c12; color: #2c3e50; }
+        .btn-secundario:hover { background-color: #d68910; }
+        .btn-danger { background-color: #e74c3c; color: #fff; }
+        .btn-danger:hover { background-color: #c0392b; }
+        .btn-ver { background-color: #2980b9; color: #f8f9fa; }
+        .btn-ver:hover { background-color: #2471a3; }
+        .btn-whatsapp { background-color: #25D366; color: #fff; }
+        .btn-whatsapp:hover { background-color: #128C7E; }
+
+        /* --- BOTÕES MINIMALISTAS PARA AS TABELAS (ATUALIZADOS) --- */
+        .btn-acao {
+            background-color: #ffffff;
+            color: #000000;
+            border: 1px solid #7f8c8d;
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            text-transform: none;
         }
         
-        .btn-secundario { 
-            background-color: #f39c12; 
-            color: #2c3e50; 
-        }
-        
-        .btn-secundario:hover { 
-            background-color: #d68910; 
-        }
-        
-        .btn-danger { 
-            background-color: #e74c3c; 
-            color: #fff; 
-        }
-        
-        .btn-danger:hover { 
-            background-color: #c0392b; 
-        }
-        
-        .btn-ver { 
-            background-color: #2980b9; 
-            color: #f8f9fa; 
-        }
-        
-        .btn-ver:hover { 
-            background-color: #2471a3; 
-        }
-        
-        .btn-whatsapp {
-            background-color: #25D366;
-            color: #fff;
-        }
-        
-        .btn-whatsapp:hover {
-            background-color: #128C7E;
-        }
+        .btn-acao:hover { background-color: #ecf0f1; border-color: #bdc3c7; }
+        .btn-acao.nota:hover { background-color: #9b59b6; color: #fff; border-color: #9b59b6;}
+        .btn-acao.whats:hover { background-color: #2ecc71; color: #fff; border-color: #2ecc71;}
+        .btn-acao.pdf:hover { background-color: #3498db; color: #fff; border-color: #3498db;}
+        .btn-acao.del:hover { background-color: #e74c3c; color: #fff; border-color: #e74c3c;}
+        .btn-acao.edit:hover { background-color: #f1c40f; color: #000; border-color: #f1c40f;}
 
         /* --- Tabelas --- */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            margin-top: 15px; 
+            margin-top: 10px; 
             background-color: #34495e; 
             border-radius: 5px; 
             overflow: hidden; 
         }
         
         th, td { 
-            padding: 12px; 
+            padding: 8px 10px; 
             text-align: left; 
             font-size: 13px; 
             border-bottom: 1px solid #7f8c8d; 
+            white-space: nowrap; 
         }
         
         th { 
@@ -223,46 +250,37 @@
             color: #f8f9fa; 
             text-transform: uppercase; 
             font-weight: bold;
+            font-size: 12px;
         }
         
-        tr:nth-child(even) { 
-            background-color: #3a4e61; 
-        }
+        tr:nth-child(even) { background-color: #3a4e61; }
         
         .acoes-flex { 
             display: flex; 
-            gap: 5px; 
+            gap: 4px; 
             align-items: center;
-            flex-wrap: wrap; /* Permite que os botões quebrem linha se a tela for pequena */
+            flex-wrap: wrap; 
         }
         
-        /* --- Alerta de Estoque Baixo (Piscando Vermelho) --- */
+        /* --- Alerta de Estoque Baixo --- */
         @keyframes piscarVermelho {
             0% { background-color: #3a4e61; }
             50% { background-color: rgba(231, 76, 60, 0.6); } 
             100% { background-color: #3a4e61; }
         }
         
-        .linha-alerta { 
-            animation: piscarVermelho 1.5s infinite; 
-        }
-        
-        .linha-alerta td { 
-            color: #fff; 
-            font-weight: bold; 
-        }
+        .linha-alerta { animation: piscarVermelho 1.5s infinite; }
+        .linha-alerta td { color: #fff; font-weight: bold; }
 
         /* --- Paginação e Buscas --- */
         .toolbar { 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            margin-bottom: 15px; 
+            margin-bottom: 10px; 
         }
         
-        .search-bar { 
-            width: 350px; 
-        }
+        .search-bar { width: 300px; }
         
         .pagination { 
             display: flex; 
@@ -270,20 +288,21 @@
             align-items: center; 
             font-weight: bold; 
             color: #f1c40f; 
+            font-size: 12px;
         }
         
         .pagination button { 
-            padding: 5px 12px; 
+            padding: 4px 10px; 
             background-color: #2980b9; 
             color: white; 
         }
 
-        /* --- Assinatura Digital Canvas (Apenas Remota agora) --- */
+        /* --- Assinatura Digital Canvas --- */
         .signature-pad { 
             border: 2px dashed #f1c40f; 
             background-color: #ecf0f1; 
             width: 100%; 
-            height: 250px; 
+            height: 200px; 
             border-radius: 8px; 
             cursor: crosshair; 
         }
@@ -292,20 +311,21 @@
         .cart-item { 
             display: flex; 
             justify-content: space-between; 
-            padding: 12px; 
+            padding: 8px 12px; 
             border-bottom: 1px solid #7f8c8d; 
             background: #3a4e61; 
             margin-bottom: 5px; 
             border-radius: 4px;
             align-items: center;
+            font-size: 13px;
         }
         
         .cart-total { 
-            font-size: 26px; 
+            font-size: 20px; 
             color: #f1c40f; 
             text-align: right; 
             font-weight: bold; 
-            padding: 15px 0; 
+            padding: 10px 0; 
         }
 
         /* --- Estilos do Modal (Janela Flutuante) --- */
@@ -325,10 +345,10 @@
         
         .modal-content { 
             background-color: #2c3e50; 
-            padding: 30px; 
-            border-radius: 10px; 
+            padding: 20px; 
+            border-radius: 8px; 
             width: 90%; 
-            max-width: 600px; 
+            max-width: 500px; 
             position: relative; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
             color: #ecf0f1; 
@@ -339,40 +359,33 @@
         
         .close-btn { 
             position: absolute; 
-            top: 15px; 
-            right: 25px; 
+            top: 10px; 
+            right: 15px; 
             color: #f1c40f; 
-            font-size: 30px; 
+            font-size: 24px; 
             font-weight: bold; 
             cursor: pointer; 
-            transition: color 0.3s; 
         }
         
-        .close-btn:hover { 
-            color: #e74c3c; 
-        }
+        .close-btn:hover { color: #e74c3c; }
         
         #modalVisualizar h2 { 
             color: #f1c40f; 
             border-bottom: 2px solid #f1c40f; 
-            padding-bottom: 10px; 
-            margin-bottom: 20px;
+            padding-bottom: 8px; 
+            margin-bottom: 15px;
         }
         
         .detalhes-linha { 
-            margin-bottom: 12px; 
-            font-size: 15px; 
+            margin-bottom: 8px; 
+            font-size: 13px; 
             border-bottom: 1px solid #7f8c8d; 
-            padding-bottom: 8px; 
+            padding-bottom: 6px; 
         }
         
-        .detalhes-linha strong { 
-            color: #bdc3c7; 
-            margin-right: 5px; 
-        }
+        .detalhes-linha strong { color: #bdc3c7; margin-right: 5px; }
 
-        /* Estilo para pré-visualização da foto na OS */
-        #previewFotoOS {
+        #previewFotoOS, #previewLogoEmpresa {
             max-width: 100%;
             height: auto;
             border-radius: 8px;
@@ -380,46 +393,118 @@
             display: none;
             border: 2px solid #f1c40f;
         }
+
+        /* =========================================
+           RESPONSIVIDADE (MOBILE)
+           ========================================= */
+        @media (max-width: 768px) {
+            body { 
+                flex-direction: column; 
+                height: 100vh; 
+            }
+            
+            .sidebar { 
+                width: 100%; 
+                padding: 10px; 
+                flex-direction: row; 
+                border-right: none; 
+                border-bottom: 2px solid rgba(241, 196, 15, 0.2); 
+                overflow-x: auto; 
+                align-items: center;
+                box-sizing: border-box;
+                height: auto;
+                flex-shrink: 0;
+            }
+            
+            .sidebar-logo { 
+                margin-bottom: 0; 
+                margin-right: 15px; 
+                width: 50px; 
+                flex-shrink: 0; 
+            }
+
+            .sidebar-logo img {
+                max-height: 40px;
+            }
+            
+            .menu-btn { 
+                white-space: nowrap; 
+                padding: 8px 12px; 
+            }
+            
+            .main-content { 
+                padding: 10px; 
+                overflow-y: auto; 
+            }
+            
+            .row { 
+                flex-direction: column; 
+                gap: 10px; 
+            }
+            
+            .col { 
+                width: 100%; 
+                flex: none !important; 
+            }
+            
+            .toolbar { 
+                flex-direction: column; 
+                gap: 10px; 
+                align-items: stretch; 
+            }
+            
+            .search-bar { 
+                width: 100%; 
+            }
+            
+            .container { 
+                padding: 15px; 
+            }
+            
+            .acoes-flex {
+                flex-wrap: nowrap;
+            }
+        }
     </style>
 </head>
 <body>
 
 <div id="telaAssinaturaRemota" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #2c3e50; padding: 20px; color: #ecf0f1; text-align: center; overflow-y: auto;">
-    <img src="https://image2url.com/r2/default/images/1774578957071-f27e2520-816d-436f-a537-ee8a160f90ca.jpeg" style="max-width: 150px; border-radius: 8px; margin-bottom: 20px;">
+    <img id="logoAssinaturaRemota" src="https://image2url.com/r2/default/images/1774578957071-f27e2520-816d-436f-a537-ee8a160f90ca.jpeg" style="max-width: 120px; border-radius: 8px; margin-bottom: 20px; background-color: #fff; padding: 5px;">
     
-    <h2 style="color: #f1c40f;">Assinatura Digital de Venda / OS</h2>
+    <h2 style="color: #f1c40f;">Assinatura Digital</h2>
     
-    <div style="background-color: #34495e; padding: 15px; border-radius: 8px; border: 1px solid #7f8c8d; margin-bottom: 20px; width: 100%; max-width: 500px; text-align: left;">
+    <div style="background-color: #34495e; padding: 15px; border-radius: 8px; border: 1px solid #7f8c8d; margin-bottom: 20px; width: 100%; max-width: 500px; text-align: left; font-size: 13px;">
         <p style="margin: 5px 0;"><strong>Cliente:</strong> <span id="remoteClienteNome">Carregando...</span></p>
         <p style="margin: 5px 0;"><strong>Nº Documento:</strong> <span id="remoteOSNum">...</span></p>
         <p style="margin: 5px 0;"><strong>Vencimento:</strong> <span id="remoteVencimento">...</span></p>
-        <p style="margin: 5px 0; color: #2ecc71; font-size: 18px;"><strong>Valor Total:</strong> <span id="remoteTotal">...</span></p>
+        <p style="margin: 5px 0; color: #2ecc71; font-size: 16px;"><strong>Valor Total:</strong> <span id="remoteTotal">...</span></p>
     </div>
 
-    <p style="font-size: 13px; color: #bdc3c7; max-width: 500px;">Por favor, assine no quadro abaixo confirmando a ciência e recebimento dos produtos/serviços.</p>
+    <p style="font-size: 12px; color: #bdc3c7; max-width: 500px;">Por favor, assine no quadro abaixo confirmando a ciência.</p>
     
     <div style="width: 100%; max-width: 500px;">
         <canvas id="assinaturaCanvasRemota" class="signature-pad"></canvas>
-        <button class="btn-secundario" onclick="limparAssinaturaRemota()" style="margin-top: 10px; width: 100%;">🗑️ Limpar e Refazer</button>
-        <button class="btn-primary" onclick="salvarAssinaturaRemota()" style="margin-top: 15px; background-color: #27ae60; padding: 15px; font-size: 18px;">✅ Confirmar e Enviar Assinatura</button>
+        <button class="btn-secundario" onclick="limparAssinaturaRemota()" style="margin-top: 10px; width: 100%;">🗑️ Limpar</button>
+        <button class="btn-primary" onclick="salvarAssinaturaRemota()" style="margin-top: 10px; background-color: #27ae60; padding: 12px; font-size: 14px;">✅ Confirmar Assinatura</button>
     </div>
 
-    <div id="msgSucessoRemoto" style="display:none; margin-top:20px; color: #2ecc71; font-size: 18px; font-weight:bold; background-color: #1e2a35; padding: 20px; border-radius: 8px; border: 2px solid #2ecc71;">
-        ✅ Assinatura registrada com sucesso!<br><br><span style="font-size: 14px; color: #ecf0f1;">Você já pode fechar esta página.</span>
+    <div id="msgSucessoRemoto" style="display:none; margin-top:20px; color: #2ecc71; font-size: 16px; font-weight:bold; background-color: #1e2a35; padding: 20px; border-radius: 8px; border: 2px solid #2ecc71;">
+        ✅ Assinatura registrada com sucesso!<br><br><span style="font-size: 13px; color: #ecf0f1;">Você já pode fechar esta página.</span>
     </div>
 </div>
 
 
 <div class="sidebar" id="appSidebar">
     <div class="sidebar-logo">
-        <img src="https://image2url.com/r2/default/images/1774578957071-f27e2520-816d-436f-a537-ee8a160f90ca.jpeg" alt="Logo FH">
+        <img id="logoSidebar" src="https://image2url.com/r2/default/images/1775093660380-c7222c89-b10b-45e8-b477-bd720db16c38.blob" alt="Logo Empresa">
     </div>
     <button class="menu-btn active" onclick="abrirAba('tabClientes', this)">👥 Clientes</button>
     <button class="menu-btn" onclick="abrirAba('tabEstoque', this)">📦 Estoque</button>
     <button class="menu-btn" onclick="abrirAba('tabVendas', this)">🛒 Venda / Orçamentos</button>
-    <button class="menu-btn" onclick="abrirAba('tabOS', this)" style="color: #f1c40f;">📝 Ordem de Serviço</button>
+    <button class="menu-btn" onclick="abrirAba('tabOS', this)" style="color: #f1c40f;">📝 OS</button>
     <button class="menu-btn" onclick="abrirAba('tabCaixa', this)">💰 Caixa / Relatórios</button>
-    <button class="menu-btn" onclick="abrirAba('tabConfig', this)">⚙️ Backups</button>
+    <button class="menu-btn" onclick="abrirAba('tabConfig', this)">⚙️ Config / Empresa</button>
 </div>
 
 <div class="main-content" id="appMainContent">
@@ -429,31 +514,36 @@
         <div class="container">
             <h2 id="tituloCliente">Cadastro de Cliente</h2>
             <form id="formCliente">
-                <div class="form-group"><label>Nome Completo / Razão Social</label><input type="text" id="nome" required></div>
-                <div class="row form-group">
-                    <div class="col"><label>CPF</label><input type="text" id="cpf" maxlength="14" placeholder="000.000.000-00"></div>
-                    <div class="col"><label>CNPJ</label><input type="text" id="cnpj" maxlength="18" placeholder="00.000.000/0000-00"></div>
+                <div class="bloco-lancamento">
+                    <div class="row form-group">
+                        <div class="col" style="flex: 2;"><label>Nome Completo / Razão Social</label><input type="text" id="nome" required></div>
+                        <div class="col"><label>CPF</label><input type="text" id="cpf" maxlength="14" placeholder="000.000.000-00"></div>
+                        <div class="col"><label>CNPJ</label><input type="text" id="cnpj" maxlength="18" placeholder="00.000.000/0000-00"></div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col"><label>Telefone / WhatsApp</label><input type="text" id="telefone" maxlength="15" placeholder="(00) 00000-0000" required></div>
+                        <div class="col"><label>Chave Pix (Opcional)</label><input type="text" id="pix" placeholder="CPF, E-mail, Celular..."></div>
+                        <div class="col"><label>Inscrição Estadual (Opcional)</label><input type="text" id="ie"></div>
+                    </div>
                 </div>
-                <div class="row form-group">
-                    <div class="col"><label>Telefone / WhatsApp</label><input type="text" id="telefone" maxlength="15" placeholder="(00) 00000-0000" required></div>
-                    <div class="col"><label>Chave Pix (Opcional)</label><input type="text" id="pix" placeholder="CPF, E-mail, Telefone ou Aleatória"></div>
+
+                <div class="bloco-lancamento">
+                    <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 13px;">Endereço</h3>
+                    <div class="row form-group">
+                        <div class="col"><label>CEP</label><input type="text" id="cep" maxlength="9" placeholder="00000-000"></div>
+                        <div class="col"><label>Estado</label><input type="text" id="estado"></div>
+                        <div class="col" style="flex: 2;"><label>Cidade</label><input type="text" id="cidade"></div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col" style="flex: 1.5;"><label>Bairro</label><input type="text" id="bairro"></div>
+                        <div class="col" style="flex: 2.5;"><label>Rua/Logradouro</label><input type="text" id="rua"></div>
+                        <div class="col" style="flex: 0.8;"><label>Número</label><input type="text" id="numero"></div>
+                    </div>
                 </div>
-                <div class="form-group"><label>Inscrição Estadual (Opcional)</label><input type="text" id="ie"></div>
-                <div class="row form-group">
-                    <div class="col"><label>CEP</label><input type="text" id="cep" maxlength="9" placeholder="00000-000"></div>
-                    <div class="col"><label>Estado</label><input type="text" id="estado"></div>
-                </div>
-                <div class="row form-group">
-                    <div class="col"><label>Cidade</label><input type="text" id="cidade"></div>
-                    <div class="col"><label>Bairro</label><input type="text" id="bairro"></div>
-                </div>
-                <div class="row form-group">
-                    <div class="col" style="flex: 3;"><label>Rua/Logradouro</label><input type="text" id="rua"></div>
-                    <div class="col" style="flex: 1;"><label>Número</label><input type="text" id="numero"></div>
-                </div>
+
                 <div class="row">
-                    <button type="submit" class="btn-primary" id="btnSalvarCli">Salvar Cliente</button>
-                    <button type="button" class="btn-secundario" style="margin-top: 10px; display: none;" id="btnCancelarCli" onclick="cancelarEdicaoCli()">Cancelar Edição (ESC)</button>
+                    <button type="submit" class="btn-primary" id="btnSalvarCli" style="padding: 10px;">Salvar Cliente</button>
+                    <button type="button" class="btn-secundario" style="margin-top: 8px; display: none; padding: 10px;" id="btnCancelarCli" onclick="cancelarEdicaoCli()">Cancelar Edição (ESC)</button>
                 </div>
             </form>
         </div>
@@ -463,15 +553,17 @@
             <div class="toolbar">
                 <input type="text" id="buscaCliente" class="search-bar" placeholder="Buscar por nome ou documento..." onkeyup="filtrarClientes()">
                 <div class="pagination">
-                    <button onclick="mudarPaginaCli(-1)">◀ Anterior</button>
+                    <button onclick="mudarPaginaCli(-1)">◀ Ant</button>
                     <span id="infoPaginaCli">Pág 1</span>
-                    <button onclick="mudarPaginaCli(1)">Próxima ▶</button>
+                    <button onclick="mudarPaginaCli(1)">Próx ▶</button>
                 </div>
             </div>
-            <table>
-                <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr></thead>
-                <tbody id="tabelaClientes"></tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr></thead>
+                    <tbody id="tabelaClientes"></tbody>
+                </table>
+            </div>
         </div>
 
     </div>
@@ -479,7 +571,7 @@
     <div id="modalVisualizar" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="fecharModal()">&times;</span>
-            <h2 style="margin-top: 0; color: #f1c40f;">Ficha Completa do Cliente</h2>
+            <h2 style="margin-top: 0; color: #f1c40f;">Ficha do Cliente</h2>
             <div id="detalhesCliente"></div>
         </div>
     </div>
@@ -490,20 +582,23 @@
         <div class="container">
             <h2 id="tituloProduto">Cadastro de Produto / Serviço</h2>
             <form id="formProduto">
-                <div class="row form-group">
-                    <div class="col" style="flex: 2;"><label>Nome do Produto/Serviço</label><input type="text" id="prodNome" required></div>
-                    <div class="col"><label>Categoria</label><input type="text" id="prodCategoria" placeholder="Ex: Cabos, Eletrônica..." required></div>
+                <div class="bloco-lancamento">
+                    <div class="row form-group">
+                        <div class="col" style="flex: 2;"><label>Nome do Produto/Serviço</label><input type="text" id="prodNome" required></div>
+                        <div class="col" style="flex: 1;"><label>Código de Barras</label><input type="text" id="prodCodigo" placeholder="Bipar código..."></div>
+                        <div class="col" style="flex: 1.5;"><label>Categoria</label><input type="text" id="prodCategoria" placeholder="Ex: Cabos, Eletrônica..." required></div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col"><label>Preço de Custo (R$)</label><input type="number" step="0.01" id="prodCusto" required></div>
+                        <div class="col"><label>Margem de Lucro (%)</label><input type="number" step="0.1" id="prodMargem" required></div>
+                        <div class="col"><label>Preço de Venda (R$)</label><input type="number" step="0.01" id="prodVenda" readonly style="font-weight: bold; color: #2c3e50;"></div>
+                        <div class="col"><label style="color: #f1c40f;">Qtd. Estoque</label><input type="number" step="1" id="prodQtd" value="0" required></div>
+                    </div>
+                    <div class="form-group"><label>Foto do Produto (Opcional)</label><input type="file" id="prodFoto" accept="image/*" style="padding: 5px; border: 1px solid #7f8c8d; border-radius: 4px; background: #ecf0f1;"></div>
                 </div>
-                <div class="row form-group">
-                    <div class="col"><label>Preço de Custo (R$)</label><input type="number" step="0.01" id="prodCusto" required></div>
-                    <div class="col"><label>Margem de Lucro (%)</label><input type="number" step="0.1" id="prodMargem" required></div>
-                    <div class="col"><label>Preço de Venda (R$)</label><input type="number" step="0.01" id="prodVenda" readonly style="background-color: #bdc3c7; font-weight: bold; color: #2c3e50;"></div>
-                    <div class="col"><label style="color: #f1c40f;">Qtd. em Estoque</label><input type="number" step="1" id="prodQtd" value="0" required></div>
-                </div>
-                <div class="form-group"><label>Foto do Produto (Opcional)</label><input type="file" id="prodFoto" accept="image/*"></div>
                 <div class="row">
-                    <button type="submit" class="btn-primary" id="btnSalvarProd">Salvar Produto</button>
-                    <button type="button" class="btn-secundario" style="margin-top: 10px; display: none;" id="btnCancelarProd" onclick="cancelarEdicaoProd()">Cancelar Edição (ESC)</button>
+                    <button type="submit" class="btn-primary" id="btnSalvarProd" style="padding: 10px;">Salvar Produto</button>
+                    <button type="button" class="btn-secundario" style="margin-top: 8px; display: none; padding: 10px;" id="btnCancelarProd" onclick="cancelarEdicaoProd()">Cancelar Edição (ESC)</button>
                 </div>
             </form>
         </div>
@@ -511,18 +606,20 @@
         <div class="container">
             <h2>Produtos no Estoque</h2>
             <div class="toolbar">
-                <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar por Nome ou Categoria..." onkeyup="filtrarProdutos()">
+                <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar Nome, Código ou Categoria..." onkeyup="filtrarProdutos()">
                 <div class="pagination">
-                    <button onclick="mudarPaginaProd(-1)">◀ Anterior</button>
+                    <button onclick="mudarPaginaProd(-1)">◀ Ant</button>
                     <span id="infoPaginaProd">Pág 1</span>
-                    <button onclick="mudarPaginaProd(1)">Próxima ▶</button>
+                    <button onclick="mudarPaginaProd(1)">Próx ▶</button>
                 </div>
             </div>
-            <p style="font-size: 12px; color: #e74c3c;">Atenção: Produtos com quantidade igual ou inferior a 3 piscarão em vermelho solicitando reposição.</p>
-            <table>
-                <thead><tr><th>Foto</th><th>Nome</th><th>Categoria</th><th>Qtd</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
-                <tbody id="tabelaEstoque"></tbody>
-            </table>
+            <p style="font-size: 11px; color: #e74c3c; margin-top: 0;">Atenção: Qtd ≤ 3 piscará vermelho.</p>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Foto</th><th>Código</th><th>Nome</th><th>Categoria</th><th>Qtd</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
+                    <tbody id="tabelaEstoque"></tbody>
+                </table>
+            </div>
         </div>
 
     </div>
@@ -533,39 +630,43 @@
         <div class="container">
             <h2>Novo Orçamento / Venda Direta</h2>
             
-            <div class="row form-group" style="background-color: #1a252f; padding: 15px; border-radius: 8px; border: 1px solid #7f8c8d;">
-                <div class="col" style="flex: 0.5;"><label style="color: #f1c40f;">Nº da Venda</label><input type="number" id="vendaOS" style="background-color: #ecf0f1; font-weight: bold; font-size: 16px; color: #e74c3c;"></div>
-                <div class="col" style="flex: 1;"><label style="color: #f1c40f;">Data de Vencimento</label><input type="date" id="vendaVencimento" required style="font-weight: bold; font-size: 16px;"></div>
+            <div class="row form-group" style="background-color: #1a252f; padding: 12px; border-radius: 6px; border: 1px solid #7f8c8d;">
+                <div class="col"><label style="color: #f1c40f;">Nº da Venda</label><input type="number" id="vendaOS" style="font-weight: bold; color: #e74c3c;"></div>
+                <div class="col" style="flex: 1.5;"><label style="color: #f1c40f;">Data de Vencimento (Opcional)</label><input type="date" id="vendaVencimento" style="font-weight: bold;"></div>
             </div>
 
             <div class="row form-group">
                 <div class="col" style="flex: 2;">
-                    <label>1. Buscar e Selecionar Cliente</label>
-                    <input type="text" id="vendaClienteBusca" list="listaClientesNomesVenda" placeholder="Digite para buscar o nome do cliente...">
+                    <label>1. Buscar Cliente (Ou digite nome avulso)</label>
+                    <input type="text" id="vendaClienteBusca" list="listaClientesNomesVenda" placeholder="Cliente registrado ou avulso...">
                     <datalist id="listaClientesNomesVenda"></datalist>
                 </div>
             </div>
             
             <div class="row form-group" style="align-items: flex-end;">
-                <div class="col" style="flex: 2;"><label>2. Adicionar Produto do Estoque (Dá baixa automática)</label><select id="vendaProdutoEstoque"></select></div>
-                <div class="col" style="flex: 0.5;"><label>Qtd.</label><input type="number" id="vendaProdutoQtd" value="1" min="1"></div>
-                <div class="col"><button type="button" class="btn-secundario" onclick="addAoCarrinhoEstoque()">➕ Adicionar</button></div>
+                <div class="col" style="flex: 2;">
+                    <label>2. Adicionar do Estoque (Busca/Bipe)</label>
+                    <input type="text" id="vendaProdutoEstoqueBusca" list="listaProdutosEstoqueVenda" placeholder="Digite nome ou código do produto...">
+                    <datalist id="listaProdutosEstoqueVenda"></datalist>
+                </div>
+                <div class="col"><label>Qtd.</label><input type="number" id="vendaProdutoQtd" value="1" min="1"></div>
+                <div class="col"><button type="button" class="btn-secundario" style="width: 100%; height: 35px;" onclick="addAoCarrinhoVenda_Estoque()">➕ Add</button></div>
             </div>
 
-            <div class="row form-group" style="align-items: flex-end; border-top: 1px solid #7f8c8d; padding-top: 15px;">
+            <div class="row form-group" style="align-items: flex-end; border-top: 1px solid #7f8c8d; padding-top: 12px;">
                 <div class="col" style="flex: 2;"><label>3. Adicionar Item Avulso</label><input type="text" id="vendaAvulsoNome" placeholder="Ex: Instalação Padrão"></div>
                 <div class="col"><label>Valor (R$)</label><input type="number" step="0.01" id="vendaAvulsoValor" placeholder="Ex: 150.00"></div>
-                <div class="col" style="flex: 0.5;"><label>Acréscimo (%)</label><input type="number" step="0.1" id="vendaAvulsoPerc" value="0"></div>
-                <div class="col"><button type="button" class="btn-secundario" onclick="addAoCarrinhoAvulso()">➕ Adicionar</button></div>
+                <div class="col"><label>Tx (%)</label><input type="number" step="0.1" id="vendaAvulsoPerc" value="0"></div>
+                <div class="col"><button type="button" class="btn-secundario" style="width: 100%; height: 35px;" onclick="addAoCarrinhoVenda_Avulso()">➕ Add</button></div>
             </div>
         </div>
 
         <div class="container">
-            <h2>Carrinho de Compras da Venda</h2>
-            <div id="listaCarrinho">Nenhum item adicionado no momento.</div>
+            <h2>Carrinho de Compras</h2>
+            <div id="listaCarrinho" style="font-size: 13px;">Nenhum item adicionado no momento.</div>
             <div class="cart-total" id="vendaTotal">Total: R$ 0,00</div>
             
-            <button type="button" class="btn-primary" style="margin-top: 30px; background-color: #27ae60; padding: 15px; font-size: 18px;" onclick="finalizarVenda()">✅ FINALIZAR VENDA E SALVAR</button>
+            <button type="button" class="btn-primary" style="background-color: #27ae60; padding: 12px; font-size: 15px;" onclick="finalizarVenda()">✅ FINALIZAR E SALVAR</button>
         </div>
 
     </div>
@@ -574,74 +675,114 @@
     <div id="tabOS" class="tab-content">
         
         <div class="container">
-            <h2 style="color: #3498db;">Preenchimento de Ordem de Serviço (Em Campo)</h2>
-            <p style="font-size: 13px; color: #bdc3c7;">Preencha os dados do serviço realizado. Os cálculos de KM serão somados ao total final automaticamente.</p>
+            <h2 style="color: #3498db;">Ordem de Serviço (Em Campo)</h2>
+            <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Preencha com atenção os valores e quantidades. O sistema calcula o total para você.</p>
             
-            <div class="row form-group" style="background-color: #1a252f; padding: 15px; border-radius: 8px; border: 1px solid #3498db; margin-bottom: 20px;">
-                <div class="col" style="flex: 0.5;">
-                    <label style="color: #3498db;">Nº da OS</label>
-                    <input type="number" id="osNumero" style="background-color: #ecf0f1; font-weight: bold; font-size: 16px; color: #e74c3c;">
+            <div class="bloco-lancamento" style="border-color: #3498db;">
+                <div class="row form-group">
+                    <div class="col">
+                        <label style="color: #3498db;">Nº da OS</label>
+                        <input type="number" id="osNumero" style="font-weight: bold; color: #e74c3c;">
+                    </div>
+                    <div class="col" style="flex: 1.5;">
+                        <label style="color: #3498db;">Cliente (Ou nome avulso)</label>
+                        <input type="text" id="osClienteBusca" list="listaClientesNomesOS" placeholder="Registrado ou avulso...">
+                        <datalist id="listaClientesNomesOS"></datalist>
+                    </div>
+                    <div class="col">
+                        <label style="color: #3498db;">Data Vencimento (Opcional)</label>
+                        <input type="date" id="osVencimento" style="font-weight: bold;">
+                    </div>
                 </div>
-                <div class="col" style="flex: 1.5;">
-                    <label style="color: #3498db;">Cliente da Ordem de Serviço</label>
-                    <input type="text" id="osClienteBusca" list="listaClientesNomesOS" placeholder="Digite para buscar o cliente...">
-                    <datalist id="listaClientesNomesOS"></datalist>
+            </div>
+
+            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">1. Equipe e Horários</h3>
+            <div class="row form-group">
+                <div class="col"><label>Responsável</label><input type="text" id="osFuncionario" placeholder="Nome"></div>
+                <div class="col"><label>Equipe</label><input type="text" id="osEquipe" placeholder="Ex: Alpha"></div>
+            </div>
+            <div class="row form-group">
+                <div class="col"><label>Início (Data/Hora)</label><input type="datetime-local" id="osInicio"></div>
+                <div class="col"><label>Saída (Data/Hora)</label><input type="datetime-local" id="osFim"></div>
+                <div class="col"><label>Qtd. Pessoas</label><input type="number" id="osQtdPessoas" value="1" min="1"></div>
+            </div>
+
+            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">2. Deslocamento</h3>
+            <div class="bloco-lancamento">
+                <div class="row form-group">
+                    <div class="col"><label>KM Inicial</label><input type="number" id="osKmInicial" step="0.1" value="0"></div>
+                    <div class="col"><label>KM Final</label><input type="number" id="osKmFinal" step="0.1" value="0"></div>
+                    <div class="col"><label>Valor P/ KM (R$)</label><input type="number" id="osValorKm" step="0.01" value="2.50"></div>
+                    <div class="col"><label>Custo Desloc.</label><input type="text" id="osCustoKmTotal" readonly style="font-weight: bold; color: #2c3e50;" value="R$ 0.00"></div>
                 </div>
-                <div class="col" style="flex: 1;">
-                    <label style="color: #3498db;">Data de Vencimento / Pgto</label>
-                    <input type="date" id="osVencimento" required style="font-weight: bold; font-size: 16px;">
+            </div>
+
+            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">3. Materiais / Serviços</h3>
+            
+            <div class="bloco-lancamento">
+                <div class="row form-group" style="align-items: flex-end;">
+                    <div class="col" style="flex: 2;">
+                        <label>Material do Estoque (Busca/Bipe)</label>
+                        <input type="text" id="osProdutoEstoqueBusca" list="listaProdutosEstoqueOS" onchange="preencherValorEstoqueOS()" placeholder="Nome ou código...">
+                        <datalist id="listaProdutosEstoqueOS"></datalist>
+                    </div>
+                    <div class="col" style="flex: 0.6;"><label>Val. Un. (R$)</label><input type="number" id="osEstoqueValUn" readonly style="font-weight: bold;"></div>
+                    <div class="col" style="flex: 0.4;"><label>Qtd</label><input type="number" id="osEstoqueQtd" value="1" min="1" oninput="calcTotalEstoqueOS()"></div>
+                    <div class="col" style="flex: 0.4;"><label>Taxa %</label><input type="number" id="osEstoquePerc" value="0" oninput="calcTotalEstoqueOS()"></div>
+                    <div class="col" style="flex: 0.7;"><label>Total (R$)</label><input type="text" id="osEstoqueTotal" readonly style="font-weight: bold; color: #27ae60;"></div>
+                    <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; height: 35px;" onclick="addAoCarrinhoOS_Estoque()">➕ MAT</button></div>
                 </div>
             </div>
 
-            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 30px;">1. Equipe e Horários</h3>
-            <div class="row form-group">
-                <div class="col"><label>Funcionário Responsável</label><input type="text" id="osFuncionario" placeholder="Nome de quem executou"></div>
-                <div class="col"><label>Nome da Equipe</label><input type="text" id="osEquipe" placeholder="Ex: Equipe Alpha"></div>
-            </div>
-            <div class="row form-group">
-                <div class="col"><label>Início (Data e Hora na Obra)</label><input type="datetime-local" id="osInicio"></div>
-                <div class="col"><label>Saída (Data e Hora da Obra)</label><input type="datetime-local" id="osFim"></div>
-                <div class="col" style="flex: 0.5;"><label>Qtd. Pessoas</label><input type="number" id="osQtdPessoas" value="1" min="1"></div>
-            </div>
-
-            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 30px;">2. Deslocamento (Cálculo Automático)</h3>
-            <div class="row form-group">
-                <div class="col"><label>KM Total Rodado</label><input type="number" id="osKm" step="0.1" value="0" placeholder="Ex: 152"></div>
-                <div class="col"><label>Valor cobrado por KM (R$)</label><input type="number" id="osValorKm" step="0.01" value="2.50" placeholder="Ex: 2.50"></div>
-                <div class="col"><label>Custo de Deslocamento</label><input type="text" id="osCustoKmTotal" readonly style="background-color: #bdc3c7; font-weight: bold; color: #2c3e50;" value="R$ 0.00"></div>
+            <div class="bloco-lancamento">
+                <div class="row form-group" style="align-items: flex-end;">
+                    <div class="col" style="flex: 2;">
+                        <label>Material Externo (Outra Empresa)</label>
+                        <input type="text" id="osMatExternoNome" placeholder="Ex: Cano comprado na Loja X">
+                    </div>
+                    <div class="col" style="flex: 0.6;"><label>Val. Un. (R$)</label><input type="number" step="0.01" id="osMatExternoValor" placeholder="0.00" oninput="calcTotalExternoOS()"></div>
+                    <div class="col" style="flex: 0.4;"><label>Qtd</label><input type="number" id="osMatExternoQtd" value="1" min="1" oninput="calcTotalExternoOS()"></div>
+                    <div class="col" style="flex: 0.4;"><label>Taxa %</label><input type="number" id="osMatExternoPerc" value="0" oninput="calcTotalExternoOS()"></div>
+                    <div class="col" style="flex: 0.7;"><label>Total (R$)</label><input type="text" id="osMatExternoTotal" readonly style="font-weight: bold; color: #27ae60;"></div>
+                    <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; background-color: #e67e22; height: 35px;" onclick="addAoCarrinhoOS_Externo()">➕ COMPRA</button></div>
+                </div>
             </div>
 
-            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 30px;">3. Materiais Utilizados e Mão de Obra</h3>
-            <div class="row form-group" style="align-items: flex-end;">
-                <div class="col" style="flex: 2;"><label>Produto do Estoque (Será descontado)</label><select id="osProdutoEstoque"></select></div>
-                <div class="col" style="flex: 0.5;"><label>Qtd.</label><input type="number" id="osProdutoQtd" value="1" min="1"></div>
-                <div class="col"><button type="button" class="btn-secundario" onclick="addAoCarrinhoOS_Estoque()">➕ Adicionar Material</button></div>
-            </div>
-            <div class="row form-group" style="align-items: flex-end;">
-                <div class="col" style="flex: 2;"><label>Mão de Obra Avulsa (Descrição)</label><input type="text" id="osMaoDeObraDesc" placeholder="Ex: Quebra de parede e alvenaria"></div>
-                <div class="col"><label>Valor (R$)</label><input type="number" step="0.01" id="osMaoDeObraValor" placeholder="Ex: 350.00"></div>
-                <div class="col"><button type="button" class="btn-secundario" onclick="addAoCarrinhoOS_Avulso()">➕ Adicionar Serviço</button></div>
-            </div>
-
-            <div style="background-color: #1a252f; padding: 15px; border-radius: 8px; margin-top: 15px;">
-                <h4 style="margin-top: 0; color: #f1c40f;">Itens Lançados nesta OS</h4>
-                <div id="listaCarrinhoOS" style="margin-bottom: 15px;">Nenhum material ou serviço lançado ainda.</div>
-                <div class="cart-total" id="osTotalGeral" style="border-top: 1px solid #7f8c8d; padding-top: 10px; color: #2ecc71;">TOTAL DA OS: R$ 0,00</div>
+            <div class="bloco-lancamento">
+                <div class="row form-group" style="align-items: flex-end;">
+                    <div class="col" style="flex: 3;">
+                        <label>Mão de Obra Avulsa / Serviço Executado</label>
+                        <input type="text" id="osMaoDeObraDesc" placeholder="Descreva os detalhes do serviço...">
+                    </div>
+                    <div class="col" style="flex: 0.8;">
+                        <label>Valor Mão de Obra (R$)</label>
+                        <input type="number" step="0.01" id="osMaoDeObraValor" placeholder="Ex: 350.00">
+                    </div>
+                    <div class="col" style="flex: 0.6;">
+                        <button type="button" class="btn-secundario" style="width: 100%; background-color: #3498db; color: #fff; height: 35px;" onclick="addAoCarrinhoOS_Avulso()">➕ SERV</button>
+                    </div>
+                </div>
             </div>
 
-            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 30px;">4. Registro Fotográfico</h3>
+            <div style="background-color: #1a252f; padding: 12px; border-radius: 6px; margin-top: 15px;">
+                <h4 style="margin-top: 0; color: #f1c40f; font-size: 14px;">Lista do Carrinho da OS</h4>
+                <div id="listaCarrinhoOS" style="margin-bottom: 10px; font-size: 13px;">Nenhum material/serviço lançado.</div>
+                <div class="cart-total" id="osTotalGeral" style="border-top: 1px solid #7f8c8d; padding-top: 10px; color: #2ecc71;">TOTAL OS: R$ 0,00</div>
+            </div>
+
+            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">4. Fotografia</h3>
             <div class="form-group">
-                <label>Bater Foto / Anexar Imagem do Material ou Serviço Concluído</label>
-                <input type="file" id="osFotoUpload" accept="image/*" capture="environment">
-                <img id="previewFotoOS" src="" alt="Sua Foto Aparecerá Aqui">
+                <label>Anexar Foto Conclusão</label>
+                <input type="file" id="osFotoUpload" accept="image/*" capture="environment" style="padding: 5px; border: 1px solid #7f8c8d; background: #ecf0f1; border-radius: 4px;">
+                <img id="previewFotoOS" src="" alt="Foto">
             </div>
 
-            <div class="row" style="margin-top: 40px; gap: 20px;">
+            <div class="row" style="margin-top: 25px;">
                 <div class="col">
-                    <button type="button" class="btn-ver" style="width: 100%; padding: 15px; font-size: 16px;" onclick="gerarPDFdaOS()">🖨️ GERAR PDF (RASCUNHO)</button>
+                    <button type="button" class="btn-ver" style="width: 100%; padding: 12px; font-size: 14px;" onclick="gerarPDFdaOS()">🖨️ PDF (RASCUNHO)</button>
                 </div>
                 <div class="col">
-                    <button type="button" class="btn-primary" style="background-color: #27ae60; margin-top: 0; padding: 15px; font-size: 16px;" onclick="salvarOrdemDeServico()">✅ SALVAR OS NO CAIXA</button>
+                    <button type="button" class="btn-primary" style="background-color: #27ae60; margin-top: 0; padding: 12px; font-size: 14px;" onclick="salvarOrdemDeServico()">✅ SALVAR NO CAIXA</button>
                 </div>
             </div>
 
@@ -651,48 +792,68 @@
 
     <div id="tabCaixa" class="tab-content">
         <div class="container">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
                 <div>
-                    <h2 style="border: none; padding: 0; margin: 0;">Fechamento de Caixa / Histórico</h2>
-                    <p style="font-size: 14px; color: #bdc3c7; margin: 5px 0 0 0;">Utilize os botões das ações para gerar os PDFs, imprimir os cupons para os clientes ou cancelar vendas.</p>
+                    <h2 style="border: none; padding: 0; margin: 0;">Caixa / Histórico</h2>
                 </div>
-                <a href="https://emissores.sebrae.com.br/" target="_blank" class="btn-primary" style="background-color: #8e44ad; text-decoration: none; display: inline-block; width: auto; padding: 12px 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-                    🧾 EMITIR NF-e (SEBRAE)
-                </a>
             </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nº Doc</th>
-                        <th>Tipo</th>
-                        <th>Data Lanc.</th>
-                        <th>Cliente</th>
-                        <th>Vencimento</th>
-                        <th>Valor Total</th>
-                        <th>Assinatura</th>
-                        <th style="min-width: 380px;">Ações Disponíveis</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelaCaixa">
-                    </tbody>
-            </table>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº Doc</th>
+                            <th>Tipo</th>
+                            <th>Data Lanc.</th>
+                            <th>Cliente</th>
+                            <th>Vencimento</th>
+                            <th>Total</th>
+                            <th>Assinatura</th>
+                            <th style="min-width: 250px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaCaixa">
+                        </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
 
     <div id="tabConfig" class="tab-content">
         <div class="container">
-            <h2>Gestão de Dados e Backups</h2>
-            <p style="font-size: 14px; color: #bdc3c7;">Proteja os dados da sua empresa. Faça backups regularmente.</p>
-            <div class="row" style="margin-top: 30px;">
-                <div class="col"><button class="btn-primary" style="background-color: #2980b9; padding: 15px;" onclick="fazerBackupLocal()">📥 1. Baixar Backup Local (Seu Computador)</button></div>
-                <div class="col"><button class="btn-primary" style="background-color: #8e44ad; padding: 15px;" onclick="fazerBackupNuvem()">☁️ 2. Criar Cópia de Segurança na Nuvem</button></div>
+            <h2>Dados da Minha Empresa</h2>
+            <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Esses dados sairão no cabeçalho dos seus PDFs e Cupons Fiscais/Recibos.</p>
+            <form id="formEmpresa">
+                <div class="bloco-lancamento">
+                    <div class="row form-group">
+                        <div class="col" style="flex: 2;"><label>Nome da Empresa (Razão ou Fantasia)</label><input type="text" id="empNome" placeholder="Ex: FH Construções e Reformas" required></div>
+                        <div class="col" style="flex: 1;"><label>CNPJ</label><input type="text" id="empCnpj" placeholder="00.000.000/0000-00"></div>
+                    </div>
+                    <div class="row form-group">
+                        <div class="col"><label>Telefone / WhatsApp</label><input type="text" id="empTelefone" placeholder="(00) 00000-0000"></div>
+                        <div class="col" style="flex: 2;"><label>Endereço Completo</label><input type="text" id="empEndereco" placeholder="Rua X, 123 - Centro - Cidade/UF"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Logomarca da Empresa</label>
+                        <input type="file" id="empLogoUpload" accept="image/*" style="padding: 5px; border: 1px solid #7f8c8d; background: #ecf0f1; border-radius: 4px;">
+                        <img id="previewLogoEmpresa" src="" alt="Sua Logo">
+                    </div>
+                    <button type="submit" class="btn-primary" style="background-color: #27ae60; padding: 10px;">💾 Salvar Dados da Empresa</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="container">
+            <h2>Gestão e Backups</h2>
+            <div class="row" style="margin-top: 20px;">
+                <div class="col"><button class="btn-primary" style="background-color: #2980b9;" onclick="fazerBackupLocal()">📥 1. Baixar Backup (PC)</button></div>
+                <div class="col"><button class="btn-primary" style="background-color: #8e44ad;" onclick="fazerBackupNuvem()">☁️ 2. Salvar na Nuvem</button></div>
             </div>
-            <hr style="border-color: #7f8c8d; margin: 40px 0;">
+            <hr style="border-color: #7f8c8d; margin: 30px 0;">
             <h3 style="color: #e74c3c;">Restauração de Sistema</h3>
-            <input type="file" id="arquivoRestore" accept=".json" style="margin-bottom: 15px;">
-            <button class="btn-danger" style="padding: 12px;" onclick="restaurarBackupLocal()">⚠️ RESTAURAR SISTEMA A PARTIR DO ARQUIVO SELECIONADO</button>
+            <input type="file" id="arquivoRestore" accept=".json" style="margin-bottom: 10px; padding: 5px; background: #ecf0f1; border-radius: 4px;">
+            <button class="btn-danger" style="padding: 10px; font-size: 13px;" onclick="restaurarBackupLocal()">⚠️ RESTAURAR DE ARQUIVO</button>
         </div>
     </div>
 
@@ -719,6 +880,7 @@
     let clientesGlobais = [];
     let produtosGlobais = [];
     let caixaGlobal = []; 
+    let empresaGlobal = { nome: "Minha Empresa", cnpj: "", telefone: "", endereco: "", logo: "" }; // Padrão
     
     let carrinhoVenda = []; 
     let carrinhoOS = []; 
@@ -767,6 +929,12 @@
         document.getElementById('appMainContent').style.display = 'none';
         document.getElementById('telaAssinaturaRemota').style.display = 'flex';
         
+        // Puxar a logo da empresa (se houver) para a tela de assinatura
+        onValue(ref(db, 'empresa'), function(s) {
+            const emp = s.val();
+            if(emp && emp.logo) document.getElementById('logoAssinaturaRemota').src = emp.logo;
+        });
+
         get(ref(db, 'caixa/' + linkAssinaturaRemota_ID)).then(function(snapshot) {
             const docCaixa = snapshot.val();
             if (docCaixa) {
@@ -790,7 +958,7 @@
     let ctxRemoto; let desenhandoRemoto = false;
     function iniciarCanvasRemoto() {
         const cRemoto = document.getElementById('assinaturaCanvasRemota'); const caixaPaiRemoto = cRemoto.parentElement;
-        cRemoto.width = caixaPaiRemoto.clientWidth - 4; cRemoto.height = 250;
+        cRemoto.width = caixaPaiRemoto.clientWidth - 4; cRemoto.height = 200;
         ctxRemoto = cRemoto.getContext('2d'); ctxRemoto.lineWidth = 3; ctxRemoto.lineCap = 'round'; ctxRemoto.strokeStyle = '#2c3e50';
         const comecarDesenho = function(e) { desenhandoRemoto = true; desenhar(e); }; const pararDesenho = function() { desenhandoRemoto = false; ctxRemoto.beginPath(); };
         const desenhar = function(e) { 
@@ -821,11 +989,57 @@
     
     if (!codigoAssinar) {
         
+        // --- 0. DADOS DA EMPRESA (CONFIG) ---
+        onValue(ref(db, 'empresa'), function(snapshot) {
+            const dados = snapshot.val();
+            if (dados) { 
+                empresaGlobal = dados; 
+                document.getElementById('empNome').value = dados.nome || '';
+                document.getElementById('empCnpj').value = dados.cnpj || '';
+                document.getElementById('empTelefone').value = dados.telefone || '';
+                document.getElementById('empEndereco').value = dados.endereco || '';
+                
+                if(dados.logo) {
+                    document.getElementById('previewLogoEmpresa').src = dados.logo;
+                    document.getElementById('previewLogoEmpresa').style.display = 'block';
+                    document.getElementById('logoSidebar').src = dados.logo; // Atualiza a logo do menu
+                }
+            }
+        });
+
+        document.getElementById('empLogoUpload').addEventListener('change', e => {
+            const f = e.target.files; 
+            if (f && f) { 
+                const r = new FileReader(); 
+                r.onload = ev => { 
+                    empresaGlobal.logo = ev.target.result; 
+                    document.getElementById('previewLogoEmpresa').src = ev.target.result; 
+                    document.getElementById('previewLogoEmpresa').style.display = 'block'; 
+                }; 
+                r.readAsDataURL(f); 
+            }
+        });
+
+        document.getElementById('formEmpresa').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const d = {
+                nome: document.getElementById('empNome').value,
+                cnpj: document.getElementById('empCnpj').value,
+                telefone: document.getElementById('empTelefone').value,
+                endereco: document.getElementById('empEndereco').value,
+                logo: empresaGlobal.logo || ''
+            };
+            set(ref(db, 'empresa'), d).then(() => alert('Dados da Empresa salvos com sucesso!')).catch(e => alert("Erro: " + e));
+        });
+
+
         // --- 1. CLIENTES ---
         const formatarMascara = function(id, regra) { const campo = document.getElementById(id); if (campo) { campo.addEventListener('input', function() { this.value = regra(this.value); }); } }
         formatarMascara('cpf', v => { v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); return v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); });
         formatarMascara('cnpj', v => { v = v.replace(/\D/g, ''); if (v.length > 14) v = v.slice(0, 14); return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2'); });
+        formatarMascara('empCnpj', v => { v = v.replace(/\D/g, ''); if (v.length > 14) v = v.slice(0, 14); return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2'); });
         formatarMascara('telefone', v => { v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2'); });
+        formatarMascara('empTelefone', v => { v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2'); });
         formatarMascara('cep', v => { v = v.replace(/\D/g, ''); if (v.length > 8) v = v.slice(0, 8); return v.replace(/^(\d{5})(\d)/, '$1-$2'); });
         
         onValue(ref(db, 'clientes'), function(snapshot) {
@@ -844,8 +1058,13 @@
             document.getElementById('infoPaginaCli').innerText = `Pág ${paginaAtualCli} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaCli))}`;
             pag.forEach(c => {
                 const tr = document.createElement('tr'); const doc = c.cpf ? c.cpf : (c.cnpj || '-');
-                tr.innerHTML = `<td>${c.nome}</td><td>${doc}</td><td>${c.telefone || '-'}</td><td>${c.cidade || '-'}</td>
-                    <td class="acoes-flex"><button class="btn-ver" onclick="verCliente('${c.id}')">🔍</button><button class="btn-secundario" style="padding: 5px 10px;" onclick="editarCli('${c.id}')">Editar</button><button class="btn-danger" style="padding: 5px 10px;" onclick="excluirCli('${c.id}')">X</button></td>`;
+                // Colocando os dados em negrito como solicitado
+                tr.innerHTML = `<td style="font-weight: bold;">${c.nome}</td><td style="font-weight: bold;">${doc}</td><td style="font-weight: bold;">${c.telefone || '-'}</td><td style="font-weight: bold;">${c.cidade || '-'}</td>
+                    <td class="acoes-flex">
+                        <button class="btn-acao" onclick="verCliente('${c.id}')" title="Ver Cliente">🔍 Ver</button>
+                        <button class="btn-acao edit" onclick="editarCli('${c.id}')" title="Editar Cliente">✏️ Ed</button>
+                        <button class="btn-acao del" onclick="excluirCli('${c.id}')" title="Excluir Cliente">🗑️</button>
+                    </td>`;
                 tab.appendChild(tr);
             });
         }
@@ -876,28 +1095,45 @@
         });
 
         window.filtrarProdutos = function() { termoBuscaProd = document.getElementById('buscaProduto').value.toLowerCase(); paginaAtualProd = 1; renderizarTabelaEstoque(); }
-        window.mudarPaginaProd = function(direcao) { const f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd)); const max = Math.ceil(f.length / itensPorPaginaProd); if (paginaAtualProd + direcao >= 1 && paginaAtualProd + direcao <= max) { paginaAtualProd += direcao; renderizarTabelaEstoque(); } }
+        window.mudarPaginaProd = function(direcao) { const f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd))); const max = Math.ceil(f.length / itensPorPaginaProd); if (paginaAtualProd + direcao >= 1 && paginaAtualProd + direcao <= max) { paginaAtualProd += direcao; renderizarTabelaEstoque(); } }
 
         function renderizarTabelaEstoque() {
             const tab = document.getElementById('tabelaEstoque'); tab.innerHTML = '';
-            let f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)));
+            let f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd)));
             const pag = f.slice((paginaAtualProd - 1) * itensPorPaginaProd, ((paginaAtualProd - 1) * itensPorPaginaProd) + itensPorPaginaProd);
             document.getElementById('infoPaginaProd').innerText = `Pág ${paginaAtualProd} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaProd))}`;
             pag.forEach(p => {
-                let img = p.foto ? `<img src="${p.foto}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">` : '-';
+                let img = p.foto ? `<img src="${p.foto}" style="width:30px;height:30px;border-radius:4px;object-fit:cover;">` : '-';
                 let alert = ((p.quantidade || 0) <= 3) ? 'linha-alerta' : '';
                 const tr = document.createElement('tr'); tr.className = alert;
-                tr.innerHTML = `<td>${img}</td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#f1c40f;color:#2c3e50;padding:3px 6px;border-radius:4px;font-size:11px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:16px;">${p.quantidade || 0}</td><td>R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td><td class="acoes-flex"><button class="btn-secundario" style="padding:5px 10px;" onclick="editarProd('${p.id}')">Editar</button><button class="btn-danger" style="padding:5px 10px;" onclick="excluirProd('${p.id}')">X</button></td>`;
+                // Destacando os dados do estoque também
+                tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#f1c40f;">${p.codigo || '-'}</td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
+                <td class="acoes-flex">
+                    <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️ Ed</button>
+                    <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
+                </td>`;
                 tab.appendChild(tr);
             });
         }
 
         document.getElementById('formProduto').addEventListener('submit', e => {
-            e.preventDefault(); const d = { nome: document.getElementById('prodNome').value, categoria: document.getElementById('prodCategoria').value, custo: document.getElementById('prodCusto').value, margem: document.getElementById('prodMargem').value, venda: document.getElementById('prodVenda').value, quantidade: parseInt(document.getElementById('prodQtd').value) || 0, foto: fotoBase64Atual };
+            e.preventDefault(); const d = { nome: document.getElementById('prodNome').value, codigo: document.getElementById('prodCodigo').value, categoria: document.getElementById('prodCategoria').value, custo: document.getElementById('prodCusto').value, margem: document.getElementById('prodMargem').value, venda: document.getElementById('prodVenda').value, quantidade: parseInt(document.getElementById('prodQtd').value) || 0, foto: fotoBase64Atual };
             if (editandoProdId) { update(ref(db, 'produtos/' + editandoProdId), d).then(() => cancelarEdicaoProd()); } else { set(push(ref(db, 'produtos')), d).then(() => { document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; }); }
         });
 
-        window.editarProd = function(id) { const p = produtosGlobais.find(x => x.id === id); if(!p) return; ['nome','categoria','custo','margem','venda','qtd'].forEach(k => { if(document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1))) document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1)).value = p[k] || p['quantidade'] || 0; }); fotoBase64Atual = p.foto || ""; editandoProdId = id; document.getElementById('tituloProduto').innerText = "Editando Produto"; document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; document.getElementById('btnCancelarProd').style.display = "inline-block"; window.scrollTo(0,0); }
+        window.editarProd = function(id) { 
+            const p = produtosGlobais.find(x => x.id === id); 
+            if(!p) return; 
+            ['nome','codigo','categoria','custo','margem','venda','qtd'].forEach(k => { 
+                let campo = document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1));
+                if(campo) {
+                    if (k === 'qtd') campo.value = p.quantidade || 0;
+                    else if (k === 'codigo') campo.value = p.codigo || '';
+                    else campo.value = p[k] || 0;
+                }
+            }); 
+            fotoBase64Atual = p.foto || ""; editandoProdId = id; document.getElementById('tituloProduto').innerText = "Editando Produto"; document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; document.getElementById('btnCancelarProd').style.display = "inline-block"; window.scrollTo(0,0); 
+        }
         window.cancelarEdicaoProd = function() { editandoProdId = null; document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; document.getElementById('tituloProduto').innerText = "Cadastro de Produto"; document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; document.getElementById('btnCancelarProd').style.display = "none"; }
         window.excluirProd = function(id) { if(confirm("Excluir produto do estoque?")) remove(ref(db, 'produtos/' + id)); }
 
@@ -912,56 +1148,70 @@
         }
 
         function carregarSelectsGerais() {
-            const dVenda = document.getElementById('listaClientesNomesVenda'); 
-            const dOS = document.getElementById('listaClientesNomesOS'); 
-            if(dVenda) dVenda.innerHTML = ''; if(dOS) dOS.innerHTML = ''; 
+            const dCliVenda = document.getElementById('listaClientesNomesVenda'); 
+            const dCliOS = document.getElementById('listaClientesNomesOS'); 
+            if(dCliVenda) dCliVenda.innerHTML = ''; if(dCliOS) dCliOS.innerHTML = ''; 
             clientesGlobais.forEach(c => { 
-                if(dVenda) dVenda.innerHTML += `<option value="${c.nome}">`; 
-                if(dOS) dOS.innerHTML += `<option value="${c.nome}">`; 
+                if(dCliVenda) dCliVenda.innerHTML += `<option value="${c.nome}">`; 
+                if(dCliOS) dCliOS.innerHTML += `<option value="${c.nome}">`; 
             });
             
-            const sVenda = document.getElementById('vendaProdutoEstoque'); 
-            const sOS = document.getElementById('osProdutoEstoque'); 
-            if(sVenda) sVenda.innerHTML = '<option value="">Selecione uma Mercadoria...</option>'; 
-            if(sOS) sOS.innerHTML = '<option value="">Selecione um Material...</option>'; 
+            const dProdVenda = document.getElementById('listaProdutosEstoqueVenda'); 
+            const dProdOS = document.getElementById('listaProdutosEstoqueOS'); 
+            if(dProdVenda) dProdVenda.innerHTML = ''; if(dProdOS) dProdOS.innerHTML = ''; 
             produtosGlobais.forEach(p => { 
-                let txt = `<option value="${p.id}">${p.nome} - R$ ${parseFloat(p.venda).toFixed(2)} (Estoque: ${p.quantidade || 0})</option>`;
-                if(sVenda) sVenda.innerHTML += txt; if(sOS) sOS.innerHTML += txt; 
+                let codTxt = p.codigo ? `[${p.codigo}] ` : '';
+                let opt = `<option value="${p.nome}">${codTxt}R$ ${parseFloat(p.venda).toFixed(2)} (Estoque: ${p.quantidade || 0})</option>`;
+                if(dProdVenda) dProdVenda.innerHTML += opt; 
+                if(dProdOS) dProdOS.innerHTML += opt; 
             });
         }
 
 
         // --- 3. VENDAS NORMAIS ---
-        window.addAoCarrinhoEstoque = function() {
-            const id = document.getElementById('vendaProdutoEstoque').value; const qtd = parseInt(document.getElementById('vendaProdutoQtd').value) || 1;
-            if (!id) return; const p = produtosGlobais.find(x => x.id === id);
-            carrinhoVenda.push({ idProd: p.id, nome: `${p.nome} (Qtd: ${qtd})`, valor: parseFloat(p.venda) * qtd, qtdBaixa: qtd, ehEstoque: true });
-            document.getElementById('vendaProdutoQtd').value = 1; atualizarCarrinhoVenda();
+        window.addAoCarrinhoVenda_Estoque = function() {
+            const n = document.getElementById('vendaProdutoEstoqueBusca').value; 
+            const qtd = parseInt(document.getElementById('vendaProdutoQtd').value) || 1;
+            if (!n) return; 
+            
+            const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
+            if (!p) return alert("Produto não encontrado. Para lançar produto avulso, use a opção 'Item Avulso' abaixo.");
+            
+            carrinhoVenda.push({ idProd: p.id, nome: `${p.nome} (Qtd: ${qtd})`, valor: parseFloat(p.venda) * qtd, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material' });
+            document.getElementById('vendaProdutoEstoqueBusca').value = '';
+            document.getElementById('vendaProdutoQtd').value = 1; 
+            atualizarCarrinhoVenda();
         }
-        window.addAoCarrinhoAvulso = function() {
+
+        window.addAoCarrinhoVenda_Avulso = function() {
             const n = document.getElementById('vendaAvulsoNome').value; const v = parseFloat(document.getElementById('vendaAvulsoValor').value); const perc = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
             if (!n || isNaN(v)) return alert("Preencha Nome e Valor.");
-            carrinhoVenda.push({ nome: perc > 0 ? `${n} (+${perc}% tx)` : n, valor: v + (v * (perc / 100)), ehEstoque: false });
+            carrinhoVenda.push({ nome: perc > 0 ? `${n} (+${perc}% tx)` : n, valor: v + (v * (perc / 100)), ehEstoque: false, categoriaOS: 'material' });
             document.getElementById('vendaAvulsoNome').value = ''; document.getElementById('vendaAvulsoValor').value = ''; document.getElementById('vendaAvulsoPerc').value = '0'; atualizarCarrinhoVenda();
         }
         window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); atualizarCarrinhoVenda(); }
+        
         function atualizarCarrinhoVenda() {
             const div = document.getElementById('listaCarrinho'); div.innerHTML = ''; let t = 0;
             if (carrinhoVenda.length === 0) { div.innerHTML = 'Nenhum item adicionado no momento.'; } else {
-                carrinhoVenda.forEach((item, i) => { t += item.valor; div.innerHTML += `<div class="cart-item"><span>${item.nome}</span><span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:4px 8px;margin-left:15px;" onclick="removerDoCarrinhoVenda(${i})">X</button></span></div>`; });
+                carrinhoVenda.forEach((item, i) => { t += item.valor; div.innerHTML += `<div class="cart-item"><span>${item.nome}</span><span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:2px 6px;margin-left:10px;" onclick="removerDoCarrinhoVenda(${i})">X</button></span></div>`; });
             }
             document.getElementById('vendaTotal').innerText = `TOTAL GERAL: R$ ${t.toFixed(2)}`;
         }
         
         window.finalizarVenda = async function() {
             const os = parseInt(document.getElementById('vendaOS').value); const v = document.getElementById('vendaVencimento').value; const n = document.getElementById('vendaClienteBusca').value; 
-            if (!v || !n || carrinhoVenda.length === 0) return alert("Preencha Vencimento, Cliente e coloque itens no carrinho."); 
-            const cli = clientesGlobais.find(c => c.nome === n); if (!cli) return alert("Cliente não encontrado.");
+            if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
+            
+            let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
+            let cId = cli ? cli.id : 'avulso';
+            let cNome = cli ? cli.nome : n;
+
             const total = carrinhoVenda.reduce((acc, item) => acc + item.valor, 0);
 
             const doc = { 
                 tipo: 'VENDA', os: os, vencimento: v, dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(), 
-                clienteId: cli.id, clienteNome: cli.nome, itens: carrinhoVenda, total: total, assinaturaBase64: null 
+                clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total, assinaturaBase64: null 
             };
 
             try {
@@ -983,50 +1233,139 @@
             if (f) { const r = new FileReader(); r.onload = ev => { fotoAtualOS_Base64 = ev.target.result; document.getElementById('previewFotoOS').src = fotoAtualOS_Base64; document.getElementById('previewFotoOS').style.display = 'block'; }; r.readAsDataURL(f); } 
         });
 
-        document.getElementById('osKm').addEventListener('input', calcularDeslocamentoOS);
+        document.getElementById('osKmInicial').addEventListener('input', calcularDeslocamentoOS);
+        document.getElementById('osKmFinal').addEventListener('input', calcularDeslocamentoOS);
         document.getElementById('osValorKm').addEventListener('input', calcularDeslocamentoOS);
+        
         function calcularDeslocamentoOS() {
-            let km = parseFloat(document.getElementById('osKm').value) || 0; let val = parseFloat(document.getElementById('osValorKm').value) || 0;
-            document.getElementById('osCustoKmTotal').value = `R$ ${(km * val).toFixed(2)}`; atualizarCarrinhoOS(); 
+            let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
+            let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
+            let kmTotal = kmFin > kmIni ? (kmFin - kmIni) : 0;
+            let val = parseFloat(document.getElementById('osValorKm').value) || 0;
+            
+            document.getElementById('osCustoKmTotal').value = `R$ ${(kmTotal * val).toFixed(2)}`; 
+            atualizarCarrinhoOS(); 
+        }
+
+        window.preencherValorEstoqueOS = function() {
+            const n = document.getElementById('osProdutoEstoqueBusca').value;
+            const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
+            if(p) {
+                document.getElementById('osEstoqueValUn').value = parseFloat(p.venda).toFixed(2);
+                calcTotalEstoqueOS();
+            } else {
+                document.getElementById('osEstoqueValUn').value = '';
+                document.getElementById('osEstoqueTotal').value = '';
+            }
+        }
+
+        window.calcTotalEstoqueOS = function() {
+            let valUn = parseFloat(document.getElementById('osEstoqueValUn').value) || 0;
+            let qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
+            let perc = parseFloat(document.getElementById('osEstoquePerc').value) || 0;
+            let total = valUn * qtd;
+            total = total + (total * (perc / 100));
+            document.getElementById('osEstoqueTotal').value = total.toFixed(2);
+        }
+
+        window.calcTotalExternoOS = function() {
+            let valUn = parseFloat(document.getElementById('osMatExternoValor').value) || 0;
+            let qtd = parseInt(document.getElementById('osMatExternoQtd').value) || 1;
+            let perc = parseFloat(document.getElementById('osMatExternoPerc').value) || 0;
+            let total = valUn * qtd;
+            total = total + (total * (perc / 100));
+            document.getElementById('osMatExternoTotal').value = total.toFixed(2);
         }
 
         window.addAoCarrinhoOS_Estoque = function() {
-            const id = document.getElementById('osProdutoEstoque').value; const qtd = parseInt(document.getElementById('osProdutoQtd').value) || 1;
-            if (!id) return; const p = produtosGlobais.find(x => x.id === id);
-            carrinhoOS.push({ idProd: p.id, nome: `[Mat] ${p.nome} (Qtd: ${qtd})`, valor: parseFloat(p.venda) * qtd, qtdBaixa: qtd, ehEstoque: true });
-            document.getElementById('osProdutoQtd').value = 1; atualizarCarrinhoOS();
+            const n = document.getElementById('osProdutoEstoqueBusca').value; 
+            const qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
+            const perc = parseFloat(document.getElementById('osEstoquePerc').value) || 0;
+            const valTotal = parseFloat(document.getElementById('osEstoqueTotal').value);
+
+            if (!n || isNaN(valTotal)) return alert("Selecione um produto do estoque válido.");
+            
+            const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
+            if (!p) return alert("Produto não encontrado no estoque! Use o campo 'Material Externo' logo abaixo.");
+            
+            let extraTxt = perc > 0 ? ` (+${perc}%)` : '';
+            carrinhoOS.push({ idProd: p.id, nome: `[Estoque] ${p.nome} (Qtd: ${qtd})${extraTxt}`, valor: valTotal, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material' });
+            
+            document.getElementById('osProdutoEstoqueBusca').value = '';
+            document.getElementById('osEstoqueValUn').value = '';
+            document.getElementById('osEstoqueQtd').value = 1;
+            document.getElementById('osEstoquePerc').value = 0;
+            document.getElementById('osEstoqueTotal').value = '';
+            atualizarCarrinhoOS();
         }
+
+        window.addAoCarrinhoOS_Externo = function() {
+            const n = document.getElementById('osMatExternoNome').value; 
+            const qtd = parseInt(document.getElementById('osMatExternoQtd').value) || 1;
+            const perc = parseFloat(document.getElementById('osMatExternoPerc').value) || 0;
+            const valTotal = parseFloat(document.getElementById('osMatExternoTotal').value);
+
+            if (!n || isNaN(valTotal) || valTotal === 0) return alert("Preencha o Nome e Valor da Compra Externa.");
+            
+            let extraTxt = perc > 0 ? ` (+${perc}%)` : '';
+            carrinhoOS.push({ nome: `[Externo] ${n} (Qtd: ${qtd})${extraTxt}`, valor: valTotal, ehEstoque: false, categoriaOS: 'material' });
+            
+            document.getElementById('osMatExternoNome').value = ''; 
+            document.getElementById('osMatExternoValor').value = ''; 
+            document.getElementById('osMatExternoQtd').value = 1;
+            document.getElementById('osMatExternoPerc').value = 0;
+            document.getElementById('osMatExternoTotal').value = '';
+            atualizarCarrinhoOS();
+        }
+
         window.addAoCarrinhoOS_Avulso = function() {
-            const n = document.getElementById('osMaoDeObraDesc').value; const v = parseFloat(document.getElementById('osMaoDeObraValor').value);
-            if (!n || isNaN(v)) return alert("Preencha Serviço e Valor.");
-            carrinhoOS.push({ nome: `[Serv] ${n}`, valor: v, ehEstoque: false });
-            document.getElementById('osMaoDeObraDesc').value = ''; document.getElementById('osMaoDeObraValor').value = ''; atualizarCarrinhoOS();
+            const n = document.getElementById('osMaoDeObraDesc').value; 
+            const v = parseFloat(document.getElementById('osMaoDeObraValor').value);
+            if (!n || isNaN(v)) return alert("Preencha a descrição do Serviço e o Valor.");
+            
+            carrinhoOS.push({ nome: `[Serviço] ${n}`, valor: v, ehEstoque: false, categoriaOS: 'servico' });
+            document.getElementById('osMaoDeObraDesc').value = ''; 
+            document.getElementById('osMaoDeObraValor').value = ''; 
+            atualizarCarrinhoOS();
         }
+
         window.removerDoCarrinhoOS = function(idx) { carrinhoOS.splice(idx, 1); atualizarCarrinhoOS(); }
 
         function atualizarCarrinhoOS() {
             const div = document.getElementById('listaCarrinhoOS'); div.innerHTML = ''; let tItens = 0;
             if (carrinhoOS.length === 0) { div.innerHTML = 'Nenhum material/serviço lançado.'; } else {
-                carrinhoOS.forEach((item, i) => { tItens += item.valor; div.innerHTML += `<div class="cart-item"><span>${item.nome}</span><span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:4px 8px;margin-left:15px;" onclick="removerDoCarrinhoOS(${i})">X</button></span></div>`; });
+                carrinhoOS.forEach((item, i) => { tItens += item.valor; div.innerHTML += `<div class="cart-item"><span>${item.nome}</span><span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:2px 6px;margin-left:10px;" onclick="removerDoCarrinhoOS(${i})">X</button></span></div>`; });
             }
-            let km = parseFloat(document.getElementById('osKm').value) || 0; let valKm = parseFloat(document.getElementById('osValorKm').value) || 0;
-            document.getElementById('osTotalGeral').innerText = `TOTAL DA OS: R$ ${(tItens + (km * valKm)).toFixed(2)}`;
+            
+            let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
+            let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
+            let km = kmFin > kmIni ? (kmFin - kmIni) : 0;
+            let valKm = parseFloat(document.getElementById('osValorKm').value) || 0;
+            
+            document.getElementById('osTotalGeral').innerText = `TOTAL OS: R$ ${(tItens + (km * valKm)).toFixed(2)}`;
         }
 
         window.salvarOrdemDeServico = async function() {
             const numOS = parseInt(document.getElementById('osNumero').value); const cliNome = document.getElementById('osClienteBusca').value; const venc = document.getElementById('osVencimento').value;
-            if (!cliNome || !venc) return alert("Preencha Cliente e Vencimento.");
-            const cli = clientesGlobais.find(c => c.nome === cliNome); if (!cli) return alert("Cliente não encontrado.");
+            if (!cliNome) return alert("Preencha o Cliente da OS.");
+            
+            let cli = clientesGlobais.find(c => c.nome.toLowerCase() === cliNome.toLowerCase());
+            let cId = cli ? cli.id : 'avulso';
+            let cNome = cli ? cli.nome : cliNome;
 
             let tItens = carrinhoOS.reduce((acc, i) => acc + i.valor, 0);
-            let tKm = (parseFloat(document.getElementById('osKm').value) || 0) * (parseFloat(document.getElementById('osValorKm').value) || 0);
+            
+            let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
+            let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
+            let kTotal = kmFin > kmIni ? (kmFin - kmIni) : 0;
+            let tKm = kTotal * (parseFloat(document.getElementById('osValorKm').value) || 0);
 
             const docOS = {
                 tipo: 'ORDEM DE SERVIÇO', os: numOS, vencimento: venc, dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(),
-                clienteId: cli.id, clienteNome: cli.nome, funcionario: document.getElementById('osFuncionario').value || 'N/A',
+                clienteId: cId, clienteNome: cNome, funcionario: document.getElementById('osFuncionario').value || 'N/A',
                 equipe: document.getElementById('osEquipe').value || 'N/A', inicio: document.getElementById('osInicio').value || '',
                 fim: document.getElementById('osFim').value || '', pessoas: document.getElementById('osQtdPessoas').value || 1,
-                kmTotal: document.getElementById('osKm').value || 0, kmValor: document.getElementById('osValorKm').value || 0,
+                kmInicial: kmIni, kmFinal: kmFin, kmTotal: kTotal, kmValor: document.getElementById('osValorKm').value || 0,
                 kmCusto: tKm, itens: carrinhoOS, total: (tItens + tKm), fotoAnexo: fotoAtualOS_Base64, assinaturaBase64: null
             };
 
@@ -1041,16 +1380,19 @@
                 alert("OS salva! Estoque atualizado.");
                 carrinhoOS = []; atualizarCarrinhoOS(); 
                 ['osClienteBusca','osFuncionario','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value=''); 
-                document.getElementById('osKm').value='0'; fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
+                document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
+                fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
                 gerarProximoNumeroDoc('osNumero', 5000); carregarSelectsGerais(); 
             } catch(e) { alert("Erro ao salvar: " + e); }
         }
 
-        // --- GERADOR DE PDF (Tela de Criação) ---
+        // --- GERADOR DE PDF ---
         window.gerarPDFdaOS = function() {
-            // Reaproveita a função de histórico criando um objeto virtual
             let valKm = parseFloat(document.getElementById('osValorKm').value) || 0;
-            let km = parseFloat(document.getElementById('osKm').value) || 0;
+            let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
+            let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
+            let km = kmFin > kmIni ? (kmFin - kmIni) : 0;
+            
             let objVirtual = {
                 os: document.getElementById('osNumero').value,
                 tipo: 'ORDEM DE SERVIÇO',
@@ -1060,7 +1402,7 @@
                 inicio: document.getElementById('osInicio').value,
                 fim: document.getElementById('osFim').value,
                 pessoas: document.getElementById('osQtdPessoas').value,
-                kmTotal: km, kmValor: valKm, kmCusto: km * valKm,
+                kmInicial: kmIni, kmFinal: kmFin, kmTotal: km, kmValor: valKm, kmCusto: km * valKm,
                 itens: carrinhoOS, total: carrinhoOS.reduce((acc, i) => acc + i.valor, 0) + (km * valKm),
                 fotoAnexo: fotoAtualOS_Base64, dataStr: new Date().toLocaleString('pt-BR')
             };
@@ -1084,49 +1426,41 @@
 
             caixaGlobal.forEach(v => {
                 const tr = document.createElement('tr'); 
-                const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pendente</span>';
+                const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
                 let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
 
-                // Botão Whats
-                let acoesHtml = `<button class="btn-primary btn-whatsapp" style="margin:2px; padding: 5px 10px;" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
-                
-                // Botão Link Assinatura
+                // Apliquei os novos botões brancos com os mesmos ícones aqui também para manter o padrão
+                let acoesHtml = `<button class="btn-acao nota" onclick="window.open('https://emissores.sebrae.com.br/', '_blank')" title="Emitir NF-e">🧾 Nota</button>`;
+                acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
                 if (!v.assinaturaBase64) {
-                    acoesHtml += `<button class="btn-secundario" style="margin:2px; padding: 5px 10px; background-color: #34495e; color: #fff;" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
+                    acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
                 }
-
-                // NOVO: Botão PDF Espelho (Abre o OS para baixar/ver)
-                acoesHtml += `<button class="btn-ver" style="margin:2px; padding: 5px 10px;" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
-
-                // NOVO: Botão Cupom Térmico
-                acoesHtml += `<button class="btn-secundario" style="margin:2px; padding: 5px 10px; background-color: #f1c40f; color: #2c3e50;" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
-
-                // Botão Cancelar
-                acoesHtml += `<button class="btn-danger" style="margin:2px; padding: 5px 10px; background-color: #c0392b;" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️ Canc</button>`;
+                acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
+                acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
+                acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
 
                 let corTipo = v.tipo === 'VENDA' ? '#3498db' : '#f39c12';
 
                 tr.innerHTML = `
                     <td style="font-weight: bold; color: #f1c40f;">${v.os || '-'}</td>
-                    <td><span style="background-color: ${corTipo}; color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${v.tipo || 'VENDA'}</span></td>
-                    <td>${v.dataStr.split(' ')}</td>
+                    <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${v.tipo === 'VENDA' ? 'VD' : 'OS'}</span></td>
+                    <td style="font-weight: bold;">${v.dataStr.split(' ')}</td>
                     <td style="font-weight: bold;">${v.clienteNome}</td>
-                    <td>${vencForm}</td>
+                    <td style="font-weight: bold;">${vencForm}</td>
                     <td style="color:#2ecc71; font-weight:bold;">R$ ${v.total.toFixed(2)}</td>
-                    <td style="font-size: 11px;">${temAss}</td>
+                    <td style="font-size: 11px; font-weight: bold;">${temAss}</td>
                     <td class="acoes-flex">${acoesHtml}</td>
                 `; 
                 tabela.appendChild(tr);
             });
         }
 
-        // --- FUNÇÃO PARA ABRIR O PDF DE QUALQUER VENDA/OS JÁ SALVA ---
+        // --- CONSTRUÇÃO DO PDF ---
         window.gerarPDF_Historico = function(id) {
             const doc = caixaGlobal.find(x => x.id === id);
             if(doc) construirPDF(doc);
         }
 
-        // O motor real que desenha o PDF em A4
         function construirPDF(doc) {
             const formataDataHora = (isoStr) => {
                 if(!isoStr || isoStr === 'Não informado' || isoStr === '') return "N/A";
@@ -1134,12 +1468,52 @@
                 return isNaN(d) ? isoStr : (d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}));
             };
 
-            let tabelaItens = '';
-            if(doc.itens && doc.itens.length > 0) {
-                doc.itens.forEach(i => {
-                    tabelaItens += `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;">${i.nome}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">R$ ${i.valor.toFixed(2)}</td></tr>`;
-                });
-            } else { tabelaItens = `<tr><td colspan="2" style="padding: 8px; text-align:center;">Nenhum item lançado.</td></tr>`; }
+            let htmlTabelas = '';
+
+            if (doc.tipo === 'ORDEM DE SERVIÇO') {
+                let matHtml = ''; let servHtml = '';
+                let totalMat = 0; let totalServ = 0;
+
+                if(doc.itens && doc.itens.length > 0) {
+                    doc.itens.forEach(i => {
+                        let tdHtml = `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;">${i.nome}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">R$ ${i.valor.toFixed(2)}</td></tr>`;
+                        if(i.categoriaOS === 'servico') { servHtml += tdHtml; totalServ += i.valor; } 
+                        else { matHtml += tdHtml; totalMat += i.valor; }
+                    });
+                }
+                
+                if(!matHtml) matHtml = `<tr><td colspan="2" style="padding: 8px; text-align:center;">Nenhum material lançado.</td></tr>`;
+                if(!servHtml) servHtml = `<tr><td colspan="2" style="padding: 8px; text-align:center;">Nenhum serviço lançado.</td></tr>`;
+
+                htmlTabelas = `
+                    <h3>4. MATERIAIS UTILIZADOS (ESTOQUE / COMPRA EXTERNA)</h3>
+                    <table>
+                        <thead><tr><th>Descrição do Material</th><th style="text-align: right;">Valor Parcial</th></tr></thead>
+                        <tbody>${matHtml}</tbody>
+                    </table>
+                    <div style="text-align:right; font-size:14px; font-weight:bold; margin-top:5px; margin-bottom:20px; color:#555;">Subtotal Materiais: R$ ${totalMat.toFixed(2)}</div>
+
+                    <h3>5. MÃO DE OBRA / SERVIÇOS EXECUTADOS</h3>
+                    <table>
+                        <thead><tr><th>Descrição do Serviço</th><th style="text-align: right;">Valor Parcial</th></tr></thead>
+                        <tbody>${servHtml}</tbody>
+                    </table>
+                    <div style="text-align:right; font-size:14px; font-weight:bold; margin-top:5px; color:#555;">Subtotal Serviços: R$ ${totalServ.toFixed(2)}</div>
+                `;
+            } else {
+                let todosHtml = '';
+                if(doc.itens && doc.itens.length > 0) {
+                    doc.itens.forEach(i => { todosHtml += `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;">${i.nome}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+                } else { todosHtml = `<tr><td colspan="2" style="padding: 8px; text-align:center;">Nenhum item lançado.</td></tr>`; }
+
+                htmlTabelas = `
+                    <h3>2. PRODUTOS / ITENS DA VENDA</h3>
+                    <table>
+                        <thead><tr><th>Descrição do Item</th><th style="text-align: right;">Valor Parcial</th></tr></thead>
+                        <tbody>${todosHtml}</tbody>
+                    </table>
+                `;
+            }
 
             let fotoHTML = '';
             if (doc.fotoAnexo) {
@@ -1153,7 +1527,6 @@
                 assinaturaHTML = `<div class="assinatura-box"><div class="linha-ass"></div><p>Assinatura do Responsável/Cliente</p></div>`;
             }
 
-            // Exibe o bloco de OS apenas se for do tipo OS
             let blocoOS = '';
             if(doc.tipo === 'ORDEM DE SERVIÇO') {
                 blocoOS = `
@@ -1164,12 +1537,22 @@
                     </div>
                     <h3>3. DESLOCAMENTO (KM)</h3>
                     <div class="bloco">
-                        <div class="item"><strong>Rodado:</strong> ${doc.kmTotal || 0} km</div>
+                        <div class="item"><strong>KM Inicial:</strong> ${doc.kmInicial || 0}</div>
+                        <div class="item"><strong>KM Final:</strong> ${doc.kmFinal || 0}</div>
+                        <div class="item"><strong>Total Rodado:</strong> ${doc.kmTotal || 0} km</div>
                         <div class="item"><strong>Valor P/ Km:</strong> R$ ${parseFloat(doc.kmValor||0).toFixed(2)}</div>
                         <div style="width: 100%; margin-top: 5px; color: #555;"><strong>Custo Total Deslocamento:</strong> R$ ${parseFloat(doc.kmCusto||0).toFixed(2)}</div>
                     </div>
                 `;
             }
+
+            // DADOS DA EMPRESA DINÂMICOS NO PDF
+            let logoHeader = empresaGlobal.logo ? `<img src="${empresaGlobal.logo}" style="max-height: 80px; margin-bottom: 10px;">` : '';
+            let endHeader = empresaGlobal.endereco ? `<div>${empresaGlobal.endereco}</div>` : '';
+            let cnpjeTel = [];
+            if(empresaGlobal.cnpj) cnpjeTel.push(`CNPJ: ${empresaGlobal.cnpj}`);
+            if(empresaGlobal.telefone) cnpjeTel.push(`Contato: ${empresaGlobal.telefone}`);
+            let contatosHeader = cnpjeTel.length > 0 ? `<div style="margin-top:5px; font-size:12px; color:#555;">${cnpjeTel.join(' | ')}</div>` : '';
 
             const htmlPDF = `
                 <html>
@@ -1177,22 +1560,30 @@
                     <title>Documento Nº ${doc.os}</title>
                     <style>
                         body { font-family: Arial, sans-serif; color: #333; line-height: 1.4; padding: 20px; }
-                        .cabecalho { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
-                        h1 { margin: 0; font-size: 24px; text-transform: uppercase; }
-                        h3 { background-color: #f4f4f4; padding: 5px; margin-top: 20px; border: 1px solid #ddd; }
-                        .bloco { display: flex; flex-wrap: wrap; margin-bottom: 10px; }
+                        .cabecalho-empresa { text-align: center; margin-bottom: 20px; }
+                        .cabecalho { text-align: center; border-bottom: 2px solid #333; border-top: 2px solid #333; padding: 10px 0; margin-bottom: 20px; background-color: #f9f9f9; }
+                        h1 { margin: 0; font-size: 20px; text-transform: uppercase; }
+                        h3 { background-color: #f4f4f4; padding: 5px; margin-top: 20px; border: 1px solid #ddd; font-size: 14px; }
+                        .bloco { display: flex; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; }
                         .item { width: 50%; margin-bottom: 5px; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
                         th { background-color: #eee; padding: 8px; text-align: left; border-bottom: 2px solid #ccc; }
-                        .totais { text-align: right; margin-top: 15px; font-size: 18px; font-weight: bold; }
+                        .totais { text-align: right; margin-top: 25px; font-size: 18px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px;}
                         .assinatura-box { margin-top: 50px; text-align: center; }
                         .linha-ass { width: 300px; border-top: 1px solid #000; margin: 0 auto 5px auto; }
                     </style>
                 </head>
                 <body>
+                    <div class="cabecalho-empresa">
+                        ${logoHeader}
+                        <div style="font-size: 18px; font-weight: bold; text-transform: uppercase;">${empresaGlobal.nome}</div>
+                        ${endHeader}
+                        ${contatosHeader}
+                    </div>
+
                     <div class="cabecalho">
                         <h1>ESPELHO DE ${doc.tipo}</h1>
-                        <p style="font-size: 18px; font-weight: bold; margin: 5px 0;">Doc Nº: ${doc.os}</p>
+                        <p style="font-size: 16px; font-weight: bold; margin: 5px 0;">Doc Nº: ${doc.os}</p>
                         <p style="font-size: 12px; margin: 0;">Lançado em: ${doc.dataStr}</p>
                     </div>
                     
@@ -1205,12 +1596,7 @@
                     </div>
 
                     ${blocoOS}
-
-                    <h3>${doc.tipo === 'ORDEM DE SERVIÇO' ? '4.' : '2.'} MATERIAIS UTILIZADOS E MÃO DE OBRA</h3>
-                    <table>
-                        <thead><tr><th>Descrição do Item/Serviço</th><th style="text-align: right;">Valor Parcial</th></tr></thead>
-                        <tbody>${tabelaItens}</tbody>
-                    </table>
+                    ${htmlTabelas}
 
                     <div class="totais">TOTAL GERAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
                     
@@ -1225,22 +1611,43 @@
             let j = window.open('', '', 'width=900,height=650'); j.document.write(htmlPDF); j.document.close();
         }
 
-        // --- FUNÇÃO PARA IMPRIMIR O CUPOM TÉRMICO (80mm) ---
+        // --- IMPRIMIR CUPOM TÉRMICO (80mm) COM DADOS DA EMPRESA ---
         window.imprimirCupom = function(id) {
             const doc = caixaGlobal.find(x => x.id === id);
             if(!doc) return;
 
             let itensHtml = '';
-            if(doc.itens) {
-                doc.itens.forEach(i => {
-                    itensHtml += `<tr><td style="padding-bottom:5px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`;
-                });
+
+            if(doc.tipo === 'ORDEM DE SERVIÇO') {
+                let mats = doc.itens ? doc.itens.filter(i => i.categoriaOS !== 'servico') : [];
+                let servs = doc.itens ? doc.itens.filter(i => i.categoriaOS === 'servico') : [];
+                
+                if (mats.length > 0) {
+                    itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MATERIAIS --</td></tr>`;
+                    mats.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+                }
+
+                if (servs.length > 0) {
+                    itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MAO DE OBRA --</td></tr>`;
+                    servs.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+                }
+
+                if(doc.kmCusto > 0) {
+                    itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- DESLOCAMENTO --</td></tr>`;
+                    itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${doc.kmTotal} km rodados</td><td style="text-align:right;">R$ ${doc.kmCusto.toFixed(2)}</td></tr>`;
+                }
+
+            } else { 
+                if(doc.itens) doc.itens.forEach(i => { itensHtml += `<tr><td style="padding-bottom:5px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
             }
 
-            // Se for OS e tiver Deslocamento
-            if(doc.tipo === 'ORDEM DE SERVIÇO' && doc.kmCusto > 0) {
-                itensHtml += `<tr><td style="padding-bottom:5px; padding-right: 5px;">[Serv] Deslocamento (${doc.kmTotal} km)</td><td style="text-align:right;">R$ ${doc.kmCusto.toFixed(2)}</td></tr>`;
-            }
+            // Cabeçalho da Empresa Dinâmico no Cupom
+            let logoCupom = empresaGlobal.logo ? `<div class="center"><img src="${empresaGlobal.logo}" style="max-height: 60px; margin-bottom: 5px;"></div>` : '';
+            let contatoCupom = [];
+            if(empresaGlobal.cnpj) contatoCupom.push(`CNPJ: ${empresaGlobal.cnpj}`);
+            if(empresaGlobal.telefone) contatoCupom.push(`Tel: ${empresaGlobal.telefone}`);
+            let cTxt = contatoCupom.length > 0 ? `<div class="center" style="font-size: 10px;">${contatoCupom.join(' | ')}</div>` : '';
+            let endCupom = empresaGlobal.endereco ? `<div class="center" style="font-size: 10px;">${empresaGlobal.endereco}</div>` : '';
 
             let htmlCupom = `
                 <html>
@@ -1256,7 +1663,11 @@
                     </style>
                 </head>
                 <body>
-                    <div class="center bold" style="font-size: 16px;">FH CONSTRUÇÕES</div>
+                    ${logoCupom}
+                    <div class="center bold" style="font-size: 14px; text-transform: uppercase;">${empresaGlobal.nome}</div>
+                    ${cTxt}
+                    ${endCupom}
+                    <div class="line"></div>
                     <div class="center">RECIBO / CUPOM NÃO FISCAL</div>
                     <div class="line"></div>
                     <div>Doc Nº: <span class="bold">${doc.os || 'S/N'}</span> (${doc.tipo})</div>
@@ -1328,7 +1739,7 @@
                 msg += `⚠️ Solicitamos por gentileza que confirme a ciência deste documento acessando o link seguro abaixo e realizando sua assinatura digital:\n\n${link}\n\n`;
             } else { msg += `✅ Documento confirmado com assinatura digital do cliente.\n\n`; }
 
-            msg += `Agradecemos a preferência! Equipe FH Construções.`;
+            msg += `Agradecemos a preferência! *${empresaGlobal.nome}*`;
             window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`, '_blank');
         }
 
