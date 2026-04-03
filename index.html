@@ -1430,7 +1430,7 @@
                 let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
 
                 // Apliquei os novos botões brancos com os mesmos ícones aqui também para manter o padrão
-                let acoesHtml = `<button class="btn-acao nota" onclick="window.open('https://emissores.sebrae.com.br/', '_blank')" title="Emitir NF-e">🧾 Nota</button>`;
+                let acoesHtml = `<button class="btn-acao nota" onclick="window.open('https://sebrae.com.br/sites/PortalSebrae/produtoseservicos/emissornfe', '_blank')" title="Emitir NF-e">🧾 Nota</button>`;
                 acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
                 if (!v.assinaturaBase64) {
                     acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
