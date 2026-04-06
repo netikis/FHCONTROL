@@ -198,7 +198,7 @@
         .btn-whatsapp { background-color: #25D366; color: #fff; }
         .btn-whatsapp:hover { background-color: #128C7E; }
 
-        /* --- BOTÕES MINIMALISTAS PARA AS TABELAS (ATUALIZADOS) --- */
+        /* --- BOTÕES MINIMALISTAS PARA AS TABELAS --- */
         .btn-acao {
             background-color: #ffffff;
             color: #000000;
@@ -809,7 +809,7 @@
                             <th>Vencimento</th>
                             <th>Total</th>
                             <th>Assinatura</th>
-                            <th style="min-width: 250px;">Ações</th>
+                            <th style="min-width: 350px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tabelaCaixa">
@@ -1009,7 +1009,7 @@
 
         document.getElementById('empLogoUpload').addEventListener('change', e => {
             const f = e.target.files; 
-            if (f && f) { 
+            if (f && f.length > 0) { 
                 const r = new FileReader(); 
                 r.onload = ev => { 
                     empresaGlobal.logo = ev.target.result; 
@@ -1087,7 +1087,7 @@
         let fotoBase64Atual = ""; 
         document.getElementById('prodMargem').addEventListener('input', calcularVenda); document.getElementById('prodCusto').addEventListener('input', calcularVenda);
         function calcularVenda() { let c = parseFloat(document.getElementById('prodCusto').value) || 0; let m = parseFloat(document.getElementById('prodMargem').value) || 0; document.getElementById('prodVenda').value = (c + (c * (m / 100))).toFixed(2); }
-        document.getElementById('prodFoto').addEventListener('change', e => { const f = e.target.files; if (f) { const r = new FileReader(); r.onload = ev => { fotoBase64Atual = ev.target.result; }; r.readAsDataURL(f); } });
+        document.getElementById('prodFoto').addEventListener('change', e => { const f = e.target.files; if (f && f.length > 0) { const r = new FileReader(); r.onload = ev => { fotoBase64Atual = ev.target.result; }; r.readAsDataURL(f); } });
 
         onValue(ref(db, 'produtos'), function(snapshot) {
             produtosGlobais = []; const d = snapshot.val(); if (d) { Object.keys(d).forEach(k => produtosGlobais.push({ id: k, ...d[k] })); }
@@ -1184,11 +1184,13 @@
         }
 
         window.addAoCarrinhoVenda_Avulso = function() {
+            window.addAoCarrinhoVenda_Avulso = function() {
             const n = document.getElementById('vendaAvulsoNome').value; const v = parseFloat(document.getElementById('vendaAvulsoValor').value); const perc = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
             if (!n || isNaN(v)) return alert("Preencha Nome e Valor.");
-            carrinhoVenda.push({ nome: perc > 0 ? `${n} (+${perc}% tx)` : n, valor: v + (v * (perc / 100)), ehEstoque: false, categoriaOS: 'material' });
+            carrinhoVenda.push({ nome: n, valor: v + (v * (perc / 100)), ehEstoque: false, categoriaOS: 'material' });
             document.getElementById('vendaAvulsoNome').value = ''; document.getElementById('vendaAvulsoValor').value = ''; document.getElementById('vendaAvulsoPerc').value = '0'; atualizarCarrinhoVenda();
         }
+
         window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); atualizarCarrinhoVenda(); }
         
         function atualizarCarrinhoVenda() {
@@ -1230,7 +1232,7 @@
         // --- 4. MÓDULO ORDEM DE SERVIÇO (OS) ---
         document.getElementById('osFotoUpload').addEventListener('change', e => { 
             const f = e.target.files; 
-            if (f) { const r = new FileReader(); r.onload = ev => { fotoAtualOS_Base64 = ev.target.result; document.getElementById('previewFotoOS').src = fotoAtualOS_Base64; document.getElementById('previewFotoOS').style.display = 'block'; }; r.readAsDataURL(f); } 
+            if (f && f.length > 0) { const r = new FileReader(); r.onload = ev => { fotoAtualOS_Base64 = ev.target.result; document.getElementById('previewFotoOS').src = fotoAtualOS_Base64; document.getElementById('previewFotoOS').style.display = 'block'; }; r.readAsDataURL(f); } 
         });
 
         document.getElementById('osKmInicial').addEventListener('input', calcularDeslocamentoOS);
@@ -1280,7 +1282,6 @@
         window.addAoCarrinhoOS_Estoque = function() {
             const n = document.getElementById('osProdutoEstoqueBusca').value; 
             const qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
-            const perc = parseFloat(document.getElementById('osEstoquePerc').value) || 0;
             const valTotal = parseFloat(document.getElementById('osEstoqueTotal').value);
 
             if (!n || isNaN(valTotal)) return alert("Selecione um produto do estoque válido.");
@@ -1288,8 +1289,7 @@
             const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
             if (!p) return alert("Produto não encontrado no estoque! Use o campo 'Material Externo' logo abaixo.");
             
-            let extraTxt = perc > 0 ? ` (+${perc}%)` : '';
-            carrinhoOS.push({ idProd: p.id, nome: `[Estoque] ${p.nome} (Qtd: ${qtd})${extraTxt}`, valor: valTotal, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material' });
+            carrinhoOS.push({ idProd: p.id, nome: `[Estoque] ${p.nome} (Qtd: ${qtd})`, valor: valTotal, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material' });
             
             document.getElementById('osProdutoEstoqueBusca').value = '';
             document.getElementById('osEstoqueValUn').value = '';
@@ -1302,13 +1302,11 @@
         window.addAoCarrinhoOS_Externo = function() {
             const n = document.getElementById('osMatExternoNome').value; 
             const qtd = parseInt(document.getElementById('osMatExternoQtd').value) || 1;
-            const perc = parseFloat(document.getElementById('osMatExternoPerc').value) || 0;
             const valTotal = parseFloat(document.getElementById('osMatExternoTotal').value);
 
             if (!n || isNaN(valTotal) || valTotal === 0) return alert("Preencha o Nome e Valor da Compra Externa.");
             
-            let extraTxt = perc > 0 ? ` (+${perc}%)` : '';
-            carrinhoOS.push({ nome: `[Externo] ${n} (Qtd: ${qtd})${extraTxt}`, valor: valTotal, ehEstoque: false, categoriaOS: 'material' });
+            carrinhoOS.push({ nome: `[Externo] ${n} (Qtd: ${qtd})`, valor: valTotal, ehEstoque: false, categoriaOS: 'material' });
             
             document.getElementById('osMatExternoNome').value = ''; 
             document.getElementById('osMatExternoValor').value = ''; 
@@ -1429,8 +1427,8 @@
                 const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
                 let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
 
-                // Apliquei os novos botões brancos com os mesmos ícones aqui também para manter o padrão
-                let acoesHtml = `<button class="btn-acao nota" onclick="window.open('https://sebrae.com.br/sites/PortalSebrae/produtoseservicos/emissornfe', '_blank')" title="Emitir NF-e">🧾 Nota</button>`;
+                let acoesHtml = `<button class="btn-acao nota" onclick="window.open('https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=5688dbb5-e022-4412-8c30-aef8fad8f24b&response_mode=fragment&response_type=code&scope=openid&nonce=a38a4d2f-7a43-4324-86e7-9aad256a98d7')" title="Emitir NFe Sebrae">🧾 NFe</button>`;
+                acoesHtml += `<button class="btn-acao nota" onclick="window.open('https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional', '_blank')" title="Emitir NFS-e Nacional">🧾 NFS-e</button>`;
                 acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
                 if (!v.assinaturaBase64) {
                     acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
@@ -1447,7 +1445,7 @@
                     <td style="font-weight: bold;">${v.dataStr.split(' ')}</td>
                     <td style="font-weight: bold;">${v.clienteNome}</td>
                     <td style="font-weight: bold;">${vencForm}</td>
-                    <td style="color:#2ecc71; font-weight:bold;">R$ ${v.total.toFixed(2)}</td>
+                    <td style="color:#2ecc71; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
                     <td style="font-size: 11px; font-weight: bold;">${temAss}</td>
                     <td class="acoes-flex">${acoesHtml}</td>
                 `; 
@@ -1463,152 +1461,202 @@
 
         function construirPDF(doc) {
             const formataDataHora = (isoStr) => {
-                if(!isoStr || isoStr === 'Não informado' || isoStr === '') return "N/A";
+                if(!isoStr || isoStr === 'Não informado' || isoStr === '') return "-";
                 let d = new Date(isoStr);
                 return isNaN(d) ? isoStr : (d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}));
             };
 
             let htmlTabelas = '';
+            let blocoDados = '';
 
+            // Construção das Tabelas e Blocos de Informação
             if (doc.tipo === 'ORDEM DE SERVIÇO') {
                 let matHtml = ''; let servHtml = '';
                 let totalMat = 0; let totalServ = 0;
 
                 if(doc.itens && doc.itens.length > 0) {
                     doc.itens.forEach(i => {
-                        let tdHtml = `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;">${i.nome}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">R$ ${i.valor.toFixed(2)}</td></tr>`;
+                        let tdHtml = `<tr><td>${i.nome}</td><td class="text-right">R$ ${i.valor.toFixed(2)}</td></tr>`;
                         if(i.categoriaOS === 'servico') { servHtml += tdHtml; totalServ += i.valor; } 
                         else { matHtml += tdHtml; totalMat += i.valor; }
                     });
                 }
                 
-                if(!matHtml) matHtml = `<tr><td colspan="2" style="padding: 8px; text-align:center;">Nenhum material lançado.</td></tr>`;
-                if(!servHtml) servHtml = `<tr><td colspan="2" style="padding: 8px; text-align:center;">Nenhum serviço lançado.</td></tr>`;
+                if(!matHtml) matHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum material lançado.</td></tr>`;
+                if(!servHtml) servHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum serviço lançado.</td></tr>`;
+
+                blocoDados = `
+                    <div class="info-card">
+                        <div class="card-title">DADOS DA ORDEM DE SERVIÇO</div>
+                        <div class="grid-3">
+                            <div><strong>Cliente:</strong><br>${doc.clienteNome}</div>
+                            <div><strong>Técnico:</strong><br>${doc.funcionario || 'Não informado'}</div>
+                            <div><strong>Equipe:</strong><br>${doc.equipe || 'Não informada'} (Pessoas: ${doc.pessoas || 1})</div>
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <div class="card-title">EXECUÇÃO E DESLOCAMENTO</div>
+                        <div class="grid-4">
+                            <div><strong>Início:</strong><br>${formataDataHora(doc.inicio)}</div>
+                            <div><strong>Término:</strong><br>${formataDataHora(doc.fim)}</div>
+                            <div><strong>Deslocamento:</strong><br>${doc.kmTotal || 0} km rodados</div>
+                            <div><strong>Custo Km:</strong><br>R$ ${parseFloat(doc.kmCusto||0).toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
 
                 htmlTabelas = `
-                    <h3>4. MATERIAIS UTILIZADOS (ESTOQUE / COMPRA EXTERNA)</h3>
-                    <table>
-                        <thead><tr><th>Descrição do Material</th><th style="text-align: right;">Valor Parcial</th></tr></thead>
-                        <tbody>${matHtml}</tbody>
-                    </table>
-                    <div style="text-align:right; font-size:14px; font-weight:bold; margin-top:5px; margin-bottom:20px; color:#555;">Subtotal Materiais: R$ ${totalMat.toFixed(2)}</div>
-
-                    <h3>5. MÃO DE OBRA / SERVIÇOS EXECUTADOS</h3>
-                    <table>
-                        <thead><tr><th>Descrição do Serviço</th><th style="text-align: right;">Valor Parcial</th></tr></thead>
-                        <tbody>${servHtml}</tbody>
-                    </table>
-                    <div style="text-align:right; font-size:14px; font-weight:bold; margin-top:5px; color:#555;">Subtotal Serviços: R$ ${totalServ.toFixed(2)}</div>
+                    <div class="tabelas-container">
+                        <div class="tabela-box">
+                            <div class="card-title">MATERIAIS E PEÇAS</div>
+                            <table class="tabela-bonita">
+                                <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
+                                <tbody>${matHtml}</tbody>
+                                <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalMat.toFixed(2)}</th></tr></tfoot>
+                            </table>
+                        </div>
+                        <div class="tabela-box">
+                            <div class="card-title">MÃO DE OBRA / SERVIÇOS</div>
+                            <table class="tabela-bonita">
+                                <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
+                                <tbody>${servHtml}</tbody>
+                                <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalServ.toFixed(2)}</th></tr></tfoot>
+                            </table>
+                        </div>
+                    </div>
                 `;
             } else {
                 let todosHtml = '';
                 if(doc.itens && doc.itens.length > 0) {
-                    doc.itens.forEach(i => { todosHtml += `<tr><td style="padding: 8px; border-bottom: 1px solid #ddd;">${i.nome}</td><td style="padding: 8px; border-bottom: 1px solid #ddd; text-align: right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
-                } else { todosHtml = `<tr><td colspan="2" style="padding: 8px; text-align:center;">Nenhum item lançado.</td></tr>`; }
+                    doc.itens.forEach(i => { todosHtml += `<tr><td>${i.nome}</td><td class="text-right" style="width: 120px;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+                } else { todosHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum item lançado.</td></tr>`; }
+
+                blocoDados = `
+                    <div class="info-card">
+                        <div class="card-title">DADOS DO CLIENTE</div>
+                        <div class="grid-2">
+                            <div><strong>Nome do Cliente:</strong><br>${doc.clienteNome}</div>
+                            <div><strong>Data de Emissão:</strong><br>${doc.dataStr}</div>
+                        </div>
+                    </div>
+                `;
 
                 htmlTabelas = `
-                    <h3>2. PRODUTOS / ITENS DA VENDA</h3>
-                    <table>
-                        <thead><tr><th>Descrição do Item</th><th style="text-align: right;">Valor Parcial</th></tr></thead>
-                        <tbody>${todosHtml}</tbody>
-                    </table>
-                `;
-            }
-
-            let fotoHTML = '';
-            if (doc.fotoAnexo) {
-                fotoHTML = `<div style="margin-top: 20px; text-align: center;"><h4 style="margin-bottom: 10px;">Registro Fotográfico</h4><img src="${doc.fotoAnexo}" style="max-width: 100%; max-height: 400px; border: 1px solid #333; border-radius: 4px;"></div>`;
-            }
-
-            let assinaturaHTML = '';
-            if (doc.assinaturaBase64) {
-                assinaturaHTML = `<div style="margin-top: 30px; text-align: center;"><p style="font-weight:bold; color: #27ae60;">Assinatura Digital Coletada:</p><img src="${doc.assinaturaBase64}" style="max-height: 120px; border-bottom: 1px solid #000;"><p style="font-size: 14px;">${doc.clienteNome}</p></div>`;
-            } else {
-                assinaturaHTML = `<div class="assinatura-box"><div class="linha-ass"></div><p>Assinatura do Responsável/Cliente</p></div>`;
-            }
-
-            let blocoOS = '';
-            if(doc.tipo === 'ORDEM DE SERVIÇO') {
-                blocoOS = `
-                    <h3>2. HORÁRIOS DA EXECUÇÃO</h3>
-                    <div class="bloco">
-                        <div class="item"><strong>Início do Serviço:</strong><br>${formataDataHora(doc.inicio)}</div>
-                        <div class="item"><strong>Término/Saída:</strong><br>${formataDataHora(doc.fim)}</div>
-                    </div>
-                    <h3>3. DESLOCAMENTO (KM)</h3>
-                    <div class="bloco">
-                        <div class="item"><strong>KM Inicial:</strong> ${doc.kmInicial || 0}</div>
-                        <div class="item"><strong>KM Final:</strong> ${doc.kmFinal || 0}</div>
-                        <div class="item"><strong>Total Rodado:</strong> ${doc.kmTotal || 0} km</div>
-                        <div class="item"><strong>Valor P/ Km:</strong> R$ ${parseFloat(doc.kmValor||0).toFixed(2)}</div>
-                        <div style="width: 100%; margin-top: 5px; color: #555;"><strong>Custo Total Deslocamento:</strong> R$ ${parseFloat(doc.kmCusto||0).toFixed(2)}</div>
+                    <div class="tabela-box" style="margin-top: 15px;">
+                        <div class="card-title">PRODUTOS / ITENS DA VENDA</div>
+                        <table class="tabela-bonita">
+                            <thead><tr><th>Descrição do Item</th><th class="text-right">Valor Parcial</th></tr></thead>
+                            <tbody>${todosHtml}</tbody>
+                        </table>
                     </div>
                 `;
             }
 
-            // DADOS DA EMPRESA DINÂMICOS NO PDF
-            let logoHeader = empresaGlobal.logo ? `<img src="${empresaGlobal.logo}" style="max-height: 80px; margin-bottom: 10px;">` : '';
-            let endHeader = empresaGlobal.endereco ? `<div>${empresaGlobal.endereco}</div>` : '';
+            // Tratamento de Imagens e Assinatura
+            let fotoHTML = doc.fotoAnexo ? `<div class="foto-box"><div class="card-title">REGISTRO FOTOGRÁFICO</div><img src="${doc.fotoAnexo}"></div>` : '';
+            
+            let assinaturaHTML = doc.assinaturaBase64 
+                ? `<div class="ass-box"><img src="${doc.assinaturaBase64}"><div class="ass-linha" style="color: #27ae60;">Assinatura Digital Confirmada</div><div class="ass-nome">${doc.clienteNome}</div></div>` 
+                : `<div class="ass-box" style="margin-top: 40px;"><div class="ass-linha">Assinatura do Cliente</div></div>`;
+
+            // Tratamento do Cabeçalho
+            let logoHeader = empresaGlobal.logo ? `<img src="${empresaGlobal.logo}" class="logo-img">` : `<div class="sem-logo">Sua Logo</div>`;
             let cnpjeTel = [];
             if(empresaGlobal.cnpj) cnpjeTel.push(`CNPJ: ${empresaGlobal.cnpj}`);
             if(empresaGlobal.telefone) cnpjeTel.push(`Contato: ${empresaGlobal.telefone}`);
-            let contatosHeader = cnpjeTel.length > 0 ? `<div style="margin-top:5px; font-size:12px; color:#555;">${cnpjeTel.join(' | ')}</div>` : '';
+            let contatosHeader = cnpjeTel.length > 0 ? cnpjeTel.join(' | ') : '';
 
             const htmlPDF = `
                 <html>
                 <head>
-                    <title>Documento Nº ${doc.os}</title>
+                    <title>Doc Nº ${doc.os}</title>
                     <style>
-                        body { font-family: Arial, sans-serif; color: #333; line-height: 1.4; padding: 20px; }
-                        .cabecalho-empresa { text-align: center; margin-bottom: 20px; }
-                        .cabecalho { text-align: center; border-bottom: 2px solid #333; border-top: 2px solid #333; padding: 10px 0; margin-bottom: 20px; background-color: #f9f9f9; }
-                        h1 { margin: 0; font-size: 20px; text-transform: uppercase; }
-                        h3 { background-color: #f4f4f4; padding: 5px; margin-top: 20px; border: 1px solid #ddd; font-size: 14px; }
-                        .bloco { display: flex; flex-wrap: wrap; margin-bottom: 10px; font-size: 13px; }
-                        .item { width: 50%; margin-bottom: 5px; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-                        th { background-color: #eee; padding: 8px; text-align: left; border-bottom: 2px solid #ccc; }
-                        .totais { text-align: right; margin-top: 25px; font-size: 18px; font-weight: bold; border-top: 2px solid #333; padding-top: 10px;}
-                        .assinatura-box { margin-top: 50px; text-align: center; }
-                        .linha-ass { width: 300px; border-top: 1px solid #000; margin: 0 auto 5px auto; }
+                        @page { size: A4; margin: 10mm; }
+                        body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; font-size: 11px; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        
+                        /* HEADER APRIMORADO */
+                        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #2c3e50; padding-bottom: 15px; margin-bottom: 15px; }
+                        .logo-container { width: 25%; text-align: left; }
+                        .logo-img { max-height: 65px; max-width: 100%; object-fit: contain; }
+                        .sem-logo { width: 60px; height: 60px; background: #ecf0f1; border: 1px dashed #bdc3c7; display: flex; align-items: center; justify-content: center; color: #95a5a6; font-weight: bold; border-radius: 4px; }
+                        .empresa-info { width: 45%; text-align: center; }
+                        .empresa-nome { font-size: 15px; font-weight: bold; color: #2c3e50; text-transform: uppercase; margin-bottom: 3px; }
+                        .empresa-detalhes { font-size: 10px; color: #555; }
+                        .doc-info { width: 30%; text-align: right; }
+                        .doc-tipo { font-size: 12px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
+                        .doc-numero { font-size: 20px; font-weight: 900; color: #e74c3c; margin: 4px 0; }
+                        
+                        /* CARDS DE INFORMAÇÃO */
+                        .info-card { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+                        .card-title { font-size: 10px; font-weight: 800; color: #34495e; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; letter-spacing: 0.5px; }
+                        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+                        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+                        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+                        
+                        /* TABELAS MODERNAS */
+                        .tabelas-container { display: flex; gap: 15px; margin-top: 15px; }
+                        .tabela-box { flex: 1; }
+                        .tabela-bonita { width: 100%; border-collapse: collapse; border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 1px #dee2e6; }
+                        .tabela-bonita th { background-color: #2c3e50; color: #ffffff; padding: 6px 8px; font-size: 10px; text-transform: uppercase; }
+                        .tabela-bonita td { padding: 6px 8px; border-bottom: 1px solid #e9ecef; }
+                        .tabela-bonita tbody tr:nth-child(even) { background-color: #f8f9fa; }
+                        .tabela-bonita tfoot th { background-color: #e9ecef; color: #2c3e50; font-size: 11px; border-top: 2px solid #ced4da; }
+                        
+                        /* UTILITÁRIOS */
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .text-muted { color: #6c757d; font-style: italic; }
+                        
+                        /* TOTAIS E FOTO */
+                        .total-destaque { background-color: #2c3e50; color: #f1c40f; font-size: 16px; font-weight: 900; text-align: right; padding: 10px 15px; margin-top: 15px; border-radius: 6px; }
+                        .foto-box { text-align: center; margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; }
+                        .foto-box img { max-height: 180px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+                        
+                        /* ASSINATURAS */
+                        .area-assinaturas { display: flex; justify-content: space-around; margin-top: 25px; align-items: flex-end; }
+                        .ass-box { text-align: center; width: 40%; }
+                        .ass-box img { max-height: 60px; margin-bottom: 5px; }
+                        .ass-linha { border-top: 1px solid #34495e; padding-top: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+                        .ass-nome { font-size: 11px; color: #555; margin-top: 2px; }
+                        
+                        .rodape { text-align: center; margin-top: 20px; font-size: 9px; color: #adb5bd; border-top: 1px dashed #dee2e6; padding-top: 8px; }
                     </style>
                 </head>
                 <body>
-                    <div class="cabecalho-empresa">
-                        ${logoHeader}
-                        <div style="font-size: 18px; font-weight: bold; text-transform: uppercase;">${empresaGlobal.nome}</div>
-                        ${endHeader}
-                        ${contatosHeader}
+                    <div class="header">
+                        <div class="logo-container">${logoHeader}</div>
+                        <div class="empresa-info">
+                            <div class="empresa-nome">${empresaGlobal.nome}</div>
+                            <div class="empresa-detalhes">${empresaGlobal.endereco}</div>
+                            <div class="empresa-detalhes">${contatosHeader}</div>
+                        </div>
+                        <div class="doc-info">
+                            <div class="doc-tipo">${doc.tipo === 'ORDEM DE SERVIÇO' ? 'ORDEM DE SERVIÇO' : 'RECIBO DE VENDA'}</div>
+                            <div class="doc-numero">Nº ${doc.os || 'S/N'}</div>
+                            <div style="font-size: 10px; color: #7f8c8d;">Emitido em: ${doc.dataStr.split(' ')}</div>
+                        </div>
                     </div>
 
-                    <div class="cabecalho">
-                        <h1>ESPELHO DE ${doc.tipo}</h1>
-                        <p style="font-size: 16px; font-weight: bold; margin: 5px 0;">Doc Nº: ${doc.os}</p>
-                        <p style="font-size: 12px; margin: 0;">Lançado em: ${doc.dataStr}</p>
-                    </div>
-                    
-                    <h3>1. DADOS BÁSICOS</h3>
-                    <div class="bloco">
-                        <div class="item"><strong>Cliente:</strong> ${doc.clienteNome}</div>
-                        <div class="item"><strong>Responsável Técnico:</strong> ${doc.funcionario || 'N/A'}</div>
-                        <div class="item"><strong>Equipe:</strong> ${doc.equipe || 'N/A'}</div>
-                        <div class="item"><strong>Qtd. de Pessoas:</strong> ${doc.pessoas || 'N/A'}</div>
-                    </div>
-
-                    ${blocoOS}
+                    ${blocoDados}
                     ${htmlTabelas}
 
-                    <div class="totais">TOTAL GERAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
+                    <div class="total-destaque">TOTAL GERAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
                     
                     ${fotoHTML}
-                    ${assinaturaHTML}
 
-                    <p style="font-size: 11px; color: #777; text-align: center; margin-top: 20px;">Documento gerado eletronicamente.</p>
+                    <div class="area-assinaturas">
+                        <div class="ass-box" style="margin-top: 40px;">
+                            <div class="ass-linha">Assinatura da Empresa / Técnico</div>
+                        </div>
+                        ${assinaturaHTML}
+                    </div>
+
+                    <div class="rodape">Documento gerado eletronicamente pelo sistema GESTÃO RH.</div>
                     <script>window.onload = function() { setTimeout(function(){ window.print(); window.close(); }, 500); }<\/script>
                 </body>
                 </html>
             `;
-            let j = window.open('', '', 'width=900,height=650'); j.document.write(htmlPDF); j.document.close();
+            let j = window.open('', '', 'width=900,height=750'); j.document.write(htmlPDF); j.document.close();
         }
 
         // --- IMPRIMIR CUPOM TÉRMICO (80mm) COM DADOS DA EMPRESA ---
@@ -1747,7 +1795,7 @@
         // --- 6. SEGURANÇA (BACKUP E RESTAURAÇÃO) ---
         window.fazerBackupLocal = async function() { try { const snap = await get(ref(db, '/')); const json = JSON.stringify(snap.val(), null, 2); const blob = new Blob([json], { type: "application/json" }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `FH_Backup_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.json`; a.click(); alert("Backup Local finalizado!"); } catch (e) { alert("Erro: " + e); } }
         window.fazerBackupNuvem = async function() { try { const snap = await get(ref(db, '/')); const d = snap.val(); if (d && d.backups) delete d.backups; await set(ref(db, 'backups/backup_' + Date.now()), { data: new Date().toLocaleString('pt-BR'), conteudo: d }); alert("Cópia salva na nuvem!"); } catch(e) { alert("Erro: " + e); } }
-        window.restaurarBackupLocal = function() { const f = document.getElementById('arquivoRestore').files; if (!f) return alert("Selecione um arquivo."); if (!confirm("RISCO: Substituir tudo?")) return; const r = new FileReader(); r.onload = async function(e) { try { await set(ref(db, '/'), JSON.parse(e.target.result)); alert("Restauração Concluída!"); window.location.reload(); } catch (err) { alert("Falha ao restaurar: " + err); } }; r.readAsText(f); }
+        window.restaurarBackupLocal = function() { const f = document.getElementById('arquivoRestore').files; if (!f || f.length === 0) return alert("Selecione um arquivo."); if (!confirm("RISCO: Substituir tudo?")) return; const r = new FileReader(); r.onload = async function(e) { try { await set(ref(db, '/'), JSON.parse(e.target.result)); alert("Restauração Concluída!"); window.location.reload(); } catch (err) { alert("Falha ao restaurar: " + err); } }; r.readAsText(f); }
         
     } // Fim de bloqueio assinatura remota
 
