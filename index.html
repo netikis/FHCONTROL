@@ -1184,25 +1184,35 @@
         }
 
         window.addAoCarrinhoVenda_Avulso = function() {
-            window.addAoCarrinhoVenda_Avulso = function() {
-            const n = document.getElementById('vendaAvulsoNome').value; const v = parseFloat(document.getElementById('vendaAvulsoValor').value); const perc = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
-            if (!n || isNaN(v)) return alert("Preencha Nome e Valor.");
-            carrinhoVenda.push({ nome: n, valor: v + (v * (perc / 100)), ehEstoque: false, categoriaOS: 'material' });
-            document.getElementById('vendaAvulsoNome').value = ''; document.getElementById('vendaAvulsoValor').value = ''; document.getElementById('vendaAvulsoPerc').value = '0'; atualizarCarrinhoVenda();
-        }
 
+        const n = document.getElementById('vendaAvulsoNome').value; 
+        const v = parseFloat(document.getElementById('vendaAvulsoValor').value); 
+        const perc = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
+      
+    if (!n || isNaN(v)) return alert("Preencha Nome e Valor.");
+    
+    carrinhoVenda.push({ nome: n, valor: v + (v * (perc / 100)), ehEstoque: false, categoriaOS: 'material' });
+    
+    document.getElementById('vendaAvulsoNome').value = ''; 
+    document.getElementById('vendaAvulsoValor').value = ''; 
+    document.getElementById('vendaAvulsoPerc').value = '0'; 
+    atualizarCarrinhoVenda();
+   }
         window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); atualizarCarrinhoVenda(); }
         
         function atualizarCarrinhoVenda() {
-            const div = document.getElementById('listaCarrinho'); div.innerHTML = ''; let t = 0;
-            if (carrinhoVenda.length === 0) { div.innerHTML = 'Nenhum item adicionado no momento.'; } else {
-                carrinhoVenda.forEach((item, i) => { t += item.valor; div.innerHTML += `<div class="cart-item"><span>${item.nome}</span><span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:2px 6px;margin-left:10px;" onclick="removerDoCarrinhoVenda(${i})">X</button></span></div>`; });
+
+        const div = document.getElementById('listaCarrinho'); div.innerHTML = ''; let t = 0;
+        if (carrinhoVenda.length === 0) { div.innerHTML = 'Nenhum item adicionado no momento.'; } else {
+        carrinhoVenda.forEach((item, i) => { t += item.valor; div.innerHTML += `<div class="cart-item"><span>${item.nome}</span><span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:2px 6px;margin-left:10px;" onclick="removerDoCarrinhoVenda(${i})">X</button></span></div>`; });
             }
             document.getElementById('vendaTotal').innerText = `TOTAL GERAL: R$ ${t.toFixed(2)}`;
         }
         
         window.finalizarVenda = async function() {
-            const os = parseInt(document.getElementById('vendaOS').value); const v = document.getElementById('vendaVencimento').value; const n = document.getElementById('vendaClienteBusca').value; 
+        const os = parseInt(document.getElementById('vendaOS').value); 
+        const v = document.getElementById('vendaVencimento').value; 
+        const n = document.getElementById('vendaClienteBusca').value; 
             if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
             
             let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
@@ -1280,42 +1290,42 @@
         }
 
         window.addAoCarrinhoOS_Estoque = function() {
-            const n = document.getElementById('osProdutoEstoqueBusca').value; 
-            const qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
-            const valTotal = parseFloat(document.getElementById('osEstoqueTotal').value);
 
-            if (!n || isNaN(valTotal)) return alert("Selecione um produto do estoque válido.");
-            
-            const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
-            if (!p) return alert("Produto não encontrado no estoque! Use o campo 'Material Externo' logo abaixo.");
-            
-            carrinhoOS.push({ idProd: p.id, nome: `[Estoque] ${p.nome} (Qtd: ${qtd})`, valor: valTotal, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material' });
-            
-            document.getElementById('osProdutoEstoqueBusca').value = '';
-            document.getElementById('osEstoqueValUn').value = '';
-            document.getElementById('osEstoqueQtd').value = 1;
-            document.getElementById('osEstoquePerc').value = 0;
-            document.getElementById('osEstoqueTotal').value = '';
-            atualizarCarrinhoOS();
-        }
+    const n = document.getElementById('osProdutoEstoqueBusca').value; 
+    const qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
+    const valTotal = parseFloat(document.getElementById('osEstoqueTotal').value);
+
+    if (!n || isNaN(valTotal)) return alert("Selecione um produto do estoque válido.");
+    
+    const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
+    if (!p) return alert("Produto não encontrado no estoque!");
+    
+    carrinhoOS.push({ idProd: p.id, nome: `[Estoque] ${p.nome} (Qtd: ${qtd})`, valor: valTotal, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material' });
+    
+    document.getElementById('osProdutoEstoqueBusca').value = ''; 
+document.getElementById('osEstoqueValUn').value = ''; 
+document.getElementById('osEstoqueQtd').value = 1; 
+document.getElementById('osEstoquePerc').value = 0; 
+document.getElementById('osEstoqueTotal').value = '';
+atualizarCarrinhoOS();
+};
 
         window.addAoCarrinhoOS_Externo = function() {
-            const n = document.getElementById('osMatExternoNome').value; 
-            const qtd = parseInt(document.getElementById('osMatExternoQtd').value) || 1;
-            const valTotal = parseFloat(document.getElementById('osMatExternoTotal').value);
+    const n = document.getElementById('osMatExternoNome').value; 
+    const qtd = parseInt(document.getElementById('osMatExternoQtd').value) || 1;
+    const valTotal = parseFloat(document.getElementById('osMatExternoTotal').value);
 
-            if (!n || isNaN(valTotal) || valTotal === 0) return alert("Preencha o Nome e Valor da Compra Externa.");
-            
-            carrinhoOS.push({ nome: `[Externo] ${n} (Qtd: ${qtd})`, valor: valTotal, ehEstoque: false, categoriaOS: 'material' });
-            
-            document.getElementById('osMatExternoNome').value = ''; 
-            document.getElementById('osMatExternoValor').value = ''; 
-            document.getElementById('osMatExternoQtd').value = 1;
-            document.getElementById('osMatExternoPerc').value = 0;
-            document.getElementById('osMatExternoTotal').value = '';
-            atualizarCarrinhoOS();
-        }
-
+    if (!n || isNaN(valTotal) || valTotal === 0) return alert("Preencha o Nome e Valor da Compra Externa.");
+    
+    carrinhoOS.push({ nome: `[Externo] ${n} (Qtd: ${qtd})`, valor: valTotal, ehEstoque: false, categoriaOS: 'material' });
+    
+    document.getElementById('osMatExternoNome').value = ''; 
+document.getElementById('osMatExternoValor').value = ''; 
+document.getElementById('osMatExternoQtd').value = 1; 
+document.getElementById('osMatExternoPerc').value = 0; 
+document.getElementById('osMatExternoTotal').value = ''; 
+atualizarCarrinhoOS();
+}
         window.addAoCarrinhoOS_Avulso = function() {
             const n = document.getElementById('osMaoDeObraDesc').value; 
             const v = parseFloat(document.getElementById('osMaoDeObraValor').value);
