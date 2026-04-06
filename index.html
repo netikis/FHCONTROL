@@ -1,485 +1,485 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FH Control - ERP & PDV</title>
-    <style>
-        /* =========================================
-           ESTILOS GERAIS E PALETA DE CORES
-           ========================================= */
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #34495e; 
-            color: #ecf0f1; 
-            margin: 0; 
-            padding: 0; 
-            display: flex; 
-            height: 100vh; 
-            overflow: hidden; 
-            font-size: 14px; 
-        }
-        
-        /* --- Barra Lateral (Menu) --- */
-        .sidebar { 
-            width: 220px; 
-            background-color: #1a252f; 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            border-right: 2px solid rgba(241, 196, 15, 0.2); 
-            overflow-y: auto;
-        }
-        
-        .sidebar-logo {
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .sidebar-logo img { 
-            width: 100%; 
-            max-height: 120px;
-            object-fit: contain;
-            border-radius: 8px; 
-            background-color: #fff; 
-            padding: 5px; 
-            box-sizing: border-box; 
-        }
-        
-        .menu-btn { 
-            background-color: transparent; 
-            color: #bdc3c7; 
-            border: 1px solid transparent; 
-            padding: 10px; 
-            text-align: left; 
-            font-size: 13px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            border-radius: 6px; 
-            transition: background-color 0.3s, color 0.3s; 
-            text-transform: uppercase; 
-        }
-        
-        .menu-btn:hover { 
-            background-color: #2c3e50; 
-            color: #f1c40f; 
-        }
-        
-        .menu-btn.active { 
-            background-color: #0056b3; 
-            color: #f8f9fa; 
-            border: 1px solid #f1c40f; 
-        }
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>FH Control - ERP & PDV</title>
+   <style>
+       /* =========================================
+          ESTILOS GERAIS E PALETA DE CORES
+          ========================================= */
+       body { 
+           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+           background-color: #34495e; 
+           color: #ecf0f1; 
+           margin: 0; 
+           padding: 0; 
+           display: flex; 
+           height: 100vh; 
+           overflow: hidden; 
+           font-size: 14px; 
+       }
+       
+       /* --- Barra Lateral (Menu) --- */
+       .sidebar { 
+           width: 220px; 
+           background-color: #1a252f; 
+           padding: 15px; 
+           display: flex; 
+           flex-direction: column; 
+           gap: 10px; 
+           border-right: 2px solid rgba(241, 196, 15, 0.2); 
+           overflow-y: auto;
+       }
+       
+       .sidebar-logo {
+           margin-bottom: 15px;
+           text-align: center;
+       }
+       
+       .sidebar-logo img { 
+           width: 100%; 
+           max-height: 120px;
+           object-fit: contain;
+           border-radius: 8px; 
+           background-color: #fff; 
+           padding: 5px; 
+           box-sizing: border-box; 
+       }
+       
+       .menu-btn { 
+           background-color: transparent; 
+           color: #bdc3c7; 
+           border: 1px solid transparent; 
+           padding: 10px; 
+           text-align: left; 
+           font-size: 13px; 
+           font-weight: bold; 
+           cursor: pointer; 
+           border-radius: 6px; 
+           transition: background-color 0.3s, color 0.3s; 
+           text-transform: uppercase; 
+       }
+       
+       .menu-btn:hover { 
+           background-color: #2c3e50; 
+           color: #f1c40f; 
+       }
+       
+       .menu-btn.active { 
+           background-color: #0056b3; 
+           color: #f8f9fa; 
+           border: 1px solid #f1c40f; 
+       }
 
-        /* --- Área Principal --- */
-        .main-content { 
-            flex: 1; 
-            padding: 15px; 
-            overflow-y: auto; 
-        }
-        
-        .tab-content { 
-            display: none; 
-        }
-        
-        .tab-content.active { 
-            display: block; 
-            animation: fadeIn 0.3s ease-in-out; 
-        }
-        
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(10px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
+       /* --- Área Principal --- */
+       .main-content { 
+           flex: 1; 
+           padding: 15px; 
+           overflow-y: auto; 
+       }
+       
+       .tab-content { 
+           display: none; 
+       }
+       
+       .tab-content.active { 
+           display: block; 
+           animation: fadeIn 0.3s ease-in-out;
+       }
+       
+       @keyframes fadeIn { 
+           from { opacity: 0; transform: translateY(10px); } 
+           to { opacity: 1; transform: translateY(0); } 
+       }
 
-        /* --- Contêineres --- */
-        .container { 
-            background-color: #2c3e50; 
-            padding: 20px; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
-            margin-bottom: 20px; 
-            border: 1px solid rgba(241, 196, 15, 0.1); 
-        }
-        
-        .bloco-lancamento {
-            background-color: #1a252f;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #7f8c8d;
-            margin-bottom: 10px;
-        }
+       /* --- Contêineres --- */
+       .container { 
+           background-color: #2c3e50; 
+           padding: 20px; 
+           border-radius: 8px; 
+           box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+           margin-bottom: 20px; 
+           border: 1px solid rgba(241, 196, 15, 0.1); 
+       }
+       
+       .bloco-lancamento {
+           background-color: #1a252f;
+           padding: 15px;
+           border-radius: 6px;
+           border: 1px solid #7f8c8d;
+           margin-bottom: 10px;
+       }
 
-        h2 { 
-            color: #f1c40f; 
-            text-transform: uppercase; 
-            margin-top: 0; 
-            border-bottom: 1px solid rgba(255,255,255,0.1); 
-            padding-bottom: 8px; 
-            font-size: 18px; 
-        }
-        
-        h3 {
-            font-size: 15px;
-            color: #bdc3c7;
-        }
+       h2 { 
+           color: #f1c40f; 
+           text-transform: uppercase; 
+           margin-top: 0; 
+           border-bottom: 1px solid rgba(255,255,255,0.1); 
+           padding-bottom: 8px; 
+           font-size: 18px; 
+       }
+       
+       h3 {
+           font-size: 15px;
+           color: #bdc3c7;
+       }
 
-        /* --- Formulários --- */
-        .form-group { 
-            margin-bottom: 12px; 
-        }
-        
-        label { 
-            display: block; 
-            font-weight: bold; 
-            margin-bottom: 4px; 
-            font-size: 11px;
-            color: #bdc3c7; 
-            text-transform: uppercase;
-        }
-        
-        input, select, textarea { 
-            width: 100%; 
-            padding: 7px 10px; 
-            border: 1px solid #7f8c8d; 
-            border-radius: 4px; 
-            box-sizing: border-box; 
-            background-color: #ecf0f1; 
-            color: #2c3e50; 
-            font-family: inherit;
-            font-size: 13px;
-        }
-        
-        input:focus, select:focus, textarea:focus { 
-            border-color: #f1c40f; 
-            outline: none; 
-            box-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
-        }
+       /* --- Formulários --- */
+       .form-group { 
+           margin-bottom: 12px; 
+       }
+       
+       label { 
+           display: block; 
+           font-weight: bold; 
+           margin-bottom: 4px; 
+           font-size: 11px;
+           color: #bdc3c7; 
+           text-transform: uppercase;
+       }
+       
+       input, select, textarea { 
+           width: 100%; 
+           padding: 7px 10px; 
+           border: 1px solid #7f8c8d; 
+           border-radius: 4px; 
+           box-sizing: border-box; 
+           background-color: #ecf0f1; 
+           color: #2c3e50; 
+           font-family: inherit;
+           font-size: 13px;
+       }
+       
+       input:focus, select:focus, textarea:focus { 
+           border-color: #f1c40f; 
+           outline: none; 
+           box-shadow: 0 0 5px rgba(241, 196, 15, 0.3);
+       }
 
-        textarea { resize: vertical; }
-        
-        .row { 
-            display: flex; 
-            gap: 15px; 
-        }
-        
-        .col { 
-            flex: 1; 
-        }
-        
-        /* --- Botões --- */
-        button { 
-            padding: 8px 12px; 
-            border: none; 
-            border-radius: 4px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: 0.2s; 
-            text-transform: uppercase; 
-            font-size: 12px;
-        }
-        
-        .btn-primary { 
-            background-color: #0056b3; 
-            color: #f8f9fa; 
-            width: 100%; 
-            font-size: 14px; 
-            margin-top: 8px; 
-        }
-        
-        .btn-primary:hover { background-color: #004494; }
-        .btn-secundario { background-color: #f39c12; color: #2c3e50; }
-        .btn-secundario:hover { background-color: #d68910; }
-        .btn-danger { background-color: #e74c3c; color: #fff; }
-        .btn-danger:hover { background-color: #c0392b; }
-        .btn-ver { background-color: #2980b9; color: #f8f9fa; }
-        .btn-ver:hover { background-color: #2471a3; }
-        .btn-whatsapp { background-color: #25D366; color: #fff; }
-        .btn-whatsapp:hover { background-color: #128C7E; }
+       textarea { resize: vertical; }
+       
+       .row { 
+           display: flex; 
+           gap: 15px; 
+       }
+       
+       .col { 
+           flex: 1; 
+       }
+       
+       /* --- Botões --- */
+       button { 
+           padding: 8px 12px; 
+           border: none; 
+           border-radius: 4px; 
+           font-weight: bold; 
+           cursor: pointer; 
+           transition: 0.2s; 
+           text-transform: uppercase; 
+           font-size: 12px;
+       }
+       
+       .btn-primary { 
+           background-color: #0056b3; 
+           color: #f8f9fa; 
+           width: 100%; 
+           font-size: 14px; 
+           margin-top: 8px; 
+       }
+       
+       .btn-primary:hover { background-color: #004494; }
+       .btn-secundario { background-color: #f39c12; color: #2c3e50; }
+       .btn-secundario:hover { background-color: #d68910; }
+       .btn-danger { background-color: #e74c3c; color: #fff; }
+       .btn-danger:hover { background-color: #c0392b; }
+       .btn-ver { background-color: #2980b9; color: #f8f9fa; }
+       .btn-ver:hover { background-color: #2471a3; }
+       .btn-whatsapp { background-color: #25D366; color: #fff; }
+       .btn-whatsapp:hover { background-color: #128C7E; }
 
-        /* --- BOTÕES MINIMALISTAS PARA AS TABELAS --- */
-        .btn-acao {
-            background-color: #ffffff;
-            color: #000000;
-            border: 1px solid #7f8c8d;
-            padding: 5px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 11px;
-            font-weight: bold;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            text-transform: none;
-        }
-        
-        .btn-acao:hover { background-color: #ecf0f1; border-color: #bdc3c7; }
-        .btn-acao.nota:hover { background-color: #9b59b6; color: #fff; border-color: #9b59b6;}
-        .btn-acao.whats:hover { background-color: #2ecc71; color: #fff; border-color: #2ecc71;}
-        .btn-acao.pdf:hover { background-color: #3498db; color: #fff; border-color: #3498db;}
-        .btn-acao.del:hover { background-color: #e74c3c; color: #fff; border-color: #e74c3c;}
-        .btn-acao.edit:hover { background-color: #f1c40f; color: #000; border-color: #f1c40f;}
+       /* --- BOTÕES MINIMALISTAS PARA AS TABELAS --- */
+       .btn-acao {
+           background-color: #ffffff;
+           color: #000000;
+           border: 1px solid #7f8c8d;
+           padding: 5px 8px;
+           border-radius: 4px;
+           cursor: pointer;
+           font-size: 11px;
+           font-weight: bold;
+           transition: all 0.2s;
+           display: inline-flex;
+           align-items: center;
+           gap: 4px;
+           text-transform: none;
+       }
+       
+       .btn-acao:hover { background-color: #ecf0f1; border-color: #bdc3c7; }
+       .btn-acao.nota:hover { background-color: #9b59b6; color: #fff; border-color: #9b59b6;}
+       .btn-acao.whats:hover { background-color: #2ecc71; color: #fff; border-color: #2ecc71;}
+       .btn-acao.pdf:hover { background-color: #3498db; color: #fff; border-color: #3498db;}
+       .btn-acao.del:hover { background-color: #e74c3c; color: #fff; border-color: #e74c3c;}
+       .btn-acao.edit:hover { background-color: #f1c40f; color: #000; border-color: #f1c40f;}
 
-        /* --- Tabelas --- */
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-        }
+       /* --- Tabelas --- */
+       .table-responsive {
+           width: 100%;
+           overflow-x: auto;
+       }
 
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 10px; 
-            background-color: #34495e; 
-            border-radius: 5px; 
-            overflow: hidden; 
-        }
-        
-        th, td { 
-            padding: 8px 10px; 
-            text-align: left; 
-            font-size: 13px; 
-            border-bottom: 1px solid #7f8c8d; 
-            white-space: nowrap; 
-        }
-        
-        th { 
-            background-color: #0056b3; 
-            color: #f8f9fa; 
-            text-transform: uppercase; 
-            font-weight: bold;
-            font-size: 12px;
-        }
-        
-        tr:nth-child(even) { background-color: #3a4e61; }
-        
-        .acoes-flex { 
-            display: flex; 
-            gap: 4px; 
-            align-items: center;
-            flex-wrap: wrap; 
-        }
-        
-        /* --- Alerta de Estoque Baixo --- */
-        @keyframes piscarVermelho {
-            0% { background-color: #3a4e61; }
-            50% { background-color: rgba(231, 76, 60, 0.6); } 
-            100% { background-color: #3a4e61; }
-        }
-        
-        .linha-alerta { animation: piscarVermelho 1.5s infinite; }
-        .linha-alerta td { color: #fff; font-weight: bold; }
+       table { 
+           width: 100%; 
+           border-collapse: collapse; 
+           margin-top: 10px; 
+           background-color: #34495e; 
+           border-radius: 5px; 
+           overflow: hidden; 
+       }
+       
+       th, td { 
+           padding: 8px 10px; 
+           text-align: left; 
+           font-size: 13px; 
+           border-bottom: 1px solid #7f8c8d; 
+           white-space: nowrap; 
+       }
+       
+       th { 
+           background-color: #0056b3; 
+           color: #f8f9fa; 
+           text-transform: uppercase; 
+           font-weight: bold;
+           font-size: 12px;
+       }
+       
+       tr:nth-child(even) { background-color: #3a4e61; }
+       
+       .acoes-flex { 
+           display: flex; 
+           gap: 4px; 
+           align-items: center;
+           flex-wrap: wrap; 
+       }
+       
+       /* --- Alerta de Estoque Baixo --- */
+       @keyframes piscarVermelho {
+           0% { background-color: #3a4e61; }
+           50% { background-color: rgba(231, 76, 60, 0.6); } 
+           100% { background-color: #3a4e61; }
+       }
+       
+       .linha-alerta { animation: piscarVermelho 1.5s infinite; }
+       .linha-alerta td { color: #fff; font-weight: bold; }
 
-        /* --- Paginação e Buscas --- */
-        .toolbar { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 10px; 
-        }
-        
-        .search-bar { width: 300px; }
-        
-        .pagination { 
-            display: flex; 
-            gap: 10px; 
-            align-items: center; 
-            font-weight: bold; 
-            color: #f1c40f; 
-            font-size: 12px;
-        }
-        
-        .pagination button { 
-            padding: 4px 10px; 
-            background-color: #2980b9; 
-            color: white; 
-        }
+       /* --- Paginação e Buscas --- */
+       .toolbar { 
+           display: flex; 
+           justify-content: space-between; 
+           align-items: center; 
+           margin-bottom: 10px; 
+       }
+       
+       .search-bar { width: 300px; }
+       
+       .pagination { 
+           display: flex; 
+           gap: 10px; 
+           align-items: center; 
+           font-weight: bold; 
+           color: #f1c40f; 
+           font-size: 12px;
+       }
+       
+       .pagination button { 
+           padding: 4px 10px; 
+           background-color: #2980b9; 
+           color: white; 
+       }
 
-        /* --- Assinatura Digital Canvas --- */
-        .signature-pad { 
-            border: 2px dashed #f1c40f; 
-            background-color: #ecf0f1; 
-            width: 100%; 
-            height: 200px; 
-            border-radius: 8px; 
-            cursor: crosshair; 
-        }
-        
-        /* --- Carrinho de Vendas (PDV e OS) --- */
-        .cart-item { 
-            display: flex; 
-            justify-content: space-between; 
-            padding: 8px 12px; 
-            border-bottom: 1px solid #7f8c8d; 
-            background: #3a4e61; 
-            margin-bottom: 5px; 
-            border-radius: 4px;
-            align-items: center;
-            font-size: 13px;
-        }
-        
-        .cart-total { 
-            font-size: 20px; 
-            color: #f1c40f; 
-            text-align: right; 
-            font-weight: bold; 
-            padding: 10px 0; 
-        }
+       /* --- Assinatura Digital Canvas --- */
+       .signature-pad { 
+           border: 2px dashed #f1c40f; 
+           background-color: #ecf0f1; 
+           width: 100%; 
+           height: 200px; 
+           border-radius: 8px; 
+           cursor: crosshair; 
+       }
+       
+       /* --- Carrinho de Vendas (PDV e OS) --- */
+       .cart-item { 
+           display: flex; 
+           justify-content: space-between; 
+           padding: 8px 12px; 
+           border-bottom: 1px solid #7f8c8d; 
+           background: #3a4e61; 
+           margin-bottom: 5px; 
+           border-radius: 4px;
+           align-items: center;
+           font-size: 13px;
+       }
+       
+       .cart-total { 
+           font-size: 20px; 
+           color: #f1c40f; 
+           text-align: right; 
+           font-weight: bold; 
+           padding: 10px 0; 
+       }
 
-        /* --- Estilos do Modal (Janela Flutuante) --- */
-        .modal { 
-            display: none; 
-            position: fixed; 
-            z-index: 1000; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            height: 100%; 
-            background-color: rgba(0,0,0,0.85); 
-            align-items: center; 
-            justify-content: center; 
-            backdrop-filter: blur(5px); 
-        }
-        
-        .modal-content { 
-            background-color: #2c3e50; 
-            padding: 20px; 
-            border-radius: 8px; 
-            width: 90%; 
-            max-width: 500px; 
-            position: relative; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            color: #ecf0f1; 
-            border: 2px solid #f1c40f; 
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .close-btn { 
-            position: absolute; 
-            top: 10px; 
-            right: 15px; 
-            color: #f1c40f; 
-            font-size: 24px; 
-            font-weight: bold; 
-            cursor: pointer; 
-        }
-        
-        .close-btn:hover { color: #e74c3c; }
-        
-        #modalVisualizar h2 { 
-            color: #f1c40f; 
-            border-bottom: 2px solid #f1c40f; 
-            padding-bottom: 8px; 
-            margin-bottom: 15px;
-        }
-        
-        .detalhes-linha { 
-            margin-bottom: 8px; 
-            font-size: 13px; 
-            border-bottom: 1px solid #7f8c8d; 
-            padding-bottom: 6px; 
-        }
-        
-        .detalhes-linha strong { color: #bdc3c7; margin-right: 5px; }
+       /* --- Estilos do Modal (Janela Flutuante) --- */
+       .modal { 
+           display: none; 
+           position: fixed; 
+           z-index: 1000; 
+           left: 0; 
+           top: 0; 
+           width: 100%; 
+           height: 100%; 
+           background-color: rgba(0,0,0,0.85);
+           align-items: center; 
+           justify-content: center; 
+           backdrop-filter: blur(5px); 
+       }
+       
+       .modal-content { 
+           background-color: #2c3e50; 
+           padding: 20px; 
+           border-radius: 8px; 
+           width: 90%; 
+           max-width: 500px; 
+           position: relative; 
+           box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+           color: #ecf0f1; 
+           border: 2px solid #f1c40f; 
+           max-height: 90vh;
+           overflow-y: auto;
+       }
+       
+       .close-btn { 
+           position: absolute; 
+           top: 10px; 
+           right: 15px; 
+           color: #f1c40f; 
+           font-size: 24px; 
+           font-weight: bold; 
+           cursor: pointer; 
+       }
+       
+       .close-btn:hover { color: #e74c3c; }
+       
+       #modalVisualizar h2 { 
+           color: #f1c40f; 
+           border-bottom: 2px solid #f1c40f; 
+           padding-bottom: 8px; 
+           margin-bottom: 15px;
+       }
+       
+       .detalhes-linha { 
+           margin-bottom: 8px; 
+           font-size: 13px; 
+           border-bottom: 1px solid #7f8c8d; 
+           padding-bottom: 6px; 
+       }
+       
+       .detalhes-linha strong { color: #bdc3c7; margin-right: 5px; }
 
-        #previewFotoOS, #previewLogoEmpresa {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin-top: 10px;
-            display: none;
-            border: 2px solid #f1c40f;
-        }
+       #previewFotoOS, #previewLogoEmpresa {
+           max-width: 100%;
+           height: auto;
+           border-radius: 8px;
+           margin-top: 10px;
+           display: none;
+           border: 2px solid #f1c40f;
+       }
 
-        /* =========================================
-           RESPONSIVIDADE (MOBILE)
-           ========================================= */
-        @media (max-width: 768px) {
-            body { 
-                flex-direction: column; 
-                height: 100vh; 
-            }
-            
-            .sidebar { 
-                width: 100%; 
-                padding: 10px; 
-                flex-direction: row; 
-                border-right: none; 
-                border-bottom: 2px solid rgba(241, 196, 15, 0.2); 
-                overflow-x: auto; 
-                align-items: center;
-                box-sizing: border-box;
-                height: auto;
-                flex-shrink: 0;
-            }
-            
-            .sidebar-logo { 
-                margin-bottom: 0; 
-                margin-right: 15px; 
-                width: 50px; 
-                flex-shrink: 0; 
-            }
+       /* =========================================
+          RESPONSIVIDADE (MOBILE)
+          ========================================= */
+       @media (max-width: 768px) {
+           body { 
+               flex-direction: column; 
+               height: 100vh; 
+           }
+           
+           .sidebar { 
+               width: 100%; 
+               padding: 10px; 
+               flex-direction: row; 
+               border-right: none; 
+               border-bottom: 2px solid rgba(241, 196, 15, 0.2); 
+               overflow-x: auto; 
+               align-items: center;
+               box-sizing: border-box;
+               height: auto;
+               flex-shrink: 0;
+           }
+           
+           .sidebar-logo { 
+               margin-bottom: 0; 
+               margin-right: 15px; 
+               width: 50px; 
+               flex-shrink: 0; 
+           }
 
-            .sidebar-logo img {
-                max-height: 40px;
-            }
-            
-            .menu-btn { 
-                white-space: nowrap; 
-                padding: 8px 12px; 
-            }
-            
-            .main-content { 
-                padding: 10px; 
-                overflow-y: auto; 
-            }
-            
-            .row { 
-                flex-direction: column; 
-                gap: 10px; 
-            }
-            
-            .col { 
-                width: 100%; 
-                flex: none !important; 
-            }
-            
-            .toolbar { 
-                flex-direction: column; 
-                gap: 10px; 
-                align-items: stretch; 
-            }
-            
-            .search-bar { 
-                width: 100%; 
-            }
-            
-            .container { 
-                padding: 15px; 
-            }
-            
-            .acoes-flex {
-                flex-wrap: nowrap;
-            }
-        }
-    </style>
+           .sidebar-logo img {
+               max-height: 40px;
+           }
+           
+           .menu-btn { 
+               white-space: nowrap; 
+               padding: 8px 12px; 
+           }
+           
+           .main-content { 
+               padding: 10px; 
+               overflow-y: auto; 
+           }
+           
+           .row { 
+               flex-direction: column; 
+               gap: 10px; 
+           }
+           
+           .col { 
+               width: 100%; 
+               flex: none !important; 
+           }
+           
+           .toolbar { 
+               flex-direction: column; 
+               gap: 10px; 
+               align-items: stretch; 
+           }
+           
+           .search-bar { 
+               width: 100%; 
+           }
+           
+           .container { 
+               padding: 15px; 
+           }
+           
+           .acoes-flex {
+               flex-wrap: nowrap;
+           }
+       }
+   </style>
 </head>
 <body>
 
 <div id="telaAssinaturaRemota" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #2c3e50; padding: 20px; color: #ecf0f1; text-align: center; overflow-y: auto;">
-    <img id="logoAssinaturaRemota" src="https://image2url.com/r2/default/images/1774578957071-f27e2520-816d-436f-a537-ee8a160f90ca.jpeg" style="max-width: 120px; border-radius: 8px; margin-bottom: 20px; background-color: #fff; padding: 5px;">
-    
-    <h2 style="color: #f1c40f;">Assinatura Digital</h2>
+   <img id="logoAssinaturaRemota" src="https://image2url.com/r2/default/images/1774578957071-f27e2520-816d-436f-a537-ee8a160f90ca.jpeg" style="max-width: 120px; border-radius: 8px; margin-bottom: 20px; background-color: #fff; padding: 5px;">
+   
+   <h2 style="color: #f1c40f;">Assinatura Digital</h2>
     
     <div style="background-color: #34495e; padding: 15px; border-radius: 8px; border: 1px solid #7f8c8d; margin-bottom: 20px; width: 100%; max-width: 500px; text-align: left; font-size: 13px;">
         <p style="margin: 5px 0;"><strong>Cliente:</strong> <span id="remoteClienteNome">Carregando...</span></p>
         <p style="margin: 5px 0;"><strong>Nº Documento:</strong> <span id="remoteOSNum">...</span></p>
         <p style="margin: 5px 0;"><strong>Vencimento:</strong> <span id="remoteVencimento">...</span></p>
         <p style="margin: 5px 0; color: #2ecc71; font-size: 16px;"><strong>Valor Total:</strong> <span id="remoteTotal">...</span></p>
-    </div>
+   </div>
 
     <p style="font-size: 12px; color: #bdc3c7; max-width: 500px;">Por favor, assine no quadro abaixo confirmando a ciência.</p>
     
@@ -487,29 +487,28 @@
         <canvas id="assinaturaCanvasRemota" class="signature-pad"></canvas>
         <button class="btn-secundario" onclick="limparAssinaturaRemota()" style="margin-top: 10px; width: 100%;">🗑️ Limpar</button>
         <button class="btn-primary" onclick="salvarAssinaturaRemota()" style="margin-top: 10px; background-color: #27ae60; padding: 12px; font-size: 14px;">✅ Confirmar Assinatura</button>
-    </div>
+   </div>
 
-    <div id="msgSucessoRemoto" style="display:none; margin-top:20px; color: #2ecc71; font-size: 16px; font-weight:bold; background-color: #1e2a35; padding: 20px; border-radius: 8px; border: 2px solid #2ecc71;">
-        ✅ Assinatura registrada com sucesso!<br><br><span style="font-size: 13px; color: #ecf0f1;">Você já pode fechar esta página.</span>
+   <div id="msgSucessoRemoto" style="display:none; margin-top:20px; color: #2ecc71; font-size: 16px; font-weight:bold; background-color: #1e2a35; padding: 20px; border-radius: 8px; border: 2px solid #2ecc71;">
+       ✅ Assinatura registrada com sucesso!<br><br><span style="font-size: 13px; color: #ecf0f1;">Você já pode fechar esta página.</span>
     </div>
 </div>
 
-
 <div class="sidebar" id="appSidebar">
-    <div class="sidebar-logo">
+   <div class="sidebar-logo">
         <img id="logoSidebar" src="https://image2url.com/r2/default/images/1775222635762-bb7b4bc7-d027-4c9a-abc4-add5cdbf79ba.png" alt="Logo Empresa">
     </div>
-    <button class="menu-btn active" onclick="abrirAba('tabClientes', this)">👥 Clientes</button>
-    <button class="menu-btn" onclick="abrirAba('tabEstoque', this)">📦 Estoque</button>
-    <button class="menu-btn" onclick="abrirAba('tabVendas', this)">🛒 Venda / Orçamentos</button>
-    <button class="menu-btn" onclick="abrirAba('tabOS', this)" style="color: #f1c40f;">📝 OS</button>
-    <button class="menu-btn" onclick="abrirAba('tabCaixa', this)">💰 Caixa / Relatórios</button>
-    <button class="menu-btn" onclick="abrirAba('tabConfig', this)">⚙️ Config / Empresa</button>
+   <button class="menu-btn active" onclick="abrirAba('tabClientes', this)">👥 Clientes</button>
+   <button class="menu-btn" onclick="abrirAba('tabEstoque', this)">📦 Estoque</button>
+   <button class="menu-btn" onclick="abrirAba('tabVendas', this)">🛒 Venda / Orçamentos</button>
+   <button class="menu-btn" onclick="abrirAba('tabOS', this)" style="color: #f1c40f;">📝 OS</button>
+   <button class="menu-btn" onclick="abrirAba('tabCaixa', this)">💰 Caixa / Relatórios</button>
+   <button class="menu-btn" onclick="abrirAba('tabConfig', this)">⚙️ Config / Empresa</button>
 </div>
 
 <div class="main-content" id="appMainContent">
 
-    <div id="tabClientes" class="tab-content active">
+   <div id="tabClientes" class="tab-content active">
         
         <div class="container">
             <h2 id="tituloCliente">Cadastro de Cliente</h2>
@@ -560,24 +559,24 @@
             </div>
             <div class="table-responsive">
                 <table>
-                    <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr></thead>
+                   <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr></thead>
                     <tbody id="tabelaClientes"></tbody>
                 </table>
             </div>
         </div>
 
-    </div>
+   </div>
 
-    <div id="modalVisualizar" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="fecharModal()">&times;</span>
-            <h2 style="margin-top: 0; color: #f1c40f;">Ficha do Cliente</h2>
-            <div id="detalhesCliente"></div>
-        </div>
-    </div>
+   <div id="modalVisualizar" class="modal">
+       <div class="modal-content">
+           <span class="close-btn" onclick="fecharModal()">&times;</span>
+           <h2 style="margin-top: 0; color: #f1c40f;">Ficha do Cliente</h2>
+           <div id="detalhesCliente"></div>
+       </div>
+   </div>
 
 
-    <div id="tabEstoque" class="tab-content">
+   <div id="tabEstoque" class="tab-content">
         
         <div class="container">
             <h2 id="tituloProduto">Cadastro de Produto / Serviço</h2>
@@ -616,16 +615,16 @@
             <p style="font-size: 11px; color: #e74c3c; margin-top: 0;">Atenção: Qtd ≤ 3 piscará vermelho.</p>
             <div class="table-responsive">
                 <table>
-                    <thead><tr><th>Foto</th><th>Código</th><th>Nome</th><th>Categoria</th><th>Qtd</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
+                   <thead><tr><th>Foto</th><th>Código</th><th>Nome</th><th>Categoria</th><th>Qtd</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
                     <tbody id="tabelaEstoque"></tbody>
                 </table>
             </div>
         </div>
 
-    </div>
+   </div>
 
 
-    <div id="tabVendas" class="tab-content">
+   <div id="tabVendas" class="tab-content">
         
         <div class="container">
             <h2>Novo Orçamento / Venda Direta</h2>
@@ -669,10 +668,10 @@
             <button type="button" class="btn-primary" style="background-color: #27ae60; padding: 12px; font-size: 15px;" onclick="finalizarVenda()">✅ FINALIZAR E SALVAR</button>
         </div>
 
-    </div>
+   </div>
 
 
-    <div id="tabOS" class="tab-content">
+   <div id="tabOS" class="tab-content">
         
         <div class="container">
             <h2 style="color: #3498db;">Ordem de Serviço (Em Campo)</h2>
@@ -787,118 +786,118 @@
             </div>
 
         </div>
-    </div>
+   </div>
 
 
-    <div id="tabCaixa" class="tab-content">
-        <div class="container">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-                <div>
-                    <h2 style="border: none; padding: 0; margin: 0;">Caixa / Histórico</h2>
-                </div>
-            </div>
+   <div id="tabCaixa" class="tab-content">
+       <div class="container">
+           <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+               <div>
+                   <h2 style="border: none; padding: 0; margin: 0;">Caixa / Histórico</h2>
+               </div>
+           </div>
 
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nº Doc</th>
-                            <th>Tipo</th>
-                            <th>Data Lanc.</th>
-                            <th>Cliente</th>
-                            <th>Vencimento</th>
-                            <th>Total</th>
-                            <th>Assinatura</th>
-                            <th style="min-width: 350px;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabelaCaixa">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+           <div class="table-responsive">
+               <table>
+                   <thead>
+                       <tr>
+                           <th>Nº Doc</th>
+                           <th>Tipo</th>
+                           <th>Data Lanc.</th>
+                           <th>Cliente</th>
+                           <th>Vencimento</th>
+                           <th>Total</th>
+                           <th>Assinatura</th>
+                           <th style="min-width: 350px;">Ações</th>
+                       </tr>
+                   </thead>
+                   <tbody id="tabelaCaixa">
+                   </tbody>
+               </table>
+           </div>
+       </div>
+   </div>
 
 
-    <div id="tabConfig" class="tab-content">
-        <div class="container">
-            <h2>Dados da Minha Empresa</h2>
-            <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Esses dados sairão no cabeçalho dos seus PDFs e Cupons Fiscais/Recibos.</p>
-            <form id="formEmpresa">
-                <div class="bloco-lancamento">
-                    <div class="row form-group">
-                        <div class="col" style="flex: 2;"><label>Nome da Empresa (Razão ou Fantasia)</label><input type="text" id="empNome" placeholder="Ex: FH Construções e Reformas" required></div>
-                        <div class="col" style="flex: 1;"><label>CNPJ</label><input type="text" id="empCnpj" placeholder="00.000.000/0000-00"></div>
-                    </div>
-                    <div class="row form-group">
-                        <div class="col"><label>Telefone / WhatsApp</label><input type="text" id="empTelefone" placeholder="(00) 00000-0000"></div>
-                        <div class="col" style="flex: 2;"><label>Endereço Completo</label><input type="text" id="empEndereco" placeholder="Rua X, 123 - Centro - Cidade/UF"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Logomarca da Empresa</label>
-                        <input type="file" id="empLogoUpload" accept="image/*" style="padding: 5px; border: 1px solid #7f8c8d; background: #ecf0f1; border-radius: 4px;">
-                        <img id="previewLogoEmpresa" src="" alt="Sua Logo">
-                    </div>
-                    <button type="submit" class="btn-primary" style="background-color: #27ae60; padding: 10px;">💾 Salvar Dados da Empresa</button>
-                </div>
-            </form>
-        </div>
+   <div id="tabConfig" class="tab-content">
+       <div class="container">
+           <h2>Dados da Minha Empresa</h2>
+           <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Esses dados sairão no cabeçalho dos seus PDFs e Cupons Fiscais/Recibos.</p>
+           <form id="formEmpresa">
+               <div class="bloco-lancamento">
+                   <div class="row form-group">
+                       <div class="col" style="flex: 2;"><label>Nome da Empresa (Razão ou Fantasia)</label><input type="text" id="empNome" placeholder="Ex: FH Construções e Reformas" required></div>
+                       <div class="col" style="flex: 1;"><label>CNPJ</label><input type="text" id="empCnpj" placeholder="00.000.000/0000-00"></div>
+                   </div>
+                   <div class="row form-group">
+                       <div class="col"><label>Telefone / WhatsApp</label><input type="text" id="empTelefone" placeholder="(00) 00000-0000"></div>
+                       <div class="col" style="flex: 2;"><label>Endereço Completo</label><input type="text" id="empEndereco" placeholder="Rua X, 123 - Centro - Cidade/UF"></div>
+                   </div>
+                   <div class="form-group">
+                       <label>Logomarca da Empresa</label>
+                       <input type="file" id="empLogoUpload" accept="image/*" style="padding: 5px; border: 1px solid #7f8c8d; background: #ecf0f1; border-radius: 4px;">
+                       <img id="previewLogoEmpresa" src="" alt="Sua Logo">
+                   </div>
+                   <button type="submit" class="btn-primary" style="background-color: #27ae60; padding: 10px;">💾 Salvar Dados da Empresa</button>
+               </div>
+           </form>
+       </div>
 
-        <div class="container">
-            <h2>Gestão e Backups</h2>
-            <div class="row" style="margin-top: 20px;">
-                <div class="col"><button class="btn-primary" style="background-color: #2980b9;" onclick="fazerBackupLocal()">📥 1. Baixar Backup (PC)</button></div>
-                <div class="col"><button class="btn-primary" style="background-color: #8e44ad;" onclick="fazerBackupNuvem()">☁️ 2. Salvar na Nuvem</button></div>
-            </div>
-            <hr style="border-color: #7f8c8d; margin: 30px 0;">
-            <h3 style="color: #e74c3c;">Restauração de Sistema</h3>
-            <input type="file" id="arquivoRestore" accept=".json" style="margin-bottom: 10px; padding: 5px; background: #ecf0f1; border-radius: 4px;">
-            <button class="btn-danger" style="padding: 10px; font-size: 13px;" onclick="restaurarBackupLocal()">⚠️ RESTAURAR DE ARQUIVO</button>
-        </div>
-    </div>
+       <div class="container">
+           <h2>Gestão e Backups</h2>
+           <div class="row" style="margin-top: 20px;">
+               <div class="col"><button class="btn-primary" style="background-color: #2980b9;" onclick="fazerBackupLocal()">📥 1. Baixar Backup (PC)</button></div>
+               <div class="col"><button class="btn-primary" style="background-color: #8e44ad;" onclick="fazerBackupNuvem()">☁️ 2. Salvar na Nuvem</button></div>
+           </div>
+           <hr style="border-color: #7f8c8d; margin: 30px 0;">
+           <h3 style="color: #e74c3c;">Restauração de Sistema</h3>
+           <input type="file" id="arquivoRestore" accept=".json" style="margin-bottom: 10px; padding: 5px; background: #ecf0f1; border-radius: 4px;">
+           <button class="btn-danger" style="padding: 10px; font-size: 13px;" onclick="restaurarBackupLocal()">⚠️ RESTAURAR DE ARQUIVO</button>
+       </div>
+   </div>
 
 </div>
 
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getDatabase, ref, push, set, update, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+   import { getDatabase, ref, push, set, update, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
 
-    // --- CONFIGURAÇÃO FIREBASE ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyDOgI0jOhTlxf2d_weEfCRiMSSsOVLcI7Y",
-      authDomain: "fhcontroles-1ea1e.firebaseapp.com",
-      projectId: "fhcontroles-1ea1e",
-      storageBucket: "fhcontroles-1ea1e.firebasestorage.app",
-      messagingSenderId: "1093224290178",
-      appId: "1:1093224290178:web:6aaead161795807e91e19b"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+   // --- CONFIGURAÇÃO FIREBASE ---
+   const firebaseConfig = {
+     apiKey: "AIzaSyDOgI0jOhTlxf2d_weEfCRiMSSsOVLcI7Y",
+     authDomain: "fhcontroles-1ea1e.firebaseapp.com",
+     projectId: "fhcontroles-1ea1e",
+     storageBucket: "fhcontroles-1ea1e.firebasestorage.app",
+     messagingSenderId: "1093224290178",
+     appId: "1:1093224290178:web:6aaead161795807e91e19b"
+   };
+   const app = initializeApp(firebaseConfig);
+   const db = getDatabase(app);
 
-    // ================= VARIÁVEIS GLOBAIS =================
+   // ================= VARIÁVEIS GLOBAIS =================
     let clientesGlobais = [];
     let produtosGlobais = [];
     let caixaGlobal = []; 
     let empresaGlobal = { nome: "Minha Empresa", cnpj: "", telefone: "", endereco: "", logo: "" }; // Padrão
     
     let carrinhoVenda = []; 
-    let carrinhoOS = []; 
-    let fotoAtualOS_Base64 = ""; 
-    
-    let editandoCliId = null;
-    let editandoProdId = null;
-    let linkAssinaturaRemota_ID = null; 
+   let carrinhoOS = []; 
+   let fotoAtualOS_Base64 = ""; 
+   
+   let editandoCliId = null;
+   let editandoProdId = null;
+   let linkAssinaturaRemota_ID = null; 
 
-    let paginaAtualCli = 1; const itensPorPaginaCli = 8; let termoBuscaCli = "";
-    let paginaAtualProd = 1; const itensPorPaginaProd = 15; let termoBuscaProd = "";
+   let paginaAtualCli = 1; const itensPorPaginaCli = 8; let termoBuscaCli = "";
+   let paginaAtualProd = 1; const itensPorPaginaProd = 15; let termoBuscaProd = "";
 
 
-    // ================= SISTEMA DE ABAS =================
+   // ================= SISTEMA DE ABAS =================
     window.abrirAba = function(idAba, elementoBotao) {
         document.querySelectorAll('.tab-content').forEach(function(tab) { tab.classList.remove('active'); });
-        document.querySelectorAll('.menu-btn').forEach(function(btn) { btn.classList.remove('active'); });
-        document.getElementById(idAba).classList.add('active');
+       document.querySelectorAll('.menu-btn').forEach(function(btn) { btn.classList.remove('active'); });
+       document.getElementById(idAba).classList.add('active');
         elementoBotao.classList.add('active');
 
         if (idAba === 'tabVendas') {
@@ -920,13 +919,13 @@
     // ================================================================
     // INTERCEPTADOR DE URL (TELA DE ASSINATURA REMOTA)
     // ================================================================
-    const urlParams = new URLSearchParams(window.location.search);
-    const codigoAssinar = urlParams.get('assinar');
+   const urlParams = new URLSearchParams(window.location.search);
+   const codigoAssinar = urlParams.get('assinar');
 
     if (codigoAssinar) {
         linkAssinaturaRemota_ID = codigoAssinar;
         document.getElementById('appSidebar').style.display = 'none';
-        document.getElementById('appMainContent').style.display = 'none';
+       document.getElementById('appMainContent').style.display = 'none';
         document.getElementById('telaAssinaturaRemota').style.display = 'flex';
         
         // Puxar a logo da empresa (se houver) para a tela de assinatura
@@ -938,25 +937,25 @@
         get(ref(db, 'caixa/' + linkAssinaturaRemota_ID)).then(function(snapshot) {
             const docCaixa = snapshot.val();
             if (docCaixa) {
-                document.getElementById('remoteClienteNome').innerText = docCaixa.clienteNome;
-                document.getElementById('remoteOSNum').innerText = docCaixa.os || "S/N";
+               document.getElementById('remoteClienteNome').innerText = docCaixa.clienteNome;
+               document.getElementById('remoteOSNum').innerText = docCaixa.os || "S/N";
                 let dataVencFormatada = docCaixa.vencimento ? docCaixa.vencimento.split('-').reverse().join('/') : 'À vista';
-                document.getElementById('remoteVencimento').innerText = dataVencFormatada;
-                document.getElementById('remoteTotal').innerText = `R$ ${docCaixa.total.toFixed(2)}`;
-                
+               document.getElementById('remoteVencimento').innerText = dataVencFormatada;
+               document.getElementById('remoteTotal').innerText = `R$ ${docCaixa.total.toFixed(2)}`;
+               
                 if (docCaixa.assinaturaBase64) {
-                    document.getElementById('msgSucessoRemoto').style.display = 'block';
-                    document.getElementById('msgSucessoRemoto').innerHTML = "Este documento já foi assinado e confirmado. ✅";
-                    document.querySelector('.signature-pad').style.display = 'none'; 
+                   document.getElementById('msgSucessoRemoto').style.display = 'block';
+                   document.getElementById('msgSucessoRemoto').innerHTML = "Este documento já foi assinado e confirmado. ✅";
+                   document.querySelector('.signature-pad').style.display = 'none'; 
                 } else {
-                    iniciarCanvasRemoto();
+                   iniciarCanvasRemoto();
                 }
             } else { alert("Documento não encontrado ou excluído do sistema."); }
         });
-    }
+   }
 
-    let ctxRemoto; let desenhandoRemoto = false;
-    function iniciarCanvasRemoto() {
+   let ctxRemoto; let desenhandoRemoto = false;
+   function iniciarCanvasRemoto() {
         const cRemoto = document.getElementById('assinaturaCanvasRemota'); const caixaPaiRemoto = cRemoto.parentElement;
         cRemoto.width = caixaPaiRemoto.clientWidth - 4; cRemoto.height = 200;
         ctxRemoto = cRemoto.getContext('2d'); ctxRemoto.lineWidth = 3; ctxRemoto.lineCap = 'round'; ctxRemoto.strokeStyle = '#2c3e50';
@@ -968,17 +967,17 @@
         };
         cRemoto.addEventListener('mousedown', comecarDesenho); cRemoto.addEventListener('mouseup', pararDesenho); cRemoto.addEventListener('mousemove', desenhar); 
         cRemoto.addEventListener('touchstart', comecarDesenho, {passive: false}); cRemoto.addEventListener('touchend', pararDesenho); cRemoto.addEventListener('touchmove', desenhar, {passive: false});
-    }
+   }
 
-    window.limparAssinaturaRemota = function() { if(ctxRemoto) { const cRemoto = document.getElementById('assinaturaCanvasRemota'); ctxRemoto.clearRect(0, 0, cRemoto.width, cRemoto.height); } }
+   window.limparAssinaturaRemota = function() { if(ctxRemoto) { const cRemoto = document.getElementById('assinaturaCanvasRemota'); ctxRemoto.clearRect(0, 0, cRemoto.width, cRemoto.height); } }
 
-    window.salvarAssinaturaRemota = async function() {
+   window.salvarAssinaturaRemota = async function() {
         const cRemoto = document.getElementById('assinaturaCanvasRemota');
         const canvasBranco = document.createElement('canvas'); canvasBranco.width = cRemoto.width; canvasBranco.height = cRemoto.height; 
         if (cRemoto.toDataURL() === canvasBranco.toDataURL()) { return alert("Por favor, assine no quadro tracejado antes de confirmar."); }
         try {
             await update(ref(db, 'caixa/' + linkAssinaturaRemota_ID), { assinaturaBase64: cRemoto.toDataURL() });
-            document.getElementById('msgSucessoRemoto').style.display = 'block';
+           document.getElementById('msgSucessoRemoto').style.display = 'block';
         } catch (erro) { alert("Erro ao enviar assinatura: " + erro); }
     }
 
@@ -994,33 +993,33 @@
             const dados = snapshot.val();
             if (dados) { 
                 empresaGlobal = dados; 
-                document.getElementById('empNome').value = dados.nome || '';
-                document.getElementById('empCnpj').value = dados.cnpj || '';
-                document.getElementById('empTelefone').value = dados.telefone || '';
-                document.getElementById('empEndereco').value = dados.endereco || '';
-                
+               document.getElementById('empNome').value = dados.nome || '';
+               document.getElementById('empCnpj').value = dados.cnpj || '';
+               document.getElementById('empTelefone').value = dados.telefone || '';
+               document.getElementById('empEndereco').value = dados.endereco || '';
+               
                 if(dados.logo) {
-                    document.getElementById('previewLogoEmpresa').src = dados.logo;
+                   document.getElementById('previewLogoEmpresa').src = dados.logo;
                     document.getElementById('previewLogoEmpresa').style.display = 'block';
                     document.getElementById('logoSidebar').src = dados.logo; // Atualiza a logo do menu
                 }
             }
         });
 
-        document.getElementById('empLogoUpload').addEventListener('change', e => {
+       document.getElementById('empLogoUpload').addEventListener('change', e => {
             const f = e.target.files; 
-            if (f && f.length > 0) { 
+            if (f && f.length > 0) {
                 const r = new FileReader(); 
                 r.onload = ev => { 
                     empresaGlobal.logo = ev.target.result; 
-                    document.getElementById('previewLogoEmpresa').src = ev.target.result; 
-                    document.getElementById('previewLogoEmpresa').style.display = 'block'; 
+                   document.getElementById('previewLogoEmpresa').src = ev.target.result; 
+                   document.getElementById('previewLogoEmpresa').style.display = 'block'; 
                 }; 
                 r.readAsDataURL(f); 
             }
         });
 
-        document.getElementById('formEmpresa').addEventListener('submit', function(e) {
+       document.getElementById('formEmpresa').addEventListener('submit', function(e) {
             e.preventDefault();
             const d = {
                 nome: document.getElementById('empNome').value,
@@ -1055,7 +1054,7 @@
             const tab = document.getElementById('tabelaClientes'); tab.innerHTML = ''; 
             let f = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli));
             const pag = f.slice((paginaAtualCli - 1) * itensPorPaginaCli, ((paginaAtualCli - 1) * itensPorPaginaCli) + itensPorPaginaCli);
-            document.getElementById('infoPaginaCli').innerText = `Pág ${paginaAtualCli} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaCli))}`;
+           document.getElementById('infoPaginaCli').innerText = `Pág ${paginaAtualCli} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaCli))}`;
             pag.forEach(c => {
                 const tr = document.createElement('tr'); const doc = c.cpf ? c.cpf : (c.cnpj || '-');
                 // Colocando os dados em negrito como solicitado
@@ -1069,7 +1068,7 @@
             });
         }
 
-        document.getElementById('formCliente').addEventListener('submit', function(e) {
+       document.getElementById('formCliente').addEventListener('submit', function(e) {
             e.preventDefault(); 
             const d = { nome: document.getElementById('nome').value, cpf: document.getElementById('cpf').value, cnpj: document.getElementById('cnpj').value, telefone: document.getElementById('telefone').value, pix: document.getElementById('pix').value, ie: document.getElementById('ie').value, cep: document.getElementById('cep').value, estado: document.getElementById('estado').value, cidade: document.getElementById('cidade').value, bairro: document.getElementById('bairro').value, rua: document.getElementById('rua').value, numero: document.getElementById('numero').value };
             if (editandoCliId) { update(ref(db, 'clientes/' + editandoCliId), d).then(() => cancelarEdicaoCli()); } 
@@ -1085,9 +1084,9 @@
 
         // --- 2. ESTOQUE ---
         let fotoBase64Atual = ""; 
-        document.getElementById('prodMargem').addEventListener('input', calcularVenda); document.getElementById('prodCusto').addEventListener('input', calcularVenda);
+       document.getElementById('prodMargem').addEventListener('input', calcularVenda); document.getElementById('prodCusto').addEventListener('input', calcularVenda);
         function calcularVenda() { let c = parseFloat(document.getElementById('prodCusto').value) || 0; let m = parseFloat(document.getElementById('prodMargem').value) || 0; document.getElementById('prodVenda').value = (c + (c * (m / 100))).toFixed(2); }
-        document.getElementById('prodFoto').addEventListener('change', e => { const f = e.target.files; if (f && f.length > 0) { const r = new FileReader(); r.onload = ev => { fotoBase64Atual = ev.target.result; }; r.readAsDataURL(f); } });
+       document.getElementById('prodFoto').addEventListener('change', e => { const f = e.target.files; if (f && f.length > 0) { const r = new FileReader(); r.onload = ev => { fotoBase64Atual = ev.target.result; }; r.readAsDataURL(f); } });
 
         onValue(ref(db, 'produtos'), function(snapshot) {
             produtosGlobais = []; const d = snapshot.val(); if (d) { Object.keys(d).forEach(k => produtosGlobais.push({ id: k, ...d[k] })); }
@@ -1101,7 +1100,7 @@
             const tab = document.getElementById('tabelaEstoque'); tab.innerHTML = '';
             let f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd)));
             const pag = f.slice((paginaAtualProd - 1) * itensPorPaginaProd, ((paginaAtualProd - 1) * itensPorPaginaProd) + itensPorPaginaProd);
-            document.getElementById('infoPaginaProd').innerText = `Pág ${paginaAtualProd} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaProd))}`;
+           document.getElementById('infoPaginaProd').innerText = `Pág ${paginaAtualProd} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaProd))}`;
             pag.forEach(p => {
                 let img = p.foto ? `<img src="${p.foto}" style="width:30px;height:30px;border-radius:4px;object-fit:cover;">` : '-';
                 let alert = ((p.quantidade || 0) <= 3) ? 'linha-alerta' : '';
@@ -1116,7 +1115,7 @@
             });
         }
 
-        document.getElementById('formProduto').addEventListener('submit', e => {
+       document.getElementById('formProduto').addEventListener('submit', e => {
             e.preventDefault(); const d = { nome: document.getElementById('prodNome').value, codigo: document.getElementById('prodCodigo').value, categoria: document.getElementById('prodCategoria').value, custo: document.getElementById('prodCusto').value, margem: document.getElementById('prodMargem').value, venda: document.getElementById('prodVenda').value, quantidade: parseInt(document.getElementById('prodQtd').value) || 0, foto: fotoBase64Atual };
             if (editandoProdId) { update(ref(db, 'produtos/' + editandoProdId), d).then(() => cancelarEdicaoProd()); } else { set(push(ref(db, 'produtos')), d).then(() => { document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; }); }
         });
@@ -1124,7 +1123,7 @@
         window.editarProd = function(id) { 
             const p = produtosGlobais.find(x => x.id === id); 
             if(!p) return; 
-            ['nome','codigo','categoria','custo','margem','venda','qtd'].forEach(k => { 
+           ['nome','codigo','categoria','custo','margem','venda','qtd'].forEach(k => { 
                 let campo = document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1));
                 if(campo) {
                     if (k === 'qtd') campo.value = p.quantidade || 0;
@@ -1142,9 +1141,9 @@
         window.gerarProximoNumeroDoc = function(inputId, valorInicial) {
             let maxNum = valorInicial; 
             caixaGlobal.forEach(v => { if(v.os && v.os >= maxNum) { maxNum = v.os; } });
-            document.getElementById(inputId).value = maxNum + 1;
-            if(document.getElementById('vendaVencimento')) document.getElementById('vendaVencimento').valueAsDate = new Date(); 
-            if(document.getElementById('osVencimento')) document.getElementById('osVencimento').valueAsDate = new Date(); 
+           document.getElementById(inputId).value = maxNum + 1;
+           if(document.getElementById('vendaVencimento')) document.getElementById('vendaVencimento').valueAsDate = new Date(); 
+           if(document.getElementById('osVencimento')) document.getElementById('osVencimento').valueAsDate = new Date(); 
         }
 
         function carregarSelectsGerais() {
@@ -1178,64 +1177,64 @@
             if (!p) return alert("Produto não encontrado. Para lançar produto avulso, use a opção 'Item Avulso' abaixo.");
             
             carrinhoVenda.push({ idProd: p.id, nome: `${p.nome} (Qtd: ${qtd})`, valor: parseFloat(p.venda) * qtd, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material' });
-            document.getElementById('vendaProdutoEstoqueBusca').value = '';
-            document.getElementById('vendaProdutoQtd').value = 1; 
+           document.getElementById('vendaProdutoEstoqueBusca').value = '';
+           document.getElementById('vendaProdutoQtd').value = 1; 
             atualizarCarrinhoVenda();
         }
 
         window.addAoCarrinhoVenda_Avulso = function() {
 
-        const n = document.getElementById('vendaAvulsoNome').value; 
-        const v = parseFloat(document.getElementById('vendaAvulsoValor').value); 
-        const perc = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
-      
-    if (!n || isNaN(v)) return alert("Preencha Nome e Valor.");
-    
-    carrinhoVenda.push({ nome: n, valor: v + (v * (perc / 100)), ehEstoque: false, categoriaOS: 'material' });
-    
-    document.getElementById('vendaAvulsoNome').value = ''; 
-    document.getElementById('vendaAvulsoValor').value = ''; 
-    document.getElementById('vendaAvulsoPerc').value = '0'; 
-    atualizarCarrinhoVenda();
-   }
+    	    const n = document.getElementById('vendaAvulsoNome').value; 
+            const v = parseFloat(document.getElementById('vendaAvulsoValor').value); 
+            const perc = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
+         
+        if (!n || isNaN(v)) return alert("Preencha Nome e Valor.");
+         
+        carrinhoVenda.push({ nome: n, valor: v + (v * (perc / 100)), ehEstoque: false, categoriaOS: 'material' });
+         
+       document.getElementById('vendaAvulsoNome').value = ''; 
+        document.getElementById('vendaAvulsoValor').value = ''; 
+        document.getElementById('vendaAvulsoPerc').value = '0'; 
+        atualizarCarrinhoVenda();
+       }
         window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); atualizarCarrinhoVenda(); }
         
         function atualizarCarrinhoVenda() {
 
-        const div = document.getElementById('listaCarrinho'); div.innerHTML = ''; let t = 0;
-        if (carrinhoVenda.length === 0) { div.innerHTML = 'Nenhum item adicionado no momento.'; } else {
-        carrinhoVenda.forEach((item, i) => { t += item.valor; div.innerHTML += `<div class="cart-item"><span>${item.nome}</span><span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:2px 6px;margin-left:10px;" onclick="removerDoCarrinhoVenda(${i})">X</button></span></div>`; });
+       		const div = document.getElementById('listaCarrinho'); div.innerHTML = ''; let t = 0;
+        	if (carrinhoVenda.length === 0) { div.innerHTML = 'Nenhum item adicionado no momento.'; } else {
+    	    carrinhoVenda.forEach((item, i) => { t += item.valor; div.innerHTML += `<div class="cart-item"><span>${item.nome}</span><span>R$ ${item.valor.toFixed(2)} <button class="btn-danger" style="padding:2px 6px;margin-left:10px;" onclick="removerDoCarrinhoVenda(${i})">X</button></span></div>`; });
             }
-            document.getElementById('vendaTotal').innerText = `TOTAL GERAL: R$ ${t.toFixed(2)}`;
+           document.getElementById('vendaTotal').innerText = `TOTAL GERAL: R$ ${t.toFixed(2)}`;
         }
         
         window.finalizarVenda = async function() {
-        const os = parseInt(document.getElementById('vendaOS').value); 
-        const v = document.getElementById('vendaVencimento').value; 
-        const n = document.getElementById('vendaClienteBusca').value; 
-            if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
-            
-            let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
-            let cId = cli ? cli.id : 'avulso';
-            let cNome = cli ? cli.nome : n;
+      		const os = parseInt(document.getElementById('vendaOS').value); 
+            const v = document.getElementById('vendaVencimento').value; 
+            const n = document.getElementById('vendaClienteBusca').value; 
+                if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
+                
+                let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
+                let cId = cli ? cli.id : 'avulso';
+                let cNome = cli ? cli.nome : n;
 
-            const total = carrinhoVenda.reduce((acc, item) => acc + item.valor, 0);
+                const total = carrinhoVenda.reduce((acc, item) => acc + item.valor, 0);
 
-            const doc = { 
-                tipo: 'VENDA', os: os, vencimento: v, dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(), 
-                clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total, assinaturaBase64: null 
-            };
+                const doc = { 
+                    tipo: 'VENDA', os: os, vencimento: v, dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(), 
+                    clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total, assinaturaBase64: null 
+                };
 
-            try {
-                await set(push(ref(db, 'caixa')), doc); 
-                for (let item of carrinhoVenda) {
-                    if (item.ehEstoque && item.idProd) {
-                        const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
-                        if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
+                try {
+                    await set(push(ref(db, 'caixa')), doc); 
+                    for (let item of carrinhoVenda) {
+                        if (item.ehEstoque && item.idProd) {
+                            const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
+                            if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
+                        }
                     }
-                }
-                alert("Venda Registrada!"); carrinhoVenda = []; atualizarCarrinhoVenda(); document.getElementById('vendaClienteBusca').value = ''; carregarSelectsGerais(); gerarProximoNumeroDoc('vendaOS', 1000); 
-            } catch(e) { alert("Erro: " + e); }
+                    alert("Venda Registrada!"); carrinhoVenda = []; atualizarCarrinhoVenda(); document.getElementById('vendaClienteBusca').value = ''; carregarSelectsGerais(); gerarProximoNumeroDoc('vendaOS', 1000); 
+                } catch(e) { alert("Erro: " + e); }
         }
 
 
@@ -1245,9 +1244,9 @@
             if (f && f.length > 0) { const r = new FileReader(); r.onload = ev => { fotoAtualOS_Base64 = ev.target.result; document.getElementById('previewFotoOS').src = fotoAtualOS_Base64; document.getElementById('previewFotoOS').style.display = 'block'; }; r.readAsDataURL(f); } 
         });
 
-        document.getElementById('osKmInicial').addEventListener('input', calcularDeslocamentoOS);
-        document.getElementById('osKmFinal').addEventListener('input', calcularDeslocamentoOS);
-        document.getElementById('osValorKm').addEventListener('input', calcularDeslocamentoOS);
+       document.getElementById('osKmInicial').addEventListener('input', calcularDeslocamentoOS);
+       document.getElementById('osKmFinal').addEventListener('input', calcularDeslocamentoOS);
+       document.getElementById('osValorKm').addEventListener('input', calcularDeslocamentoOS);
         
         function calcularDeslocamentoOS() {
             let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
@@ -1263,11 +1262,11 @@
             const n = document.getElementById('osProdutoEstoqueBusca').value;
             const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
             if(p) {
-                document.getElementById('osEstoqueValUn').value = parseFloat(p.venda).toFixed(2);
+               document.getElementById('osEstoqueValUn').value = parseFloat(p.venda).toFixed(2);
                 calcTotalEstoqueOS();
             } else {
-                document.getElementById('osEstoqueValUn').value = '';
-                document.getElementById('osEstoqueTotal').value = '';
+               document.getElementById('osEstoqueValUn').value = '';
+               document.getElementById('osEstoqueTotal').value = '';
             }
         }
 
@@ -1277,7 +1276,7 @@
             let perc = parseFloat(document.getElementById('osEstoquePerc').value) || 0;
             let total = valUn * qtd;
             total = total + (total * (perc / 100));
-            document.getElementById('osEstoqueTotal').value = total.toFixed(2);
+           document.getElementById('osEstoqueTotal').value = total.toFixed(2);
         }
 
         window.calcTotalExternoOS = function() {
@@ -1286,14 +1285,14 @@
             let perc = parseFloat(document.getElementById('osMatExternoPerc').value) || 0;
             let total = valUn * qtd;
             total = total + (total * (perc / 100));
-            document.getElementById('osMatExternoTotal').value = total.toFixed(2);
+           document.getElementById('osMatExternoTotal').value = total.toFixed(2);
         }
 
         window.addAoCarrinhoOS_Estoque = function() {
 
     const n = document.getElementById('osProdutoEstoqueBusca').value; 
     const qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
-    const valTotal = parseFloat(document.getElementById('osEstoqueTotal').value);
+   const valTotal = parseFloat(document.getElementById('osEstoqueTotal').value);
 
     if (!n || isNaN(valTotal)) return alert("Selecione um produto do estoque válido.");
     
@@ -1302,7 +1301,7 @@
     
     carrinhoOS.push({ idProd: p.id, nome: `[Estoque] ${p.nome} (Qtd: ${qtd})`, valor: valTotal, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material' });
     
-    document.getElementById('osProdutoEstoqueBusca').value = ''; 
+   document.getElementById('osProdutoEstoqueBusca').value = ''; 
 document.getElementById('osEstoqueValUn').value = ''; 
 document.getElementById('osEstoqueQtd').value = 1; 
 document.getElementById('osEstoquePerc').value = 0; 
@@ -1319,7 +1318,7 @@ atualizarCarrinhoOS();
     
     carrinhoOS.push({ nome: `[Externo] ${n} (Qtd: ${qtd})`, valor: valTotal, ehEstoque: false, categoriaOS: 'material' });
     
-    document.getElementById('osMatExternoNome').value = ''; 
+   document.getElementById('osMatExternoNome').value = ''; 
 document.getElementById('osMatExternoValor').value = ''; 
 document.getElementById('osMatExternoQtd').value = 1; 
 document.getElementById('osMatExternoPerc').value = 0; 
@@ -1332,8 +1331,8 @@ atualizarCarrinhoOS();
             if (!n || isNaN(v)) return alert("Preencha a descrição do Serviço e o Valor.");
             
             carrinhoOS.push({ nome: `[Serviço] ${n}`, valor: v, ehEstoque: false, categoriaOS: 'servico' });
-            document.getElementById('osMaoDeObraDesc').value = ''; 
-            document.getElementById('osMaoDeObraValor').value = ''; 
+           document.getElementById('osMaoDeObraDesc').value = ''; 
+           document.getElementById('osMaoDeObraValor').value = ''; 
             atualizarCarrinhoOS();
         }
 
@@ -1387,10 +1386,10 @@ atualizarCarrinhoOS();
                 }
                 alert("OS salva! Estoque atualizado.");
                 carrinhoOS = []; atualizarCarrinhoOS(); 
-                ['osClienteBusca','osFuncionario','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value=''); 
-                document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
+               ['osClienteBusca','osFuncionario','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
+               document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
                 fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
-                gerarProximoNumeroDoc('osNumero', 5000); carregarSelectsGerais(); 
+               gerarProximoNumeroDoc('osNumero', 5000); carregarSelectsGerais(); 
             } catch(e) { alert("Erro ao salvar: " + e); }
         }
 
@@ -1499,18 +1498,18 @@ atualizarCarrinhoOS();
                     <div class="info-card">
                         <div class="card-title">DADOS DA ORDEM DE SERVIÇO</div>
                         <div class="grid-3">
-                            <div><strong>Cliente:</strong><br>${doc.clienteNome}</div>
+                           <div><strong>Cliente:</strong><br>${doc.clienteNome}</div>
                             <div><strong>Técnico:</strong><br>${doc.funcionario || 'Não informado'}</div>
-                            <div><strong>Equipe:</strong><br>${doc.equipe || 'Não informada'} (Pessoas: ${doc.pessoas || 1})</div>
+                           <div><strong>Equipe:</strong><br>${doc.equipe || 'Não informada'} (Pessoas: ${doc.pessoas || 1})</div>
                         </div>
                     </div>
                     <div class="info-card">
                         <div class="card-title">EXECUÇÃO E DESLOCAMENTO</div>
                         <div class="grid-4">
-                            <div><strong>Início:</strong><br>${formataDataHora(doc.inicio)}</div>
-                            <div><strong>Término:</strong><br>${formataDataHora(doc.fim)}</div>
-                            <div><strong>Deslocamento:</strong><br>${doc.kmTotal || 0} km rodados</div>
-                            <div><strong>Custo Km:</strong><br>R$ ${parseFloat(doc.kmCusto||0).toFixed(2)}</div>
+                           <div><strong>Início:</strong><br>${formataDataHora(doc.inicio)}</div>
+                           <div><strong>Término:</strong><br>${formataDataHora(doc.fim)}</div>
+                           <div><strong>Deslocamento:</strong><br>${doc.kmTotal || 0} km rodados</div>
+                           <div><strong>Custo Km:</strong><br>R$ ${parseFloat(doc.kmCusto||0).toFixed(2)}</div>
                         </div>
                     </div>
                 `;
@@ -1520,17 +1519,17 @@ atualizarCarrinhoOS();
                         <div class="tabela-box">
                             <div class="card-title">MATERIAIS E PEÇAS</div>
                             <table class="tabela-bonita">
-                                <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
-                                <tbody>${matHtml}</tbody>
-                                <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalMat.toFixed(2)}</th></tr></tfoot>
+                               <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
+                               <tbody>${matHtml}</tbody>
+                               <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalMat.toFixed(2)}</th></tr></tfoot>
                             </table>
                         </div>
                         <div class="tabela-box">
                             <div class="card-title">MÃO DE OBRA / SERVIÇOS</div>
                             <table class="tabela-bonita">
-                                <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
-                                <tbody>${servHtml}</tbody>
-                                <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalServ.toFixed(2)}</th></tr></tfoot>
+                               <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
+                               <tbody>${servHtml}</tbody>
+                               <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalServ.toFixed(2)}</th></tr></tfoot>
                             </table>
                         </div>
                     </div>
@@ -1545,7 +1544,7 @@ atualizarCarrinhoOS();
                     <div class="info-card">
                         <div class="card-title">DADOS DO CLIENTE</div>
                         <div class="grid-2">
-                            <div><strong>Nome do Cliente:</strong><br>${doc.clienteNome}</div>
+                           <div><strong>Nome do Cliente:</strong><br>${doc.clienteNome}</div>
                             <div><strong>Data de Emissão:</strong><br>${doc.dataStr}</div>
                         </div>
                     </div>
@@ -1555,8 +1554,8 @@ atualizarCarrinhoOS();
                     <div class="tabela-box" style="margin-top: 15px;">
                         <div class="card-title">PRODUTOS / ITENS DA VENDA</div>
                         <table class="tabela-bonita">
-                            <thead><tr><th>Descrição do Item</th><th class="text-right">Valor Parcial</th></tr></thead>
-                            <tbody>${todosHtml}</tbody>
+                           <thead><tr><th>Descrição do Item</th><th class="text-right">Valor Parcial</th></tr></thead>
+                           <tbody>${todosHtml}</tbody>
                         </table>
                     </div>
                 `;
@@ -1710,7 +1709,7 @@ atualizarCarrinhoOS();
             let htmlCupom = `
                 <html>
                 <head>
-                    <title>Cupom</title>
+                   <title>Cupom</title>
                     <style>
                         body { font-family: 'Courier New', Courier, monospace; width: 300px; margin: 0 auto; padding: 10px; color: #000; font-size: 12px; }
                         .center { text-align: center; }
@@ -1732,7 +1731,7 @@ atualizarCarrinhoOS();
                     <div>Data: ${doc.dataStr}</div>
                     <div>Cliente: ${doc.clienteNome}</div>
                     <div class="line"></div>
-                    <table>${itensHtml}</table>
+                   <table>${itensHtml}</table>
                     <div class="line"></div>
                     <div style="text-align:right; font-size:14px;" class="bold">TOTAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
                     <div class="line"></div>
@@ -1769,7 +1768,7 @@ atualizarCarrinhoOS();
         // --- ENVIAR WHATSAPP / COPIAR LINK ---
         window.copiarLinkAssinatura = function(id) {
             const link = window.location.origin + window.location.pathname + "?assinar=" + id;
-            navigator.clipboard.writeText(link).then(() => alert("Link copiado! Você já pode colar no WhatsApp.")).catch(() => alert("Erro ao copiar. O Link é: " + link));
+           navigator.clipboard.writeText(link).then(() => alert("Link copiado! Você já pode colar no WhatsApp.")).catch(() => alert("Erro ao copiar. O Link é: " + link));
         }
 
         window.enviarOSWhatsApp = function(id) {
@@ -1807,8 +1806,8 @@ atualizarCarrinhoOS();
         window.fazerBackupNuvem = async function() { try { const snap = await get(ref(db, '/')); const d = snap.val(); if (d && d.backups) delete d.backups; await set(ref(db, 'backups/backup_' + Date.now()), { data: new Date().toLocaleString('pt-BR'), conteudo: d }); alert("Cópia salva na nuvem!"); } catch(e) { alert("Erro: " + e); } }
         window.restaurarBackupLocal = function() { const f = document.getElementById('arquivoRestore').files; if (!f || f.length === 0) return alert("Selecione um arquivo."); if (!confirm("RISCO: Substituir tudo?")) return; const r = new FileReader(); r.onload = async function(e) { try { await set(ref(db, '/'), JSON.parse(e.target.result)); alert("Restauração Concluída!"); window.location.reload(); } catch (err) { alert("Falha ao restaurar: " + err); } }; r.readAsText(f); }
         
-    } // Fim de bloqueio assinatura remota
-
+   } // Fim de bloqueio assinatura remota
+   
 </script>
 </body>
 </html>
