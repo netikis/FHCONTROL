@@ -305,6 +305,7 @@
            height: 200px; 
            border-radius: 8px; 
            cursor: crosshair; 
+           touch-action: none; /* Previne o navegador de tentar rolar a tela quando o dedo toca no canvas */
        }
        
        /* --- Carrinho de Vendas (PDV e OS) --- */
@@ -469,27 +470,27 @@
 </head>
 <body>
 
-<div id="telaAssinaturaRemota" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #2c3e50; padding: 20px; color: #ecf0f1; text-align: center; overflow-y: auto;">
-   <img id="logoAssinaturaRemota" src="https://image2url.com/r2/default/images/1774578957071-f27e2520-816d-436f-a537-ee8a160f90ca.jpeg" style="max-width: 120px; border-radius: 8px; margin-bottom: 20px; background-color: #fff; padding: 5px;">
+<div id="telaAssinaturaRemota" style="display: none; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; height: 100%; background-color: #2c3e50; padding: 40px 20px 100px 20px; box-sizing: border-box; color: #ecf0f1; text-align: center; overflow-y: auto;">
+   <img id="logoAssinaturaRemota" src="https://image2url.com/r2/default/images/1774578957071-f27e2520-816d-436f-a537-ee8a160f90ca.jpeg" style="max-width: 120px; border-radius: 8px; margin-bottom: 20px; background-color: #fff; padding: 5px; flex-shrink: 0;">
    
-   <h2 style="color: #f1c40f;">Assinatura Digital</h2>
+   <h2 style="color: #f1c40f; flex-shrink: 0;">Assinatura Digital</h2>
     
-    <div style="background-color: #34495e; padding: 15px; border-radius: 8px; border: 1px solid #7f8c8d; margin-bottom: 20px; width: 100%; max-width: 500px; text-align: left; font-size: 13px;">
+    <div style="background-color: #34495e; padding: 15px; border-radius: 8px; border: 1px solid #7f8c8d; margin-bottom: 20px; width: 100%; max-width: 500px; text-align: left; font-size: 13px; flex-shrink: 0;">
         <p style="margin: 5px 0;"><strong>Cliente:</strong> <span id="remoteClienteNome">Carregando...</span></p>
         <p style="margin: 5px 0;"><strong>Nº Documento:</strong> <span id="remoteOSNum">...</span></p>
         <p style="margin: 5px 0;"><strong>Vencimento:</strong> <span id="remoteVencimento">...</span></p>
         <p style="margin: 5px 0; color: #2ecc71; font-size: 16px;"><strong>Valor Total:</strong> <span id="remoteTotal">...</span></p>
    </div>
 
-    <p style="font-size: 12px; color: #bdc3c7; max-width: 500px;">Por favor, assine no quadro abaixo confirmando a ciência.</p>
+    <p style="font-size: 12px; color: #bdc3c7; max-width: 500px; flex-shrink: 0;">Por favor, assine no quadro abaixo confirmando a ciência.</p>
     
-    <div style="width: 100%; max-width: 500px;">
+    <div style="width: 100%; max-width: 500px; flex-shrink: 0;">
         <canvas id="assinaturaCanvasRemota" class="signature-pad"></canvas>
-        <button class="btn-secundario" onclick="limparAssinaturaRemota()" style="margin-top: 10px; width: 100%;">🗑️ Limpar</button>
-        <button class="btn-primary" onclick="salvarAssinaturaRemota()" style="margin-top: 10px; background-color: #27ae60; padding: 12px; font-size: 14px;">✅ Confirmar Assinatura</button>
+        <button class="btn-secundario" onclick="limparAssinaturaRemota()" style="margin-top: 10px; width: 100%;">🗑️ Limpar Traço</button>
+        <button class="btn-primary" onclick="salvarAssinaturaRemota()" style="margin-top: 10px; background-color: #27ae60; padding: 15px; font-size: 16px; font-weight: bold; width: 100%;">✅ CONFIRMAR ASSINATURA</button>
    </div>
 
-   <div id="msgSucessoRemoto" style="display:none; margin-top:20px; color: #2ecc71; font-size: 16px; font-weight:bold; background-color: #1e2a35; padding: 20px; border-radius: 8px; border: 2px solid #2ecc71;">
+   <div id="msgSucessoRemoto" style="display:none; margin-top:20px; color: #2ecc71; font-size: 16px; font-weight:bold; background-color: #1e2a35; padding: 20px; border-radius: 8px; border: 2px solid #2ecc71; flex-shrink: 0;">
        ✅ Assinatura registrada com sucesso!<br><br><span style="font-size: 13px; color: #ecf0f1;">Você já pode fechar esta página.</span>
     </div>
 </div>
@@ -1006,18 +1007,37 @@
    }
 
    let ctxRemoto; let desenhandoRemoto = false;
+   
+   // CORREÇÃO DO TOUCH AQUI: Usando array para pegar a posição do dedo na tela
    window.iniciarCanvasRemoto = function() {
         const cRemoto = document.getElementById('assinaturaCanvasRemota'); const caixaPaiRemoto = cRemoto.parentElement;
         cRemoto.width = caixaPaiRemoto.clientWidth - 4; cRemoto.height = 200;
         ctxRemoto = cRemoto.getContext('2d'); ctxRemoto.lineWidth = 3; ctxRemoto.lineCap = 'round'; ctxRemoto.strokeStyle = '#2c3e50';
-        const comecarDesenho = function(e) { desenhandoRemoto = true; desenhar(e); }; const pararDesenho = function() { desenhandoRemoto = false; ctxRemoto.beginPath(); };
+        
+        const comecarDesenho = function(e) { desenhandoRemoto = true; desenhar(e); }; 
+        const pararDesenho = function() { desenhandoRemoto = false; ctxRemoto.beginPath(); };
+        
         const desenhar = function(e) { 
-            if (!desenhandoRemoto) return; e.preventDefault(); const rect = cRemoto.getBoundingClientRect(); 
-            const X = e.touches ? e.touches.clientX : e.clientX; const Y = e.touches ? e.touches.clientY : e.clientY; 
-            ctxRemoto.lineTo(X - rect.left, Y - rect.top); ctxRemoto.stroke(); ctxRemoto.beginPath(); ctxRemoto.moveTo(X - rect.left, Y - rect.top); 
+            if (!desenhandoRemoto) return; 
+            e.preventDefault(); 
+            const rect = cRemoto.getBoundingClientRect(); 
+            
+            // Lendo a coordenada correta se for Touch (celular) ou Mouse (PC)
+            const X = (e.touches && e.touches.length > 0) ? e.touches.clientX : e.clientX; 
+            const Y = (e.touches && e.touches.length > 0) ? e.touches.clientY : e.clientY; 
+            
+            ctxRemoto.lineTo(X - rect.left, Y - rect.top); 
+            ctxRemoto.stroke(); 
+            ctxRemoto.beginPath(); 
+            ctxRemoto.moveTo(X - rect.left, Y - rect.top); 
         };
-        cRemoto.addEventListener('mousedown', comecarDesenho); cRemoto.addEventListener('mouseup', pararDesenho); cRemoto.addEventListener('mousemove', desenhar); 
-        cRemoto.addEventListener('touchstart', comecarDesenho, {passive: false}); cRemoto.addEventListener('touchend', pararDesenho); cRemoto.addEventListener('touchmove', desenhar, {passive: false});
+        
+        cRemoto.addEventListener('mousedown', comecarDesenho); 
+        cRemoto.addEventListener('mouseup', pararDesenho); 
+        cRemoto.addEventListener('mousemove', desenhar); 
+        cRemoto.addEventListener('touchstart', comecarDesenho, {passive: false}); 
+        cRemoto.addEventListener('touchend', pararDesenho); 
+        cRemoto.addEventListener('touchmove', desenhar, {passive: false});
    }
 
    window.limparAssinaturaRemota = function() { if(ctxRemoto) { const cRemoto = document.getElementById('assinaturaCanvasRemota'); ctxRemoto.clearRect(0, 0, cRemoto.width, cRemoto.height); } }
@@ -1419,7 +1439,6 @@
             if (f && f.length > 0) { const r = new FileReader(); r.onload = ev => { fotoAtualOS_Base64 = ev.target.result; document.getElementById('previewFotoOS').src = fotoAtualOS_Base64; document.getElementById('previewFotoOS').style.display = 'block'; }; r.readAsDataURL(f); } 
         });
 
-       // AGORA CALCULA O DESLOCAMENTO PELA FUNCAO GLOBAL!
        window.calcularDeslocamentoOS = function() {
             let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
             let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
