@@ -900,16 +900,16 @@
        document.getElementById(idAba).classList.add('active');
         elementoBotao.classList.add('active');
 
-        if (idAba === 'tabVendas') {
+       if (idAba === 'tabVendas') {
             carregarSelectsGerais();
-            gerarProximoNumeroDoc('vendaOS', 1000); 
+            gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA'); 
         }
         if (idAba === 'tabOS') {
             carregarSelectsGerais();
-            gerarProximoNumeroDoc('osNumero', 5000); 
+            gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO'); // Base 10000 para começar em 10001
             calcularDeslocamentoOS(); 
         }
-    }
+     };
 
     document.addEventListener('keydown', function(evento) { 
         if (evento.key === "Escape") { if (editandoCliId) cancelarEdicaoCli(); if (editandoProdId) cancelarEdicaoProd(); fecharModal(); }
@@ -1161,12 +1161,17 @@
 
 
         // --- FUNÇÕES COMPARTILHADAS ---
-        window.gerarProximoNumeroDoc = function(inputId, valorInicial) {
+
+        window.gerarProximoNumeroDoc = function(inputId, valorInicial, tipoDoc) {
             let maxNum = valorInicial; 
-            caixaGlobal.forEach(v => { if(v.os && v.os >= maxNum) { maxNum = v.os; } });
-           document.getElementById(inputId).value = maxNum + 1;
-           if(document.getElementById('vendaVencimento')) document.getElementById('vendaVencimento').valueAsDate = new Date(); 
-           if(document.getElementById('osVencimento')) document.getElementById('osVencimento').valueAsDate = new Date(); 
+            caixaGlobal.forEach(v => { 
+            if(v.tipo === tipoDoc && v.os && v.os >= maxNum) { 
+                    maxNum = v.os; 
+                } 
+            });
+            document.getElementById(inputId).value = maxNum + 1;
+            if(document.getElementById('vendaVencimento')) document.getElementById('vendaVencimento').valueAsDate = new Date(); 
+            if(document.getElementById('osVencimento')) document.getElementById('osVencimento').valueAsDate = new Date(); 
         }
 
         function carregarSelectsGerais() {
@@ -1256,7 +1261,7 @@
                             if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
                         }
                     }
-                    alert("Venda Registrada!"); carrinhoVenda = []; atualizarCarrinhoVenda(); document.getElementById('vendaClienteBusca').value = ''; carregarSelectsGerais(); gerarProximoNumeroDoc('vendaOS', 1000); 
+                    alert("Venda Registrada!"); carrinhoVenda = []; atualizarCarrinhoVenda(); document.getElementById('vendaClienteBusca').value = ''; carregarSelectsGerais(); gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
                 } catch(e) { alert("Erro: " + e); }
         }
 
@@ -1411,8 +1416,8 @@ atualizarCarrinhoOS();
                 carrinhoOS = []; atualizarCarrinhoOS(); 
                ['osClienteBusca','osFuncionario','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
                document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
-                fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
-               gerarProximoNumeroDoc('osNumero', 5000); carregarSelectsGerais(); 
+               fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
+               gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO'); carregarSelectsGerais(); 
             } catch(e) { alert("Erro ao salvar: " + e); }
         }
 
@@ -1770,6 +1775,29 @@ atualizarCarrinhoOS();
                         .line { border-bottom: 1px dashed #000; margin: 10px 0; }
                         table { width: 100%; font-size: 12px; border-collapse: collapse; }
                         td { vertical-align: top; }
+                        
+                        /* BOTÃO DE IMPRESSÃO FLUTUANTE */
+                        @media print {
+                            .btn-imprimir-flutuante { display: none !important; }
+                        }
+                        .btn-imprimir-flutuante {
+                            position: fixed;
+                            bottom: 20px;
+                            right: 20px;
+                            background-color: #27ae60;
+                            color: white;
+                            border: none;
+                            padding: 10px 15px;
+                            font-size: 13px;
+                            font-weight: bold;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                            z-index: 1000;
+                        }
+                        .btn-imprimir-flutuante:hover {
+                            background-color: #2ecc71;
+                        }
                     </style>
                 </head>
                 <body>
@@ -1791,8 +1819,10 @@ atualizarCarrinhoOS();
                     <div class="center" style="font-size:11px;">
                         ${doc.assinaturaBase64 ? 'Documento com Assinatura Digital Verificada no Sistema.' : 'Assinatura Pendente.'}
                     </div>
-                    <div class="center" style="font-size:10px; margin-top: 15px;">Obrigado pela preferência!</div>
-                    <script>window.onload = function() { setTimeout(function(){ window.print(); window.close(); }, 2000); }<\/script>
+                    
+                    <div class="center" style="font-size:10px; margin-top: 15px; margin-bottom: 50px;">Obrigado pela preferência!</div>
+                    
+                    <button class="btn-imprimir-flutuante" onclick="window.print()">🖨️ Imprimir Cupom</button>
                 </body>
                 </html>
             `;
