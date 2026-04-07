@@ -1009,7 +1009,7 @@
    let ctxRemoto; let desenhandoRemoto = false;
    
    // CORREÇÃO DO TOUCH AQUI: Usando array para pegar a posição do dedo na tela
-   window.iniciarCanvasRemoto = function() {
+  window.iniciarCanvasRemoto = function() {
         const cRemoto = document.getElementById('assinaturaCanvasRemota'); 
         const caixaPaiRemoto = cRemoto.parentElement;
         
@@ -1023,18 +1023,19 @@
         ctxRemoto.lineJoin = 'round';
         ctxRemoto.strokeStyle = '#2c3e50';
 
-        // Função inteligente para pegar a coordenada exata, seja dedo ou mouse
+        // Com Pointer Events, a posição é universal e precisa (dedo, caneta ou mouse)
         const obterPosicao = (e) => {
             const rect = cRemoto.getBoundingClientRect();
-            if (e.touches && e.touches.length > 0) {
-                return { x: e.touches.clientX - rect.left, y: e.touches.clientY - rect.top };
-            }
-            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            return { 
+                x: e.clientX - rect.left, 
+                y: e.clientY - rect.top 
+            };
         };
 
         const comecarDesenho = (e) => {
-            e.preventDefault(); // Trava a tela para não rolar
+            e.preventDefault();
             desenhandoRemoto = true;
+            cRemoto.setPointerCapture(e.pointerId); // "Prende" o dedo/mouse no canvas
             const pos = obterPosicao(e);
             ctxRemoto.beginPath();
             ctxRemoto.moveTo(pos.x, pos.y);
@@ -1049,22 +1050,17 @@
         };
 
         const pararDesenho = (e) => {
-            if (e && e.cancelable) e.preventDefault();
             desenhandoRemoto = false;
+            cRemoto.releasePointerCapture(e.pointerId); // Solta o dedo
             ctxRemoto.closePath();
         };
 
-        // Eventos para Computador (Mouse)
-        cRemoto.addEventListener('mousedown', comecarDesenho);
-        cRemoto.addEventListener('mousemove', desenhar);
-        cRemoto.addEventListener('mouseup', pararDesenho);
-        cRemoto.addEventListener('mouseout', pararDesenho); // Se o mouse sair do quadro
-
-        // Eventos para Celular (Touch/Dedo) - O passive: false é OBRIGATÓRIO aqui
-        cRemoto.addEventListener('touchstart', comecarDesenho, { passive: false });
-        cRemoto.addEventListener('touchmove', desenhar, { passive: false });
-        cRemoto.addEventListener('touchend', pararDesenho, { passive: false });
-        cRemoto.addEventListener('touchcancel', pararDesenho, { passive: false });
+        // Eventos universais POINTER (O Padrão mais moderno e a prova de falhas)
+        cRemoto.addEventListener('pointerdown', comecarDesenho);
+        cRemoto.addEventListener('pointermove', desenhar);
+        cRemoto.addEventListener('pointerup', pararDesenho);
+        cRemoto.addEventListener('pointercancel', pararDesenho);
+        cRemoto.addEventListener('pointerout', pararDesenho);
    }
 
    window.limparAssinaturaRemota = function() { 
