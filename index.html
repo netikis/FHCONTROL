@@ -1633,7 +1633,31 @@ atualizarCarrinhoOS();
                         .ass-nome { font-size: 11px; color: #555; margin-top: 2px; }
                         
                         .rodape { text-align: center; margin-top: 20px; font-size: 9px; color: #adb5bd; border-top: 1px dashed #dee2e6; padding-top: 8px; }
-                    </style>
+                       
+                      /* BOTÃO DE IMPRESSÃO FLUTUANTE */
+                        @media print {
+                            .btn-imprimir-flutuante { display: none !important; }
+                        }
+                        .btn-imprimir-flutuante {
+                            position: fixed;
+                            bottom: 30px; /* Joga o botão para a parte de BAIXO da tela */
+                            right: 30px;  /* Afasta um pouquinho mais do canto */
+                            background-color: #27ae60;
+                            color: white;
+                            border: none;
+                            padding: 12px 20px;
+                            font-size: 14px;
+                            font-weight: bold;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                            z-index: 1000;
+                        }
+                        .btn-imprimir-flutuante:hover {
+                            background-color: #2ecc71;
+                        }                  
+ 
+                   </style>
                 </head>
                 <body>
                     <div class="header">
@@ -1666,7 +1690,7 @@ atualizarCarrinhoOS();
 
                     <div class="rodape">Documento gerado eletronicamente pelo sistema FH CONTROL.</div>
                     
-                    <script>window.onload = function() { setTimeout(function(){ window.print(); window.close(); }, 2000); }<\/script>
+                    <button class="btn-imprimir-flutuante" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
                 </body>
                 </html>
             `;
@@ -1712,11 +1736,12 @@ atualizarCarrinhoOS();
             let endCupom = empresaGlobal.endereco ? `<div class="center" style="font-size: 10px;">${empresaGlobal.endereco}</div>` : '';
 
             let htmlCupom = `
-                <html>
+               <html>
                 <head>
-                   <title>Cupom</title>
+                   <title></title>
                     <style>
-                        body { font-family: 'Courier New', Courier, monospace; width: 300px; margin: 0 auto; padding: 10px; color: #000; font-size: 12px; }
+                        @page { margin: 0; } /* Remove o cabeçalho e rodapé automáticos do navegador */
+                        body { font-family: 'Courier New', Courier, monospace; width: 300px; margin: 0 auto; padding: 15px; color: #000; font-size: 12px; }
                         .center { text-align: center; }
                         .bold { font-weight: bold; }
                         .line { border-bottom: 1px dashed #000; margin: 10px 0; }
