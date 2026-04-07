@@ -1098,14 +1098,37 @@
 
         function renderizarTabelaEstoque() {
             const tab = document.getElementById('tabelaEstoque'); tab.innerHTML = '';
+            
+            // 1. Filtra pela barra de busca
             let f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd)));
+            
+            // 2. ORDENAÇÃO INTELIGENTE: Baixo estoque no topo
+            f.sort((a, b) => {
+                let qtdA = a.quantidade || 0;
+                let qtdB = b.quantidade || 0;
+                let alertaA = qtdA <= 3;
+                let alertaB = qtdB <= 3;
+
+                // Se o produto 'A' está em alerta e o 'B' não, o 'A' sobe para o topo (-1)
+                if (alertaA && !alertaB) return -1;
+                // Se o 'B' está em alerta e o 'A' não, o 'B' sobe (1)
+                if (!alertaA && alertaB) return 1;
+                
+                // Se houver empate (ambos em alerta ou ambos com estoque normal), 
+                // desempata organizando por ordem alfabética do nome
+                return a.nome.localeCompare(b.nome);
+            });
+
+            // 3. Monta a paginação com a lista já ordenada
             const pag = f.slice((paginaAtualProd - 1) * itensPorPaginaProd, ((paginaAtualProd - 1) * itensPorPaginaProd) + itensPorPaginaProd);
-           document.getElementById('infoPaginaProd').innerText = `Pág ${paginaAtualProd} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaProd))}`;
+            
+            document.getElementById('infoPaginaProd').innerText = `Pág ${paginaAtualProd} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaProd))}`;
+            
             pag.forEach(p => {
                 let img = p.foto ? `<img src="${p.foto}" style="width:30px;height:30px;border-radius:4px;object-fit:cover;">` : '-';
                 let alert = ((p.quantidade || 0) <= 3) ? 'linha-alerta' : '';
                 const tr = document.createElement('tr'); tr.className = alert;
-                // Destacando os dados do estoque também
+                
                 tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#f1c40f;">${p.codigo || '-'}</td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
                 <td class="acoes-flex">
                     <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️ Ed</button>
