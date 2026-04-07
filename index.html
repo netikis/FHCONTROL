@@ -1010,37 +1010,69 @@
    
    // CORREÇÃO DO TOUCH AQUI: Usando array para pegar a posição do dedo na tela
    window.iniciarCanvasRemoto = function() {
-        const cRemoto = document.getElementById('assinaturaCanvasRemota'); const caixaPaiRemoto = cRemoto.parentElement;
-        cRemoto.width = caixaPaiRemoto.clientWidth - 4; cRemoto.height = 200;
-        ctxRemoto = cRemoto.getContext('2d'); ctxRemoto.lineWidth = 3; ctxRemoto.lineCap = 'round'; ctxRemoto.strokeStyle = '#2c3e50';
+        const cRemoto = document.getElementById('assinaturaCanvasRemota'); 
+        const caixaPaiRemoto = cRemoto.parentElement;
         
-        const comecarDesenho = function(e) { desenhandoRemoto = true; desenhar(e); }; 
-        const pararDesenho = function() { desenhandoRemoto = false; ctxRemoto.beginPath(); };
+        // Ajusta o tamanho do quadro de assinatura
+        cRemoto.width = caixaPaiRemoto.clientWidth - 4; 
+        cRemoto.height = 200;
         
-        const desenhar = function(e) { 
-            if (!desenhandoRemoto) return; 
-            e.preventDefault(); 
-            const rect = cRemoto.getBoundingClientRect(); 
-            
-            // Lendo a coordenada correta se for Touch (celular) ou Mouse (PC)
-            const X = (e.touches && e.touches.length > 0) ? e.touches.clientX : e.clientX; 
-            const Y = (e.touches && e.touches.length > 0) ? e.touches.clientY : e.clientY; 
-            
-            ctxRemoto.lineTo(X - rect.left, Y - rect.top); 
-            ctxRemoto.stroke(); 
-            ctxRemoto.beginPath(); 
-            ctxRemoto.moveTo(X - rect.left, Y - rect.top); 
+        ctxRemoto = cRemoto.getContext('2d'); 
+        ctxRemoto.lineWidth = 3; 
+        ctxRemoto.lineCap = 'round'; 
+        ctxRemoto.lineJoin = 'round';
+        ctxRemoto.strokeStyle = '#2c3e50';
+
+        // Função inteligente para pegar a coordenada exata, seja dedo ou mouse
+        const obterPosicao = (e) => {
+            const rect = cRemoto.getBoundingClientRect();
+            if (e.touches && e.touches.length > 0) {
+                return { x: e.touches.clientX - rect.left, y: e.touches.clientY - rect.top };
+            }
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
         };
-        
-        cRemoto.addEventListener('mousedown', comecarDesenho); 
-        cRemoto.addEventListener('mouseup', pararDesenho); 
-        cRemoto.addEventListener('mousemove', desenhar); 
-        cRemoto.addEventListener('touchstart', comecarDesenho, {passive: false}); 
-        cRemoto.addEventListener('touchend', pararDesenho); 
-        cRemoto.addEventListener('touchmove', desenhar, {passive: false});
+
+        const comecarDesenho = (e) => {
+            e.preventDefault(); // Trava a tela para não rolar
+            desenhandoRemoto = true;
+            const pos = obterPosicao(e);
+            ctxRemoto.beginPath();
+            ctxRemoto.moveTo(pos.x, pos.y);
+        };
+
+        const desenhar = (e) => {
+            if (!desenhandoRemoto) return;
+            e.preventDefault();
+            const pos = obterPosicao(e);
+            ctxRemoto.lineTo(pos.x, pos.y);
+            ctxRemoto.stroke();
+        };
+
+        const pararDesenho = (e) => {
+            if (e && e.cancelable) e.preventDefault();
+            desenhandoRemoto = false;
+            ctxRemoto.closePath();
+        };
+
+        // Eventos para Computador (Mouse)
+        cRemoto.addEventListener('mousedown', comecarDesenho);
+        cRemoto.addEventListener('mousemove', desenhar);
+        cRemoto.addEventListener('mouseup', pararDesenho);
+        cRemoto.addEventListener('mouseout', pararDesenho); // Se o mouse sair do quadro
+
+        // Eventos para Celular (Touch/Dedo) - O passive: false é OBRIGATÓRIO aqui
+        cRemoto.addEventListener('touchstart', comecarDesenho, { passive: false });
+        cRemoto.addEventListener('touchmove', desenhar, { passive: false });
+        cRemoto.addEventListener('touchend', pararDesenho, { passive: false });
+        cRemoto.addEventListener('touchcancel', pararDesenho, { passive: false });
    }
 
-   window.limparAssinaturaRemota = function() { if(ctxRemoto) { const cRemoto = document.getElementById('assinaturaCanvasRemota'); ctxRemoto.clearRect(0, 0, cRemoto.width, cRemoto.height); } }
+   window.limparAssinaturaRemota = function() { 
+       if(ctxRemoto) { 
+           const cRemoto = document.getElementById('assinaturaCanvasRemota'); 
+           ctxRemoto.clearRect(0, 0, cRemoto.width, cRemoto.height); 
+       } 
+   }
 
    window.salvarAssinaturaRemota = async function() {
         const cRemoto = document.getElementById('assinaturaCanvasRemota');
