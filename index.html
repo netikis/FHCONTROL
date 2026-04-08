@@ -305,7 +305,7 @@
            height: 200px; 
            border-radius: 8px; 
            cursor: crosshair; 
-           touch-action: none; /* Previne o navegador de tentar rolar a tela quando o dedo toca no canvas */
+           touch-action: none; 
        }
        
        /* --- Carrinho de Vendas (PDV e OS) --- */
@@ -395,6 +395,15 @@
            border: 2px solid #f1c40f;
        }
 
+       /* --- Telas Extras --- */
+       .overlay-fullscreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+       .user-info-sidebar { margin-top: auto; border-top: 1px solid #7f8c8d; padding-top: 15px; text-align: center; font-size: 12px; color: #f1c40f; }
+       
+       /* --- Dashboard Caixa --- */
+       .dash-card { padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); color: #fff;}
+       .dash-card h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; opacity: 0.9;}
+       .dash-card h2 { margin: 0; font-size: 24px; border: none; padding: 0;}
+
        /* =========================================
           RESPONSIVIDADE (MOBILE)
           ========================================= */
@@ -470,6 +479,53 @@
 </head>
 <body>
 
+<div id="telaLogin" class="overlay-fullscreen" style="background-color: #021024;">
+    <div style="width: 90%; max-width: 320px; text-align: center; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 40px 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        
+        <img id="logoLogin" src="https://image2url.com/r2/default/images/1775222635762-bb7b4bc7-d027-4c9a-abc4-add5cdbf79ba.png" style="max-height: 70px; margin-bottom: 15px; border-radius: 8px; background: #fff; padding: 5px;">
+        
+        <div id="botoesPerfil">
+            <h2 style="border: none; margin: 0 0 5px 0; color: #ffffff; font-size: 24px; text-transform: none;">Quem é você?</h2>
+            <p style="color: #9ca3af; font-size: 13px; margin-top: 0; margin-bottom: 30px;">Selecione seu perfil para acessar</p>
+            
+            <button onclick="mostrarFormAdmin()" style="background-color: #1d4ed8; color: #ffffff; border: none; padding: 15px; font-size: 14px; font-weight: bold; border-radius: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; cursor: pointer; transition: 0.2s;">
+                <span style="font-size: 18px;">🛡️</span> ADMINISTRADOR
+            </button>
+            
+            <button onclick="mostrarFormBalcao()" style="background-color: #374151; color: #ffffff; border: none; padding: 15px; font-size: 14px; font-weight: bold; border-radius: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.2s;">
+                <span style="font-size: 18px;">👤</span> BALCÃO / VENDEDOR
+            </button>
+        </div>
+
+        <div id="formLoginAdmin" style="display: none; text-align: left;">
+            <h2 style="border: none; margin: 0 0 15px 0; color: #ffffff; font-size: 18px; text-align: center;">Acesso Administrativo</h2>
+            <div class="form-group"><label style="color: #9ca3af;">Senha Mestra</label><input type="password" id="inputSenhaAdmin" placeholder="Digite sua senha..."></div>
+            <button class="btn-primary" onclick="logarAdmin()" style="background-color: #1d4ed8; padding: 12px; margin-top: 10px;">Entrar</button>
+            <button class="btn-secundario" onclick="voltarParaPerfis()" style="width: 100%; padding: 10px; margin-top: 10px; background-color: transparent; color: #9ca3af; border: 1px solid #4b5563;">Voltar</button>
+        </div>
+
+        <div id="formLoginBalcao" style="display: none; text-align: left;">
+            <h2 style="border: none; margin: 0 0 15px 0; color: #ffffff; font-size: 18px; text-align: center;">Acesso Funcionário</h2>
+            <div class="form-group"><label style="color: #9ca3af;">Login / Usuário</label><input type="text" id="inputUserBalcao" placeholder="Nome de usuário..."></div>
+            <div class="form-group"><label style="color: #9ca3af;">Senha</label><input type="password" id="inputSenhaBalcao" placeholder="Sua senha..."></div>
+            <button class="btn-primary" onclick="logarBalcao()" style="background-color: #27ae60; padding: 12px; margin-top: 10px;">Acessar PDV</button>
+            <button class="btn-secundario" onclick="voltarParaPerfis()" style="width: 100%; padding: 10px; margin-top: 10px; background-color: transparent; color: #9ca3af; border: 1px solid #4b5563;">Voltar</button>
+        </div>
+        
+    </div>
+</div>
+
+<div id="modalDespesa" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('modalDespesa').style.display='none'">&times;</span>
+        <h2 style="margin-top: 0; color: #e74c3c;">Lançar Despesa / Saída</h2>
+        <p style="font-size: 12px; color:#bdc3c7;">Subtrai o valor do saldo do Caixa Atual.</p>
+        <div class="form-group"><label>Motivo (Ex: Luz, Água, Compra Avulsa)</label><input type="text" id="motivoDespesa"></div>
+        <div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" id="valorDespesa"></div>
+        <button class="btn-danger" style="width: 100%; padding: 12px;" onclick="salvarDespesa()">➖ RETIRAR DO CAIXA</button>
+    </div>
+</div>
+
 <div id="telaAssinaturaRemota" style="display: none; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; height: 100%; background-color: #2c3e50; padding: 40px 20px 100px 20px; box-sizing: border-box; color: #ecf0f1; text-align: center; overflow-y: auto;">
    <img id="logoAssinaturaRemota" src="https://image2url.com/r2/default/images/1775222635762-bb7b4bc7-d027-4c9a-abc4-add5cdbf79ba.png" style="max-width: 120px; border-radius: 8px; margin-bottom: 20px; background-color: #fff; padding: 5px; flex-shrink: 0;">
    
@@ -505,6 +561,11 @@
    <button class="menu-btn" id="btnTabOS" onclick="abrirAba('tabOS', this)" style="color: #f1c40f;">📝 OS</button>
    <button class="menu-btn" id="btnTabCaixa" onclick="abrirAba('tabCaixa', this)">💰 Caixa / Relatórios</button>
    <button class="menu-btn" id="btnTabConfig" onclick="abrirAba('tabConfig', this)">⚙️ Config / Empresa</button>
+   
+   <div class="user-info-sidebar" id="blocoUserLogado" style="display: none;">
+       <span id="nomeUserLogado">Admin</span><br>
+       <button class="btn-danger" style="margin-top: 8px; width: 100%; padding: 5px;" onclick="fazerLogout()">Sair do Sistema</button>
+   </div>
 </div>
 
 <div class="main-content" id="appMainContent">
@@ -631,8 +692,15 @@
             <h2>Novo Orçamento / Venda Direta</h2>
             
             <div class="row form-group" style="background-color: #1a252f; padding: 12px; border-radius: 6px; border: 1px solid #7f8c8d;">
+                <div class="col">
+                    <label style="color: #f1c40f;">Tipo de Documento</label>
+                    <select id="vendaTipoDoc" style="font-weight: bold; background-color: #2c3e50; color: #f1c40f; border: 1px solid #f1c40f;">
+                        <option value="VENDA">🛒 Venda Direta (Baixa Estoque)</option>
+                        <option value="ORCAMENTO">📄 Apenas Orçamento (Simulação)</option>
+                    </select>
+                </div>
                 <div class="col"><label style="color: #f1c40f;">Nº da Venda</label><input type="number" id="vendaOS" style="font-weight: bold; color: #e74c3c;"></div>
-                <div class="col" style="flex: 1.5;"><label style="color: #f1c40f;">Data de Vencimento (Opcional)</label><input type="date" id="vendaVencimento" style="font-weight: bold;"></div>
+                <div class="col" style="flex: 1.5;"><label style="color: #f1c40f;">Data Vencimento</label><input type="date" id="vendaVencimento" style="font-weight: bold;"></div>
             </div>
 
             <div class="row form-group">
@@ -718,10 +786,7 @@
 
             <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">1. Equipe e Horários</h3>
             <div class="row form-group">
-                <div class="col"><label>Responsável</label><input type="text" id="osFuncionario" placeholder="Nome"></div>
                 <div class="col"><label>Equipe</label><input type="text" id="osEquipe" placeholder="Ex: Alpha"></div>
-            </div>
-            <div class="row form-group">
                 <div class="col"><label>Início (Data/Hora)</label><input type="datetime-local" id="osInicio"></div>
                 <div class="col"><label>Saída (Data/Hora)</label><input type="datetime-local" id="osFim"></div>
                 <div class="col"><label>Qtd. Pessoas</label><input type="number" id="osQtdPessoas" value="1" min="1"></div>
@@ -821,6 +886,23 @@
                </div>
            </div>
 
+           <div class="row" style="margin-bottom: 15px;">
+               <div class="col dash-card" style="background-color: #27ae60;">
+                   <h3>Entradas (Vendas + OS)</h3><h2 id="dashEntradas">R$ 0,00</h2>
+               </div>
+               <div class="col dash-card" style="background-color: #e74c3c;">
+                   <h3>Saídas (Despesas)</h3><h2 id="dashSaidas">R$ 0,00</h2>
+               </div>
+               <div class="col dash-card" style="background-color: #2980b9;">
+                   <h3>Saldo em Caixa</h3><h2 id="dashSaldo">R$ 0,00</h2>
+               </div>
+           </div>
+           
+           <div class="row" style="margin-bottom: 20px;">
+               <div class="col"><button class="btn-danger" style="padding: 12px; font-size: 13px;" onclick="document.getElementById('modalDespesa').style.display='flex'">➖ Lançar Despesa do Caixa</button></div>
+               <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #f39c12; color: #fff; font-size: 13px;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia (Zerar Valores)</button></div>
+           </div>
+
            <div class="table-responsive">
                <table>
                    <thead>
@@ -844,9 +926,38 @@
 
 
    <div id="tabConfig" class="tab-content">
+       
        <div class="container">
-           <h2>Dados da Minha Empresa</h2>
+           <h2 style="color: #3498db; border-bottom: 1px solid #3498db;">1. Acessos do Balcão (Vendedores)</h2>
+           <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Crie logins para seus funcionários. O nome cadastrado aqui sairá na impressão do cliente.</p>
+           
+           <form id="formFuncionario" onsubmit="event.preventDefault(); salvarFuncionario();" style="margin-bottom: 20px;">
+               <div class="row form-group" style="align-items: flex-end;">
+                   <div class="col"><label>Nome do Vendedor</label><input type="text" id="cadFuncNome" placeholder="Ex: João da Silva" required></div>
+                   <div class="col"><label>Login</label><input type="text" id="cadFuncLogin" placeholder="Ex: joao123" required></div>
+                   <div class="col"><label>Senha</label><input type="text" id="cadFuncSenha" placeholder="Senha do vendedor" required></div>
+                   <div class="col" style="flex: 0.5;"><button type="submit" class="btn-primary" style="margin-top: 0; background-color: #27ae60;">➕ Criar</button></div>
+               </div>
+           </form>
+           
+           <table style="margin-bottom: 30px;">
+               <thead><tr><th>Nome do Vendedor</th><th>Login Usado</th><th>Ação</th></tr></thead>
+               <tbody id="tabelaFuncionarios"></tbody>
+           </table>
+
+           <h2 style="color: #e67e22; border-bottom: 1px solid #e67e22; margin-top: 40px;">2. Senha do Administrador</h2>
+           <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Esta é a sua senha mestra. Não compartilhe com os funcionários do balcão.</p>
+           
+           <form id="formAdmin" onsubmit="event.preventDefault(); salvarSenhaAdmin();" style="margin-bottom: 20px;">
+               <div class="row form-group" style="align-items: flex-end;">
+                   <div class="col" style="flex: 2;"><label>Sua Senha Mestra Atual / Nova</label><input type="text" id="cadAdminSenha" placeholder="Digite sua senha de proteção..." required></div>
+                   <div class="col" style="flex: 1;"><button type="submit" class="btn-primary" style="margin-top: 0; background-color: #e67e22;">💾 Salvar Senha Admin</button></div>
+               </div>
+           </form>
+
+           <h2 style="margin-top: 40px;">3. Dados da Minha Empresa</h2>
            <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Esses dados sairão no cabeçalho dos seus PDFs e Cupons Fiscais/Recibos.</p>
+           
            <form id="formEmpresa">
                <div class="bloco-lancamento">
                    <div class="row form-group">
@@ -882,7 +993,6 @@
 
 </div>
 
-
 <script type="module">
    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
    import { getDatabase, ref, push, set, update, remove, onValue, get } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
@@ -900,12 +1010,16 @@
    const db = getDatabase(app);
 
    // ================= VARIÁVEIS GLOBAIS =================
-    let clientesGlobais = [];
-    let produtosGlobais = [];
-    let caixaGlobal = []; 
-    let empresaGlobal = { nome: "Minha Empresa", cnpj: "", telefone: "", endereco: "", logo: "" }; 
-    
-    let carrinhoVenda = []; 
+   window.usuarioLogado = null;
+   window.usuariosGlobais = [];
+   window.caixaFinanceiro = { entradas: 0, saidas: 0 };
+   
+   let clientesGlobais = [];
+   let produtosGlobais = [];
+   let caixaGlobal = []; 
+   let empresaGlobal = { nome: "Minha Empresa", cnpj: "", telefone: "", endereco: "", logo: "" }; 
+   
+   let carrinhoVenda = []; 
    let carrinhoOS = []; 
    let fotoAtualOS_Base64 = ""; 
    
@@ -919,148 +1033,144 @@
 
 
    // ================= SISTEMA DE ABAS =================
-    window.abrirAba = function(idAba, elementoBotao) {
-        document.querySelectorAll('.tab-content').forEach(function(tab) { tab.classList.remove('active'); });
+   window.abrirAba = function(idAba, elementoBotao) {
+       document.querySelectorAll('.tab-content').forEach(function(tab) { tab.classList.remove('active'); });
        document.querySelectorAll('.menu-btn').forEach(function(btn) { btn.classList.remove('active'); });
        document.getElementById(idAba).classList.add('active');
-        if(elementoBotao) elementoBotao.classList.add('active');
+       if(elementoBotao) elementoBotao.classList.add('active');
 
        if (idAba === 'tabVendas') {
-            window.carregarSelectsGerais();
-            if(!editandoDocId) window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA'); 
-        }
-        if (idAba === 'tabOS') {
-            window.carregarSelectsGerais();
-            if(!editandoDocId) window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO'); 
-            window.calcularDeslocamentoOS(); 
-        }
-     };
+           window.carregarSelectsGerais();
+           if(!editandoDocId) window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA'); 
+       }
+       if (idAba === 'tabOS') {
+           window.carregarSelectsGerais();
+           if(!editandoDocId) window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO'); 
+           window.calcularDeslocamentoOS(); 
+       }
+   };
 
-    document.addEventListener('keydown', function(evento) { 
-        if (evento.key === "Escape") { 
-            if (editandoCliId) window.cancelarEdicaoCli(); 
-            if (editandoProdId) window.cancelarEdicaoProd(); 
-            if (editandoDocId) window.cancelarEdicaoDocumento();
-            window.fecharModal(); 
-        }
-    });
+   document.addEventListener('keydown', function(evento) { 
+       if (evento.key === "Escape") { 
+           if (editandoCliId) window.cancelarEdicaoCli(); 
+           if (editandoProdId) window.cancelarEdicaoProd(); 
+           if (editandoDocId) window.cancelarEdicaoDocumento();
+           window.fecharModal(); 
+       }
+   });
 
-    // Função universal para cancelar a edição de um documento
-    window.cancelarEdicaoDocumento = function() {
-        if(!confirm("Deseja cancelar a edição? As alterações não serão salvas.")) return;
-        editandoDocId = null;
-        
-        carrinhoVenda = []; window.atualizarCarrinhoVenda();
-        carrinhoOS = []; window.atualizarCarrinhoOS();
-        
-        document.getElementById('vendaClienteBusca').value = '';
-        ['osClienteBusca','osFuncionario','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
-        document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
-        fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
+   // Função universal para cancelar a edição de um documento
+   window.cancelarEdicaoDocumento = function() {
+       if(!confirm("Deseja cancelar a edição? As alterações não serão salvas.")) return;
+       editandoDocId = null;
+       
+       carrinhoVenda = []; window.atualizarCarrinhoVenda();
+       carrinhoOS = []; window.atualizarCarrinhoOS();
+       
+       document.getElementById('vendaClienteBusca').value = '';
+       ['osClienteBusca','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
+       document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
+       fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
 
-        window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
-        window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO');
-        
-        document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
-        document.getElementById('btnCancelarEdicaoOS').style.display = 'none';
-        document.getElementById('colCancelarEdicaoOS').style.display = 'none';
-        
-        alert("Edição cancelada. Você está criando um novo documento.");
-    }
+       window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
+       window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO');
+       
+       document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
+       document.getElementById('btnCancelarEdicaoOS').style.display = 'none';
+       document.getElementById('colCancelarEdicaoOS').style.display = 'none';
+       
+       alert("Edição cancelada. Você está criando um novo documento.");
+   }
 
 
-    // ================================================================
-    // INTERCEPTADOR DE URL (TELA DE ASSINATURA REMOTA)
-    // ================================================================
+   // ================================================================
+   // INTERCEPTADOR DE URL (TELA DE ASSINATURA REMOTA)
+   // ================================================================
    const urlParams = new URLSearchParams(window.location.search);
    const codigoAssinar = urlParams.get('assinar');
 
-    if (codigoAssinar) {
-        linkAssinaturaRemota_ID = codigoAssinar;
-        document.getElementById('appSidebar').style.display = 'none';
+   if (codigoAssinar) {
+       linkAssinaturaRemota_ID = codigoAssinar;
+       document.getElementById('appSidebar').style.display = 'none';
        document.getElementById('appMainContent').style.display = 'none';
-        document.getElementById('telaAssinaturaRemota').style.display = 'flex';
-        
-        onValue(ref(db, 'empresa'), function(s) {
-            const emp = s.val();
-            if(emp && emp.logo) document.getElementById('logoAssinaturaRemota').src = emp.logo;
-        });
+       document.getElementById('telaAssinaturaRemota').style.display = 'flex';
+       
+       onValue(ref(db, 'empresa'), function(s) {
+           const emp = s.val();
+           if(emp && emp.logo) document.getElementById('logoAssinaturaRemota').src = emp.logo;
+       });
 
-        get(ref(db, 'caixa/' + linkAssinaturaRemota_ID)).then(function(snapshot) {
-            const docCaixa = snapshot.val();
-            if (docCaixa) {
+       get(ref(db, 'caixa/' + linkAssinaturaRemota_ID)).then(function(snapshot) {
+           const docCaixa = snapshot.val();
+           if (docCaixa) {
                document.getElementById('remoteClienteNome').innerText = docCaixa.clienteNome;
                document.getElementById('remoteOSNum').innerText = docCaixa.os || "S/N";
-                let dataVencFormatada = docCaixa.vencimento ? docCaixa.vencimento.split('-').reverse().join('/') : 'À vista';
+               let dataVencFormatada = docCaixa.vencimento ? docCaixa.vencimento.split('-').reverse().join('/') : 'À vista';
                document.getElementById('remoteVencimento').innerText = dataVencFormatada;
                document.getElementById('remoteTotal').innerText = `R$ ${docCaixa.total.toFixed(2)}`;
                
-                if (docCaixa.assinaturaBase64) {
+               if (docCaixa.assinaturaBase64) {
                    document.getElementById('msgSucessoRemoto').style.display = 'block';
                    document.getElementById('msgSucessoRemoto').innerHTML = "Este documento já foi assinado e confirmado. ✅";
                    document.querySelector('.signature-pad').style.display = 'none'; 
-                } else {
+               } else {
                    window.iniciarCanvasRemoto();
-                }
-            } else { alert("Documento não encontrado ou excluído do sistema."); }
-        });
+               }
+           } else { alert("Documento não encontrado ou excluído do sistema."); }
+       });
    }
 
    let ctxRemoto; let desenhandoRemoto = false;
    
-   // CORREÇÃO DO TOUCH AQUI: Usando array para pegar a posição do dedo na tela
-  window.iniciarCanvasRemoto = function() {
-        const cRemoto = document.getElementById('assinaturaCanvasRemota'); 
-        const caixaPaiRemoto = cRemoto.parentElement;
-        
-        // Ajusta o tamanho do quadro de assinatura
-        cRemoto.width = caixaPaiRemoto.clientWidth - 4; 
-        cRemoto.height = 200;
-        
-        ctxRemoto = cRemoto.getContext('2d'); 
-        ctxRemoto.lineWidth = 3; 
-        ctxRemoto.lineCap = 'round'; 
-        ctxRemoto.lineJoin = 'round';
-        ctxRemoto.strokeStyle = '#2c3e50';
+   window.iniciarCanvasRemoto = function() {
+       const cRemoto = document.getElementById('assinaturaCanvasRemota'); 
+       const caixaPaiRemoto = cRemoto.parentElement;
+       
+       cRemoto.width = caixaPaiRemoto.clientWidth - 4; 
+       cRemoto.height = 200;
+       
+       ctxRemoto = cRemoto.getContext('2d'); 
+       ctxRemoto.lineWidth = 3; 
+       ctxRemoto.lineCap = 'round'; 
+       ctxRemoto.lineJoin = 'round';
+       ctxRemoto.strokeStyle = '#2c3e50';
 
-        // Com Pointer Events, a posição é universal e precisa (dedo, caneta ou mouse)
-        const obterPosicao = (e) => {
-            const rect = cRemoto.getBoundingClientRect();
-            return { 
-                x: e.clientX - rect.left, 
-                y: e.clientY - rect.top 
-            };
-        };
+       const obterPosicao = (e) => {
+           const rect = cRemoto.getBoundingClientRect();
+           return { 
+               x: e.clientX - rect.left, 
+               y: e.clientY - rect.top 
+           };
+       };
 
-        const comecarDesenho = (e) => {
-            e.preventDefault();
-            desenhandoRemoto = true;
-            cRemoto.setPointerCapture(e.pointerId); // "Prende" o dedo/mouse no canvas
-            const pos = obterPosicao(e);
-            ctxRemoto.beginPath();
-            ctxRemoto.moveTo(pos.x, pos.y);
-        };
+       const comecarDesenho = (e) => {
+           e.preventDefault();
+           desenhandoRemoto = true;
+           cRemoto.setPointerCapture(e.pointerId); 
+           const pos = obterPosicao(e);
+           ctxRemoto.beginPath();
+           ctxRemoto.moveTo(pos.x, pos.y);
+       };
 
-        const desenhar = (e) => {
-            if (!desenhandoRemoto) return;
-            e.preventDefault();
-            const pos = obterPosicao(e);
-            ctxRemoto.lineTo(pos.x, pos.y);
-            ctxRemoto.stroke();
-        };
+       const desenhar = (e) => {
+           if (!desenhandoRemoto) return;
+           e.preventDefault();
+           const pos = obterPosicao(e);
+           ctxRemoto.lineTo(pos.x, pos.y);
+           ctxRemoto.stroke();
+       };
 
-        const pararDesenho = (e) => {
-            desenhandoRemoto = false;
-            cRemoto.releasePointerCapture(e.pointerId); // Solta o dedo
-            ctxRemoto.closePath();
-        };
+       const pararDesenho = (e) => {
+           desenhandoRemoto = false;
+           cRemoto.releasePointerCapture(e.pointerId);
+           ctxRemoto.closePath();
+       };
 
-        // Eventos universais POINTER (O Padrão mais moderno e a prova de falhas)
-        cRemoto.addEventListener('pointerdown', comecarDesenho);
-        cRemoto.addEventListener('pointermove', desenhar);
-        cRemoto.addEventListener('pointerup', pararDesenho);
-        cRemoto.addEventListener('pointercancel', pararDesenho);
-        cRemoto.addEventListener('pointerout', pararDesenho);
+       cRemoto.addEventListener('pointerdown', comecarDesenho);
+       cRemoto.addEventListener('pointermove', desenhar);
+       cRemoto.addEventListener('pointerup', pararDesenho);
+       cRemoto.addEventListener('pointercancel', pararDesenho);
+       cRemoto.addEventListener('pointerout', pararDesenho);
    }
 
    window.limparAssinaturaRemota = function() { 
@@ -1071,594 +1181,624 @@
    }
 
    window.salvarAssinaturaRemota = async function() {
-        const cRemoto = document.getElementById('assinaturaCanvasRemota');
-        const canvasBranco = document.createElement('canvas'); canvasBranco.width = cRemoto.width; canvasBranco.height = cRemoto.height; 
-        if (cRemoto.toDataURL() === canvasBranco.toDataURL()) { return alert("Por favor, assine no quadro tracejado antes de confirmar."); }
-        try {
-            await update(ref(db, 'caixa/' + linkAssinaturaRemota_ID), { assinaturaBase64: cRemoto.toDataURL() });
+       const cRemoto = document.getElementById('assinaturaCanvasRemota');
+       const canvasBranco = document.createElement('canvas'); canvasBranco.width = cRemoto.width; canvasBranco.height = cRemoto.height; 
+       if (cRemoto.toDataURL() === canvasBranco.toDataURL()) { return alert("Por favor, assine no quadro tracejado antes de confirmar."); }
+       try {
+           await update(ref(db, 'caixa/' + linkAssinaturaRemota_ID), { assinaturaBase64: cRemoto.toDataURL() });
            document.getElementById('msgSucessoRemoto').style.display = 'block';
-        } catch (erro) { alert("Erro ao enviar assinatura: " + erro); }
-    }
+       } catch (erro) { alert("Erro ao enviar assinatura: " + erro); }
+   }
 
 
-    // ================================================================
-    // SISTEMA PRINCIPAL
-    // ================================================================
-    
-    if (!codigoAssinar) {
-        
-        // --- 0. DADOS DA EMPRESA (CONFIG) ---
-        onValue(ref(db, 'empresa'), function(snapshot) {
-            const dados = snapshot.val();
-            if (dados) { 
-                empresaGlobal = dados; 
+   // ================================================================
+   // SISTEMA PRINCIPAL
+   // ================================================================
+   
+   if (!codigoAssinar) {
+       
+        // ESCONDE O SISTEMA ATÉ LOGAR
+        document.getElementById('appSidebar').style.display = 'none';
+        document.getElementById('appMainContent').style.display = 'none';
+
+        // CARREGA USUÁRIOS
+        onValue(ref(db, 'usuarios'), s => {
+            window.usuariosGlobais = []; const d = s.val();
+            if (d) { Object.keys(d).forEach(k => window.usuariosGlobais.push({ id: k, ...d[k] })); }
+            
+            // Preenche a tabela do Balcão
+            window.renderTabelaFuncionarios();
+            
+            // Preenche a senha do admin se existir
+            let adminUser = window.usuariosGlobais.find(u => u.role === 'admin');
+            if(adminUser) document.getElementById('cadAdminSenha').value = adminUser.senha;
+        });
+
+        // CARREGA PAINEL DO CAIXA
+        onValue(ref(db, 'caixaStatus'), s => {
+            window.caixaFinanceiro = s.val() || { entradas: 0, saidas: 0 };
+            if(window.atualizarPainelCaixa) window.atualizarPainelCaixa();
+        });
+
+       // --- 0. DADOS DA EMPRESA (CONFIG) ---
+       onValue(ref(db, 'empresa'), function(snapshot) {
+           const dados = snapshot.val();
+           if (dados) { 
+               empresaGlobal = dados; 
                document.getElementById('empNome').value = dados.nome || '';
                document.getElementById('empCnpj').value = dados.cnpj || '';
                document.getElementById('empTelefone').value = dados.telefone || '';
                document.getElementById('empEndereco').value = dados.endereco || '';
                
-                if(dados.logo) {
+               if(dados.logo) {
                    document.getElementById('previewLogoEmpresa').src = dados.logo;
-                    document.getElementById('previewLogoEmpresa').style.display = 'block';
-                    document.getElementById('logoSidebar').src = dados.logo; 
-                }
-            }
-        });
+                   document.getElementById('previewLogoEmpresa').style.display = 'block';
+                   document.getElementById('logoSidebar').src = dados.logo; 
+                   document.getElementById('logoLogin').src = dados.logo; 
+               }
+           }
+       });
 
        document.getElementById('empLogoUpload').addEventListener('change', e => {
-            const f = e.target.files; 
-            if (f && f.length > 0) {
-                const r = new FileReader(); 
-                r.onload = ev => { 
-                    empresaGlobal.logo = ev.target.result; 
+           const f = e.target.files; 
+           if (f && f.length > 0) {
+               const r = new FileReader(); 
+               r.onload = ev => { 
+                   empresaGlobal.logo = ev.target.result; 
                    document.getElementById('previewLogoEmpresa').src = ev.target.result; 
                    document.getElementById('previewLogoEmpresa').style.display = 'block'; 
-                }; 
-                r.readAsDataURL(f); 
-            }
-        });
+               }; 
+               r.readAsDataURL(f); 
+           }
+       });
 
        document.getElementById('formEmpresa').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const d = {
-                nome: document.getElementById('empNome').value,
-                cnpj: document.getElementById('empCnpj').value,
-                telefone: document.getElementById('empTelefone').value,
-                endereco: document.getElementById('empEndereco').value,
-                logo: empresaGlobal.logo || ''
-            };
-            set(ref(db, 'empresa'), d).then(() => alert('Dados da Empresa salvos com sucesso!')).catch(e => alert("Erro: " + e));
-        });
+           e.preventDefault();
+           const d = {
+               nome: document.getElementById('empNome').value,
+               cnpj: document.getElementById('empCnpj').value,
+               telefone: document.getElementById('empTelefone').value,
+               endereco: document.getElementById('empEndereco').value,
+               logo: empresaGlobal.logo || ''
+           };
+           set(ref(db, 'empresa'), d).then(() => alert('Dados da Empresa salvos com sucesso!')).catch(e => alert("Erro: " + e));
+       });
 
 
-        // --- 1. CLIENTES ---
-        const formatarMascara = function(id, regra) { const campo = document.getElementById(id); if (campo) { campo.addEventListener('input', function() { this.value = regra(this.value); }); } }
-        formatarMascara('cpf', v => { v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); return v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); });
-        formatarMascara('cnpj', v => { v = v.replace(/\D/g, ''); if (v.length > 14) v = v.slice(0, 14); return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2'); });
-        formatarMascara('empCnpj', v => { v = v.replace(/\D/g, ''); if (v.length > 14) v = v.slice(0, 14); return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2'); });
-        formatarMascara('telefone', v => { v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2'); });
-        formatarMascara('empTelefone', v => { v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2'); });
-        formatarMascara('cep', v => { v = v.replace(/\D/g, ''); if (v.length > 8) v = v.slice(0, 8); return v.replace(/^(\d{5})(\d)/, '$1-$2'); });
-        
-        onValue(ref(db, 'clientes'), function(snapshot) {
-            clientesGlobais = []; const dados = snapshot.val();
-            if (dados) { Object.keys(dados).forEach(key => clientesGlobais.push({ id: key, ...dados[key] })); }
-            window.renderizarTabelaClientes(); window.carregarSelectsGerais();
-        });
+       // --- 1. CLIENTES ---
+       const formatarMascara = function(id, regra) { const campo = document.getElementById(id); if (campo) { campo.addEventListener('input', function() { this.value = regra(this.value); }); } }
+       formatarMascara('cpf', v => { v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); return v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); });
+       formatarMascara('cnpj', v => { v = v.replace(/\D/g, ''); if (v.length > 14) v = v.slice(0, 14); return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2'); });
+       formatarMascara('empCnpj', v => { v = v.replace(/\D/g, ''); if (v.length > 14) v = v.slice(0, 14); return v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2'); });
+       formatarMascara('telefone', v => { v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2'); });
+       formatarMascara('empTelefone', v => { v = v.replace(/\D/g, ''); if (v.length > 11) v = v.slice(0, 11); return v.replace(/^(\d{2})(\d)/g, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2'); });
+       formatarMascara('cep', v => { v = v.replace(/\D/g, ''); if (v.length > 8) v = v.slice(0, 8); return v.replace(/^(\d{5})(\d)/, '$1-$2'); });
+       
+       onValue(ref(db, 'clientes'), function(snapshot) {
+           clientesGlobais = []; const dados = snapshot.val();
+           if (dados) { Object.keys(dados).forEach(key => clientesGlobais.push({ id: key, ...dados[key] })); }
+           window.renderizarTabelaClientes(); window.carregarSelectsGerais();
+       });
 
-        window.filtrarClientes = function() { termoBuscaCli = document.getElementById('buscaCliente').value.toLowerCase(); paginaAtualCli = 1; window.renderizarTabelaClientes(); }
-        window.mudarPaginaCli = function(direcao) { const f = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli)); const max = Math.ceil(f.length / itensPorPaginaCli); if (paginaAtualCli + direcao >= 1 && paginaAtualCli + direcao <= max) { paginaAtualCli += direcao; window.renderizarTabelaClientes(); } }
+       window.filtrarClientes = function() { termoBuscaCli = document.getElementById('buscaCliente').value.toLowerCase(); paginaAtualCli = 1; window.renderizarTabelaClientes(); }
+       window.mudarPaginaCli = function(direcao) { const f = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli)); const max = Math.ceil(f.length / itensPorPaginaCli); if (paginaAtualCli + direcao >= 1 && paginaAtualCli + direcao <= max) { paginaAtualCli += direcao; window.renderizarTabelaClientes(); } }
 
-        window.renderizarTabelaClientes = function() {
-            const tab = document.getElementById('tabelaClientes'); tab.innerHTML = ''; 
-            let f = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli));
-            const pag = f.slice((paginaAtualCli - 1) * itensPorPaginaCli, ((paginaAtualCli - 1) * itensPorPaginaCli) + itensPorPaginaCli);
+       window.renderizarTabelaClientes = function() {
+           const tab = document.getElementById('tabelaClientes'); tab.innerHTML = ''; 
+           let f = clientesGlobais.filter(c => c.nome.toLowerCase().includes(termoBuscaCli));
+           const pag = f.slice((paginaAtualCli - 1) * itensPorPaginaCli, ((paginaAtualCli - 1) * itensPorPaginaCli) + itensPorPaginaCli);
            document.getElementById('infoPaginaCli').innerText = `Pág ${paginaAtualCli} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaCli))}`;
-            pag.forEach(c => {
-                const tr = document.createElement('tr'); const doc = c.cpf ? c.cpf : (c.cnpj || '-');
-                tr.innerHTML = `<td style="font-weight: bold;">${c.nome}</td><td style="font-weight: bold;">${doc}</td><td style="font-weight: bold;">${c.telefone || '-'}</td><td style="font-weight: bold;">${c.cidade || '-'}</td>
-                    <td class="acoes-flex">
-                        <button class="btn-acao" onclick="verCliente('${c.id}')" title="Ver Cliente">🔍 Ver</button>
-                        <button class="btn-acao edit" onclick="editarCli('${c.id}')" title="Editar Cliente">✏️ Ed</button>
-                        <button class="btn-acao del" onclick="excluirCli('${c.id}')" title="Excluir Cliente">🗑️</button>
-                    </td>`;
-                tab.appendChild(tr);
-            });
-        }
+           pag.forEach(c => {
+               const tr = document.createElement('tr'); const doc = c.cpf ? c.cpf : (c.cnpj || '-');
+               tr.innerHTML = `<td style="font-weight: bold;">${c.nome}</td><td style="font-weight: bold;">${doc}</td><td style="font-weight: bold;">${c.telefone || '-'}</td><td style="font-weight: bold;">${c.cidade || '-'}</td>
+                   <td class="acoes-flex">
+                       <button class="btn-acao" onclick="verCliente('${c.id}')" title="Ver Cliente">🔍 Ver</button>
+                       <button class="btn-acao edit" onclick="editarCli('${c.id}')" title="Editar Cliente">✏️ Ed</button>
+                       <button class="btn-acao del" onclick="excluirCli('${c.id}')" title="Excluir Cliente">🗑️</button>
+                   </td>`;
+               tab.appendChild(tr);
+           });
+       }
 
        document.getElementById('formCliente').addEventListener('submit', function(e) {
-            e.preventDefault(); 
-            const d = { nome: document.getElementById('nome').value, cpf: document.getElementById('cpf').value, cnpj: document.getElementById('cnpj').value, telefone: document.getElementById('telefone').value, pix: document.getElementById('pix').value, ie: document.getElementById('ie').value, cep: document.getElementById('cep').value, estado: document.getElementById('estado').value, cidade: document.getElementById('cidade').value, bairro: document.getElementById('bairro').value, rua: document.getElementById('rua').value, numero: document.getElementById('numero').value };
-            if (editandoCliId) { update(ref(db, 'clientes/' + editandoCliId), d).then(() => window.cancelarEdicaoCli()); } 
-            else { set(push(ref(db, 'clientes')), d).then(() => document.getElementById('formCliente').reset()); }
-        });
+           e.preventDefault(); 
+           const d = { nome: document.getElementById('nome').value, cpf: document.getElementById('cpf').value, cnpj: document.getElementById('cnpj').value, telefone: document.getElementById('telefone').value, pix: document.getElementById('pix').value, ie: document.getElementById('ie').value, cep: document.getElementById('cep').value, estado: document.getElementById('estado').value, cidade: document.getElementById('cidade').value, bairro: document.getElementById('bairro').value, rua: document.getElementById('rua').value, numero: document.getElementById('numero').value };
+           if (editandoCliId) { update(ref(db, 'clientes/' + editandoCliId), d).then(() => window.cancelarEdicaoCli()); } 
+           else { set(push(ref(db, 'clientes')), d).then(() => document.getElementById('formCliente').reset()); }
+       });
 
-        window.editarCli = function(id) { const c = clientesGlobais.find(x => x.id === id); if (!c) return; ['nome','cpf','cnpj','telefone','pix','ie','cep','estado','cidade','bairro','rua','numero'].forEach(k => document.getElementById(k).value = c[k] || ''); editandoCliId = id; document.getElementById('tituloCliente').innerText = "Editando Cliente"; document.getElementById('btnSalvarCli').innerText = "Salvar Atualização"; document.getElementById('btnCancelarCli').style.display = "inline-block"; window.scrollTo(0,0); }
-        window.cancelarEdicaoCli = function() { editandoCliId = null; document.getElementById('formCliente').reset(); document.getElementById('tituloCliente').innerText = "Cadastro de Cliente"; document.getElementById('btnSalvarCli').innerText = "Salvar Cliente"; document.getElementById('btnCancelarCli').style.display = "none"; }
-        window.excluirCli = function(id) { if(confirm("Deseja excluir este cliente?")) remove(ref(db, 'clientes/' + id)); }
-        window.verCliente = function(id) { const c = clientesGlobais.find(x => x.id === id); if(!c) return; const html = `<div class="detalhes-linha"><strong>Nome:</strong> ${c.nome}</div><div class="detalhes-linha"><strong>Documento:</strong> ${c.cpf ? c.cpf : (c.cnpj || '-')}</div><div class="detalhes-linha"><strong>Telefone:</strong> ${c.telefone}</div><div class="detalhes-linha"><strong>Endereço:</strong> ${c.rua || '-'}, Nº ${c.numero || '-'} - ${c.bairro || '-'} - ${c.cidade || '-'}/${c.estado || '-'}</div>`; document.getElementById('detalhesCliente').innerHTML = html; document.getElementById('modalVisualizar').style.display = 'flex'; }
-        window.fecharModal = function() { document.getElementById('modalVisualizar').style.display = 'none'; }
-        window.onclick = function(e) { if (e.target === document.getElementById('modalVisualizar')) window.fecharModal(); }
+       window.editarCli = function(id) { const c = clientesGlobais.find(x => x.id === id); if (!c) return; ['nome','cpf','cnpj','telefone','pix','ie','cep','estado','cidade','bairro','rua','numero'].forEach(k => document.getElementById(k).value = c[k] || ''); editandoCliId = id; document.getElementById('tituloCliente').innerText = "Editando Cliente"; document.getElementById('btnSalvarCli').innerText = "Salvar Atualização"; document.getElementById('btnCancelarCli').style.display = "inline-block"; window.scrollTo(0,0); }
+       window.cancelarEdicaoCli = function() { editandoCliId = null; document.getElementById('formCliente').reset(); document.getElementById('tituloCliente').innerText = "Cadastro de Cliente"; document.getElementById('btnSalvarCli').innerText = "Salvar Cliente"; document.getElementById('btnCancelarCli').style.display = "none"; }
+       window.excluirCli = function(id) { if(confirm("Deseja excluir este cliente?")) remove(ref(db, 'clientes/' + id)); }
+       window.verCliente = function(id) { const c = clientesGlobais.find(x => x.id === id); if(!c) return; const html = `<div class="detalhes-linha"><strong>Nome:</strong> ${c.nome}</div><div class="detalhes-linha"><strong>Documento:</strong> ${c.cpf ? c.cpf : (c.cnpj || '-')}</div><div class="detalhes-linha"><strong>Telefone:</strong> ${c.telefone}</div><div class="detalhes-linha"><strong>Endereço:</strong> ${c.rua || '-'}, Nº ${c.numero || '-'} - ${c.bairro || '-'} - ${c.cidade || '-'}/${c.estado || '-'}</div>`; document.getElementById('detalhesCliente').innerHTML = html; document.getElementById('modalVisualizar').style.display = 'flex'; }
+       window.fecharModal = function() { document.getElementById('modalVisualizar').style.display = 'none'; }
+       window.onclick = function(e) { if (e.target === document.getElementById('modalVisualizar')) window.fecharModal(); }
 
-        // --- 2. ESTOQUE ---
-        let fotoBase64Atual = ""; 
+       // --- 2. ESTOQUE ---
+       let fotoBase64Atual = ""; 
        document.getElementById('prodMargem').addEventListener('input', calcularVenda); document.getElementById('prodCusto').addEventListener('input', calcularVenda);
-        function calcularVenda() { let c = parseFloat(document.getElementById('prodCusto').value) || 0; let m = parseFloat(document.getElementById('prodMargem').value) || 0; document.getElementById('prodVenda').value = (c + (c * (m / 100))).toFixed(2); }
+       function calcularVenda() { let c = parseFloat(document.getElementById('prodCusto').value) || 0; let m = parseFloat(document.getElementById('prodMargem').value) || 0; document.getElementById('prodVenda').value = (c + (c * (m / 100))).toFixed(2); }
        document.getElementById('prodFoto').addEventListener('change', e => { const f = e.target.files; if (f && f.length > 0) { const r = new FileReader(); r.onload = ev => { fotoBase64Atual = ev.target.result; }; r.readAsDataURL(f); } });
 
-        onValue(ref(db, 'produtos'), function(snapshot) {
-            produtosGlobais = []; const d = snapshot.val(); if (d) { Object.keys(d).forEach(k => produtosGlobais.push({ id: k, ...d[k] })); }
-            window.renderizarTabelaEstoque(); window.carregarSelectsGerais();
-        });
+       onValue(ref(db, 'produtos'), function(snapshot) {
+           produtosGlobais = []; const d = snapshot.val(); if (d) { Object.keys(d).forEach(k => produtosGlobais.push({ id: k, ...d[k] })); }
+           window.renderizarTabelaEstoque(); window.carregarSelectsGerais();
+       });
 
-        window.filtrarProdutos = function() { termoBuscaProd = document.getElementById('buscaProduto').value.toLowerCase(); paginaAtualProd = 1; window.renderizarTabelaEstoque(); }
-        window.mudarPaginaProd = function(direcao) { const f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd))); const max = Math.ceil(f.length / itensPorPaginaProd); if (paginaAtualProd + direcao >= 1 && paginaAtualProd + direcao <= max) { paginaAtualProd += direcao; window.renderizarTabelaEstoque(); } }
+       window.filtrarProdutos = function() { termoBuscaProd = document.getElementById('buscaProduto').value.toLowerCase(); paginaAtualProd = 1; window.renderizarTabelaEstoque(); }
+       window.mudarPaginaProd = function(direcao) { const f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd))); const max = Math.ceil(f.length / itensPorPaginaProd); if (paginaAtualProd + direcao >= 1 && paginaAtualProd + direcao <= max) { paginaAtualProd += direcao; window.renderizarTabelaEstoque(); } }
 
-        window.renderizarTabelaEstoque = function() {
-            const tab = document.getElementById('tabelaEstoque'); tab.innerHTML = '';
-            
-            // 1. Filtra pela barra de busca
-            let f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd)));
-            
-            // 2. ORDENAÇÃO INTELIGENTE: Baixo estoque no topo
-            f.sort((a, b) => {
-                let qtdA = a.quantidade || 0;
-                let qtdB = b.quantidade || 0;
-                let alertaA = qtdA <= 3;
-                let alertaB = qtdB <= 3;
+       window.renderizarTabelaEstoque = function() {
+           const tab = document.getElementById('tabelaEstoque'); tab.innerHTML = '';
+           
+           // 1. Filtra pela barra de busca
+           let f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd)));
+           
+           // 2. ORDENAÇÃO INTELIGENTE: Baixo estoque no topo
+           f.sort((a, b) => {
+               let qtdA = a.quantidade || 0;
+               let qtdB = b.quantidade || 0;
+               let alertaA = qtdA <= 3;
+               let alertaB = qtdB <= 3;
 
-                if (alertaA && !alertaB) return -1;
-                if (!alertaA && alertaB) return 1;
-                
-                return a.nome.localeCompare(b.nome);
-            });
+               if (alertaA && !alertaB) return -1;
+               if (!alertaA && alertaB) return 1;
+               
+               return a.nome.localeCompare(b.nome);
+           });
 
-            // 3. Monta a paginação com a lista já ordenada
-            const pag = f.slice((paginaAtualProd - 1) * itensPorPaginaProd, ((paginaAtualProd - 1) * itensPorPaginaProd) + itensPorPaginaProd);
-            
-            document.getElementById('infoPaginaProd').innerText = `Pág ${paginaAtualProd} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaProd))}`;
-            
-            pag.forEach(p => {
-                let img = p.foto ? `<img src="${p.foto}" style="width:30px;height:30px;border-radius:4px;object-fit:cover;">` : '-';
-                let alert = ((p.quantidade || 0) <= 3) ? 'linha-alerta' : '';
-                const tr = document.createElement('tr'); tr.className = alert;
-                
-                tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#f1c40f;">${p.codigo || '-'}</td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
-                <td class="acoes-flex">
-                    <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️ Ed</button>
-                    <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
-                </td>`;
-                tab.appendChild(tr);
-            });
-        }
+           // 3. Monta a paginação com a lista já ordenada
+           const pag = f.slice((paginaAtualProd - 1) * itensPorPaginaProd, ((paginaAtualProd - 1) * itensPorPaginaProd) + itensPorPaginaProd);
+           
+           document.getElementById('infoPaginaProd').innerText = `Pág ${paginaAtualProd} de ${Math.max(1, Math.ceil(f.length / itensPorPaginaProd))}`;
+           
+           pag.forEach(p => {
+               let img = p.foto ? `<img src="${p.foto}" style="width:30px;height:30px;border-radius:4px;object-fit:cover;">` : '-';
+               let alert = ((p.quantidade || 0) <= 3) ? 'linha-alerta' : '';
+               const tr = document.createElement('tr'); tr.className = alert;
+               
+               tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#f1c40f;">${p.codigo || '-'}</td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
+               <td class="acoes-flex">
+                   <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️ Ed</button>
+                   <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
+               </td>`;
+               tab.appendChild(tr);
+           });
+       }
 
        document.getElementById('formProduto').addEventListener('submit', e => {
-            e.preventDefault(); const d = { nome: document.getElementById('prodNome').value, codigo: document.getElementById('prodCodigo').value, categoria: document.getElementById('prodCategoria').value, custo: document.getElementById('prodCusto').value, margem: document.getElementById('prodMargem').value, venda: document.getElementById('prodVenda').value, quantidade: parseInt(document.getElementById('prodQtd').value) || 0, foto: fotoBase64Atual };
-            if (editandoProdId) { update(ref(db, 'produtos/' + editandoProdId), d).then(() => window.cancelarEdicaoProd()); } else { set(push(ref(db, 'produtos')), d).then(() => { document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; }); }
-        });
+           e.preventDefault(); const d = { nome: document.getElementById('prodNome').value, codigo: document.getElementById('prodCodigo').value, categoria: document.getElementById('prodCategoria').value, custo: document.getElementById('prodCusto').value, margem: document.getElementById('prodMargem').value, venda: document.getElementById('prodVenda').value, quantidade: parseInt(document.getElementById('prodQtd').value) || 0, foto: fotoBase64Atual };
+           if (editandoProdId) { update(ref(db, 'produtos/' + editandoProdId), d).then(() => window.cancelarEdicaoProd()); } else { set(push(ref(db, 'produtos')), d).then(() => { document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; }); }
+       });
 
-        window.editarProd = function(id) { 
-            const p = produtosGlobais.find(x => x.id === id); 
-            if(!p) return; 
+       window.editarProd = function(id) { 
+           const p = produtosGlobais.find(x => x.id === id); 
+           if(!p) return; 
            ['nome','codigo','categoria','custo','margem','venda','qtd'].forEach(k => { 
-                let campo = document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1));
-                if(campo) {
-                    if (k === 'qtd') campo.value = p.quantidade || 0;
-                    else if (k === 'codigo') campo.value = p.codigo || '';
-                    else campo.value = p[k] || 0;
-                }
-            }); 
-            fotoBase64Atual = p.foto || ""; editandoProdId = id; document.getElementById('tituloProduto').innerText = "Editando Produto"; document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; document.getElementById('btnCancelarProd').style.display = "inline-block"; window.scrollTo(0,0); 
-        }
-        window.cancelarEdicaoProd = function() { editandoProdId = null; document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; document.getElementById('tituloProduto').innerText = "Cadastro de Produto"; document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; document.getElementById('btnCancelarProd').style.display = "none"; }
-        window.excluirProd = function(id) { if(confirm("Excluir produto do estoque?")) remove(ref(db, 'produtos/' + id)); }
+               let campo = document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1));
+               if(campo) {
+                   if (k === 'qtd') campo.value = p.quantidade || 0;
+                   else if (k === 'codigo') campo.value = p.codigo || '';
+                   else campo.value = p[k] || 0;
+               }
+           }); 
+           fotoBase64Atual = p.foto || ""; editandoProdId = id; document.getElementById('tituloProduto').innerText = "Editando Produto"; document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; document.getElementById('btnCancelarProd').style.display = "inline-block"; window.scrollTo(0,0); 
+       }
+       window.cancelarEdicaoProd = function() { editandoProdId = null; document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; document.getElementById('tituloProduto').innerText = "Cadastro de Produto"; document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; document.getElementById('btnCancelarProd').style.display = "none"; }
+       window.excluirProd = function(id) { if(confirm("Excluir produto do estoque?")) remove(ref(db, 'produtos/' + id)); }
 
 
-        // --- FUNÇÕES COMPARTILHADAS (CORRIGIDAS PARA GLOBAIS) ---
+       // --- FUNÇÕES COMPARTILHADAS (CORRIGIDAS PARA GLOBAIS) ---
 
-        window.gerarProximoNumeroDoc = function(inputId, valorInicial, tipoDoc) {
-            let maxNum = valorInicial; 
-            caixaGlobal.forEach(v => { 
-            if(v.tipo === tipoDoc && v.os && v.os >= maxNum) { 
-                    maxNum = v.os; 
-                } 
-            });
-            document.getElementById(inputId).value = maxNum + 1;
-            if(document.getElementById('vendaVencimento')) document.getElementById('vendaVencimento').valueAsDate = new Date(); 
-            if(document.getElementById('osVencimento')) document.getElementById('osVencimento').valueAsDate = new Date(); 
-        }
+       window.gerarProximoNumeroDoc = function(inputId, valorInicial, tipoDoc) {
+           let maxNum = valorInicial; 
+           caixaGlobal.forEach(v => { 
+           if(v.tipo === tipoDoc && v.os && v.os >= maxNum) { 
+                   maxNum = v.os; 
+               } 
+           });
+           document.getElementById(inputId).value = maxNum + 1;
+           if(document.getElementById('vendaVencimento')) document.getElementById('vendaVencimento').valueAsDate = new Date(); 
+           if(document.getElementById('osVencimento')) document.getElementById('osVencimento').valueAsDate = new Date(); 
+       }
 
-        window.carregarSelectsGerais = function() {
-            const dCliVenda = document.getElementById('listaClientesNomesVenda'); 
-            const dCliOS = document.getElementById('listaClientesNomesOS'); 
-            if(dCliVenda) dCliVenda.innerHTML = ''; if(dCliOS) dCliOS.innerHTML = ''; 
-            clientesGlobais.forEach(c => { 
-                if(dCliVenda) dCliVenda.innerHTML += `<option value="${c.nome}">`; 
-                if(dCliOS) dCliOS.innerHTML += `<option value="${c.nome}">`; 
-            });
-            
-            const dProdVenda = document.getElementById('listaProdutosEstoqueVenda'); 
-            const dProdOS = document.getElementById('listaProdutosEstoqueOS'); 
-            if(dProdVenda) dProdVenda.innerHTML = ''; if(dProdOS) dProdOS.innerHTML = ''; 
-            produtosGlobais.forEach(p => { 
-                let codTxt = p.codigo ? `[${p.codigo}] ` : '';
-                let opt = `<option value="${p.nome}">${codTxt}R$ ${parseFloat(p.venda).toFixed(2)} (Estoque: ${p.quantidade || 0})</option>`;
-                if(dProdVenda) dProdVenda.innerHTML += opt; 
-                if(dProdOS) dProdOS.innerHTML += opt; 
-            });
-        }
+       window.carregarSelectsGerais = function() {
+           const dCliVenda = document.getElementById('listaClientesNomesVenda'); 
+           const dCliOS = document.getElementById('listaClientesNomesOS'); 
+           if(dCliVenda) dCliVenda.innerHTML = ''; if(dCliOS) dCliOS.innerHTML = ''; 
+           clientesGlobais.forEach(c => { 
+               if(dCliVenda) dCliVenda.innerHTML += `<option value="${c.nome}">`; 
+               if(dCliOS) dCliOS.innerHTML += `<option value="${c.nome}">`; 
+           });
+           
+           const dProdVenda = document.getElementById('listaProdutosEstoqueVenda'); 
+           const dProdOS = document.getElementById('listaProdutosEstoqueOS'); 
+           if(dProdVenda) dProdVenda.innerHTML = ''; if(dProdOS) dProdOS.innerHTML = ''; 
+           produtosGlobais.forEach(p => { 
+               let codTxt = p.codigo ? `[${p.codigo}] ` : '';
+               let opt = `<option value="${p.nome}">${codTxt}R$ ${parseFloat(p.venda).toFixed(2)} (Estoque: ${p.quantidade || 0})</option>`;
+               if(dProdVenda) dProdVenda.innerHTML += opt; 
+               if(dProdOS) dProdOS.innerHTML += opt; 
+           });
+       }
 
 
-        // --- 3. VENDAS NORMAIS ---
-        
-        window.preencherCamposVendaEstoque = function() {
-            const busca = document.getElementById('vendaProdutoEstoqueBusca').value;
-            const p = produtosGlobais.find(x => x.nome === busca || x.codigo === busca);
-            if (p) {
-                document.getElementById('vendaProdutoCusto').value = p.custo || 0;
-                document.getElementById('vendaProdutoMargem').value = p.margem || 0;
-                document.getElementById('vendaProdutoPrecoFinal').value = p.venda || 0;
-            }
-        }
+       // --- 3. VENDAS NORMAIS ---
+       
+       window.preencherCamposVendaEstoque = function() {
+           const busca = document.getElementById('vendaProdutoEstoqueBusca').value;
+           const p = produtosGlobais.find(x => x.nome === busca || x.codigo === busca);
+           if (p) {
+               document.getElementById('vendaProdutoCusto').value = p.custo || 0;
+               document.getElementById('vendaProdutoMargem').value = p.margem || 0;
+               document.getElementById('vendaProdutoPrecoFinal').value = p.venda || 0;
+           }
+       }
 
-        window.recalcularPrecoVendaManual = function() {
-            const custo = parseFloat(document.getElementById('vendaProdutoCusto').value) || 0;
-            const margem = parseFloat(document.getElementById('vendaProdutoMargem').value) || 0;
-            document.getElementById('vendaProdutoPrecoFinal').value = (custo + (custo * (margem / 100))).toFixed(2);
-        }
+       window.recalcularPrecoVendaManual = function() {
+           const custo = parseFloat(document.getElementById('vendaProdutoCusto').value) || 0;
+           const margem = parseFloat(document.getElementById('vendaProdutoMargem').value) || 0;
+           document.getElementById('vendaProdutoPrecoFinal').value = (custo + (custo * (margem / 100))).toFixed(2);
+       }
 
-        window.addAoCarrinhoVenda_Estoque = function() {
-            const busca = document.getElementById('vendaProdutoEstoqueBusca').value;
-            const qtd = parseInt(document.getElementById('vendaProdutoQtd').value) || 1;
-            const precoUn = parseFloat(document.getElementById('vendaProdutoPrecoFinal').value);
-            const custoUn = parseFloat(document.getElementById('vendaProdutoCusto').value);
-            const margem = parseFloat(document.getElementById('vendaProdutoMargem').value);
+       window.addAoCarrinhoVenda_Estoque = function() {
+           const busca = document.getElementById('vendaProdutoEstoqueBusca').value;
+           const qtd = parseInt(document.getElementById('vendaProdutoQtd').value) || 1;
+           const precoUn = parseFloat(document.getElementById('vendaProdutoPrecoFinal').value);
+           const custoUn = parseFloat(document.getElementById('vendaProdutoCusto').value);
+           const margem = parseFloat(document.getElementById('vendaProdutoMargem').value);
 
-            if (!busca || isNaN(precoUn)) return alert("Selecione um produto e confira os valores.");
+           if (!busca || isNaN(precoUn)) return alert("Selecione um produto e confira os valores.");
 
-            const p = produtosGlobais.find(x => x.nome === busca || x.codigo === busca);
-            const nomeExibir = p ? `${p.nome} (Cód: ${p.codigo || '-'}) (Qtd: ${qtd})` : `${busca} (Qtd: ${qtd})`;
+           const p = produtosGlobais.find(x => x.nome === busca || x.codigo === busca);
+           const nomeExibir = p ? `${p.nome} (Cód: ${p.codigo || '-'}) (Qtd: ${qtd})` : `${busca} (Qtd: ${qtd})`;
 
-            carrinhoVenda.push({
-                idProd: p ? p.id : null, nome: nomeExibir, valor: precoUn * qtd, valorOriginal: precoUn, 
-                custoOriginal: custoUn, margemOriginal: margem, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material'
-            });
+           carrinhoVenda.push({
+               idProd: p ? p.id : null, nome: nomeExibir, valor: precoUn * qtd, valorOriginal: precoUn, 
+               custoOriginal: custoUn, margemOriginal: margem, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material'
+           });
 
-            ['vendaProdutoEstoqueBusca','vendaProdutoCusto','vendaProdutoMargem','vendaProdutoPrecoFinal'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('vendaProdutoQtd').value = 1;
-            window.atualizarCarrinhoVenda();
-        }
+           ['vendaProdutoEstoqueBusca','vendaProdutoCusto','vendaProdutoMargem','vendaProdutoPrecoFinal'].forEach(id => document.getElementById(id).value = '');
+           document.getElementById('vendaProdutoQtd').value = 1;
+           window.atualizarCarrinhoVenda();
+       }
 
        window.addAoCarrinhoVenda_Avulso = function() {
-            const n = document.getElementById('vendaAvulsoNome').value; 
-            const v = parseFloat(document.getElementById('vendaAvulsoValor').value); 
-            const perc = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
+           const n = document.getElementById('vendaAvulsoNome').value; 
+           const v = parseFloat(document.getElementById('vendaAvulsoValor').value); 
+           const perc = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
          
-            if (!n || isNaN(v)) return alert("Preencha Nome e Valor.");
+           if (!n || isNaN(v)) return alert("Preencha Nome e Valor.");
              
-            carrinhoVenda.push({ nome: n, valor: v + (v * (perc / 100)), valorOriginal: v, percOriginal: perc, ehEstoque: false, categoriaOS: 'material' });
+           carrinhoVenda.push({ nome: n, valor: v + (v * (perc / 100)), valorOriginal: v, percOriginal: perc, ehEstoque: false, categoriaOS: 'material' });
              
-            document.getElementById('vendaAvulsoNome').value = ''; 
-            document.getElementById('vendaAvulsoValor').value = ''; 
-            document.getElementById('vendaAvulsoPerc').value = '0'; 
-            window.atualizarCarrinhoVenda();
-        }
+           document.getElementById('vendaAvulsoNome').value = ''; 
+           document.getElementById('vendaAvulsoValor').value = ''; 
+           document.getElementById('vendaAvulsoPerc').value = '0'; 
+           window.atualizarCarrinhoVenda();
+       }
 
-        window.editarItemCarrinhoVenda = function(idx) {
-            const item = carrinhoVenda[idx];
-            carrinhoVenda.splice(idx, 1);
-            window.atualizarCarrinhoVenda();
-            
-            if (item.ehEstoque) {
-                let nomePuro = item.nome.split(' (Qtd:');
-                document.getElementById('vendaProdutoEstoqueBusca').value = nomePuro;
-                document.getElementById('vendaProdutoQtd').value = item.qtdBaixa || 1;
-                document.getElementById('vendaProdutoQtd').focus();
-            } else {
-                document.getElementById('vendaAvulsoNome').value = item.nome;
-                document.getElementById('vendaAvulsoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
-                document.getElementById('vendaAvulsoPerc').value = item.percOriginal || 0;
-                document.getElementById('vendaAvulsoValor').focus();
-            }
-        }
-        
-        window.atualizarCarrinhoVenda = function() {
-            const div = document.getElementById('listaCarrinho'); div.innerHTML = ''; 
-            let subtotal = 0;
-            if (carrinhoVenda.length === 0) { div.innerHTML = 'Nenhum item adicionado no momento.'; } else {
-                carrinhoVenda.forEach((item, i) => { 
-                    subtotal += item.valor; 
-                    div.innerHTML += `
-                    <div class="cart-item">
-                        <span>${item.nome}</span>
-                        <span>R$ ${item.valor.toFixed(2)} 
-                            <button class="btn-acao edit" style="padding:2px 6px;margin-left:10px;" onclick="editarItemCarrinhoVenda(${i})" title="Editar Item">✏️</button>
-                            <button class="btn-danger" style="padding:2px 6px;margin-left:5px;" onclick="removerDoCarrinhoVenda(${i})" title="Remover Item">X</button>
-                        </span>
-                    </div>`; 
-                });
-            }
-            document.getElementById('vendaSubtotalTxt').innerText = `R$ ${subtotal.toFixed(2)}`;
-            window.calcularTotalComDesconto();
-        }
+       window.editarItemCarrinhoVenda = function(idx) {
+           const item = carrinhoVenda[idx];
+           carrinhoVenda.splice(idx, 1);
+           window.atualizarCarrinhoVenda();
+           
+           if (item.ehEstoque) {
+               let nomePuro = item.nome.split(' (Qtd:');
+               document.getElementById('vendaProdutoEstoqueBusca').value = nomePuro;
+               document.getElementById('vendaProdutoQtd').value = item.qtdBaixa || 1;
+               document.getElementById('vendaProdutoQtd').focus();
+           } else {
+               document.getElementById('vendaAvulsoNome').value = item.nome;
+               document.getElementById('vendaAvulsoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
+               document.getElementById('vendaAvulsoPerc').value = item.percOriginal || 0;
+               document.getElementById('vendaAvulsoValor').focus();
+           }
+       }
+       
+       window.atualizarCarrinhoVenda = function() {
+           const div = document.getElementById('listaCarrinho'); div.innerHTML = ''; 
+           let subtotal = 0;
+           if (carrinhoVenda.length === 0) { div.innerHTML = 'Nenhum item adicionado no momento.'; } else {
+               carrinhoVenda.forEach((item, i) => { 
+                   subtotal += item.valor; 
+                   div.innerHTML += `
+                   <div class="cart-item">
+                       <span>${item.nome}</span>
+                       <span>R$ ${item.valor.toFixed(2)} 
+                           <button class="btn-acao edit" style="padding:2px 6px;margin-left:10px;" onclick="editarItemCarrinhoVenda(${i})" title="Editar Item">✏️</button>
+                           <button class="btn-danger" style="padding:2px 6px;margin-left:5px;" onclick="removerDoCarrinhoVenda(${i})" title="Remover Item">X</button>
+                       </span>
+                   </div>`; 
+               });
+           }
+           document.getElementById('vendaSubtotalTxt').innerText = `R$ ${subtotal.toFixed(2)}`;
+           window.calcularTotalComDesconto();
+       }
 
-        window.calcularTotalComDesconto = function() {
-            const subtotalTxt = document.getElementById('vendaSubtotalTxt').innerText.replace('R$ ', '');
-            const subtotal = parseFloat(subtotalTxt) || 0;
-            const descReais = parseFloat(document.getElementById('vendaDescontoReais').value) || 0;
-            const descPerc = parseFloat(document.getElementById('vendaDescontoPerc').value) || 0;
-            
-            let totalDesconto = descReais + (subtotal * (descPerc / 100));
-            let totalFinal = subtotal - totalDesconto;
-            document.getElementById('vendaTotalFinalTxt').innerText = `TOTAL: R$ ${Math.max(0, totalFinal).toFixed(2)}`;
-        }
-        
-        window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); window.atualizarCarrinhoVenda(); }
-        
-        window.finalizarVenda = async function() {
-      		const os = parseInt(document.getElementById('vendaOS').value); 
-            const v = document.getElementById('vendaVencimento').value; 
-            const n = document.getElementById('vendaClienteBusca').value; 
-            if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
-            
-            let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
-            let cId = cli ? cli.id : 'avulso';
-            let cNome = cli ? cli.nome : n;
+       window.calcularTotalComDesconto = function() {
+           const subtotalTxt = document.getElementById('vendaSubtotalTxt').innerText.replace('R$ ', '');
+           const subtotal = parseFloat(subtotalTxt) || 0;
+           const descReais = parseFloat(document.getElementById('vendaDescontoReais').value) || 0;
+           const descPerc = parseFloat(document.getElementById('vendaDescontoPerc').value) || 0;
+           
+           let totalDesconto = descReais + (subtotal * (descPerc / 100));
+           let totalFinal = subtotal - totalDesconto;
+           document.getElementById('vendaTotalFinalTxt').innerText = `TOTAL: R$ ${Math.max(0, totalFinal).toFixed(2)}`;
+       }
+       
+       window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); window.atualizarCarrinhoVenda(); }
+       
+       window.finalizarVenda = async function() {
+           const os = parseInt(document.getElementById('vendaOS').value); 
+           const v = document.getElementById('vendaVencimento').value; 
+           const n = document.getElementById('vendaClienteBusca').value; 
+           if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
+           
+           let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
+           let cId = cli ? cli.id : 'avulso';
+           let cNome = cli ? cli.nome : n;
 
-            const totalText = document.getElementById('vendaTotalFinalTxt').innerText.replace('TOTAL: R$ ', '');
-            const total = parseFloat(totalText) || 0;
+           const totalText = document.getElementById('vendaTotalFinalTxt').innerText.replace('TOTAL: R$ ', '');
+           const total = parseFloat(totalText) || 0;
 
-            let originalDoc = null;
-            if (editandoDocId) {
-                const snapAntigo = await get(ref(db, 'caixa/' + editandoDocId));
-                originalDoc = snapAntigo.val();
-                
-                // DEVOLVE O ESTOQUE ANTIGO ANTES DE SALVAR O NOVO
-                if (originalDoc && originalDoc.itens) {
-                    let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
-                    for (let oldItem of antigosItens) {
-                        if (oldItem.ehEstoque && oldItem.idProd) {
-                            const snapP = await get(ref(db, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
-                            if (pDb) { await update(ref(db, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); }
-                        }
-                    }
-                }
-            }
+           let originalDoc = null;
+           if (editandoDocId) {
+               const snapAntigo = await get(ref(db, 'caixa/' + editandoDocId));
+               originalDoc = snapAntigo.val();
+               
+               // DEVOLVE O ESTOQUE ANTIGO ANTES DE SALVAR O NOVO
+               if (originalDoc && originalDoc.itens) {
+                   let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
+                   for (let oldItem of antigosItens) {
+                       if (oldItem.ehEstoque && oldItem.idProd) {
+                           const snapP = await get(ref(db, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
+                           if (pDb) { await update(ref(db, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); }
+                       }
+                   }
+               }
+           }
 
+            const tipoDocSelecionado = document.getElementById('vendaTipoDoc').value;
             const doc = { 
-                tipo: 'VENDA', os: os, vencimento: v, 
+                tipo: tipoDocSelecionado, os: os, vencimento: v, 
                 dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
                 timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
                 clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total, 
-                assinaturaBase64: originalDoc ? originalDoc.assinaturaBase64 : null 
+                assinaturaBase64: originalDoc ? originalDoc.assinaturaBase64 : null,
+                vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' // GRAVA O NOME DO VENDEDOR AQUI
             };
 
-            try {
+           try {
                 if (editandoDocId) {
                     await update(ref(db, 'caixa/' + editandoDocId), doc);
                 } else {
                     await set(push(ref(db, 'caixa')), doc); 
                 }
                 
-                // DEDUZ O ESTOQUE NOVO
-                for (let item of carrinhoVenda) {
-                    if (item.ehEstoque && item.idProd) {
-                        const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
-                        if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
+                // REGRA DE CAIXA E ESTOQUE (SÓ BAIXA SE FOR VENDA)
+                if (tipoDocSelecionado === 'VENDA') {
+                    if(!editandoDocId) window.registrarMovimentoCaixa('entrada', total);
+                    for (let item of carrinhoVenda) {
+                        if (item.ehEstoque && item.idProd) {
+                            const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
+                            if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
+                        }
                     }
                 }
 
-                alert(editandoDocId ? "Venda Atualizada com Sucesso!" : "Venda Registrada!"); 
-                carrinhoVenda = []; window.atualizarCarrinhoVenda(); 
-                document.getElementById('vendaClienteBusca').value = ''; 
-                window.carregarSelectsGerais(); 
-                window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
-                
-                editandoDocId = null;
-                document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
+               alert(editandoDocId ? "Venda Atualizada com Sucesso!" : "Venda Registrada!"); 
+               carrinhoVenda = []; window.atualizarCarrinhoVenda(); 
+               document.getElementById('vendaClienteBusca').value = ''; 
+               window.carregarSelectsGerais(); 
+               window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
+               
+               editandoDocId = null;
+               document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
 
-            } catch(e) { alert("Erro: " + e); }
-        }
+           } catch(e) { alert("Erro: " + e); }
+       }
 
 
-        // --- 4. MÓDULO ORDEM DE SERVIÇO (OS) ---
-        document.getElementById('osFotoUpload').addEventListener('change', e => { 
-            const f = e.target.files; 
-            if (f && f.length > 0) { const r = new FileReader(); r.onload = ev => { fotoAtualOS_Base64 = ev.target.result; document.getElementById('previewFotoOS').src = fotoAtualOS_Base64; document.getElementById('previewFotoOS').style.display = 'block'; }; r.readAsDataURL(f); } 
-        });
+       // --- 4. MÓDULO ORDEM DE SERVIÇO (OS) ---
+       document.getElementById('osFotoUpload').addEventListener('change', e => { 
+           const f = e.target.files; 
+           if (f && f.length > 0) { const r = new FileReader(); r.onload = ev => { fotoAtualOS_Base64 = ev.target.result; document.getElementById('previewFotoOS').src = fotoAtualOS_Base64; document.getElementById('previewFotoOS').style.display = 'block'; }; r.readAsDataURL(f); } 
+       });
 
        window.calcularDeslocamentoOS = function() {
-            let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
-            let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
-            let kmTotal = kmFin > kmIni ? (kmFin - kmIni) : 0;
-            let val = parseFloat(document.getElementById('osValorKm').value) || 0;
-            
-            document.getElementById('osCustoKmTotal').value = `R$ ${(kmTotal * val).toFixed(2)}`; 
-            window.atualizarCarrinhoOS(); 
-        }
+           let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
+           let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
+           let kmTotal = kmFin > kmIni ? (kmFin - kmIni) : 0;
+           let val = parseFloat(document.getElementById('osValorKm').value) || 0;
+           
+           document.getElementById('osCustoKmTotal').value = `R$ ${(kmTotal * val).toFixed(2)}`; 
+           window.atualizarCarrinhoOS(); 
+       }
 
        document.getElementById('osKmInicial').addEventListener('input', window.calcularDeslocamentoOS);
        document.getElementById('osKmFinal').addEventListener('input', window.calcularDeslocamentoOS);
        document.getElementById('osValorKm').addEventListener('input', window.calcularDeslocamentoOS);
 
-        window.preencherValorEstoqueOS = function() {
-            const n = document.getElementById('osProdutoEstoqueBusca').value;
-            const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
-            if(p) {
+       window.preencherValorEstoqueOS = function() {
+           const n = document.getElementById('osProdutoEstoqueBusca').value;
+           const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
+           if(p) {
                document.getElementById('osEstoqueValUn').value = parseFloat(p.venda).toFixed(2);
-                window.calcTotalEstoqueOS();
-            } else {
+               window.calcTotalEstoqueOS();
+           } else {
                document.getElementById('osEstoqueValUn').value = '';
                document.getElementById('osEstoqueTotal').value = '';
-            }
-        }
+           }
+       }
 
-        window.calcTotalEstoqueOS = function() {
-            let valUn = parseFloat(document.getElementById('osEstoqueValUn').value) || 0;
-            let qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
-            let perc = parseFloat(document.getElementById('osEstoquePerc').value) || 0;
-            let total = valUn * qtd;
-            total = total + (total * (perc / 100));
+       window.calcTotalEstoqueOS = function() {
+           let valUn = parseFloat(document.getElementById('osEstoqueValUn').value) || 0;
+           let qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
+           let perc = parseFloat(document.getElementById('osEstoquePerc').value) || 0;
+           let total = valUn * qtd;
+           total = total + (total * (perc / 100));
            document.getElementById('osEstoqueTotal').value = total.toFixed(2);
-        }
+       }
 
-        window.calcTotalExternoOS = function() {
-            let valUn = parseFloat(document.getElementById('osMatExternoValor').value) || 0;
-            let qtd = parseInt(document.getElementById('osMatExternoQtd').value) || 1;
-            let perc = parseFloat(document.getElementById('osMatExternoPerc').value) || 0;
-            let total = valUn * qtd;
-            total = total + (total * (perc / 100));
+       window.calcTotalExternoOS = function() {
+           let valUn = parseFloat(document.getElementById('osMatExternoValor').value) || 0;
+           let qtd = parseInt(document.getElementById('osMatExternoQtd').value) || 1;
+           let perc = parseFloat(document.getElementById('osMatExternoPerc').value) || 0;
+           let total = valUn * qtd;
+           total = total + (total * (perc / 100));
            document.getElementById('osMatExternoTotal').value = total.toFixed(2);
-        }
+       }
 
-     window.addAoCarrinhoOS_Estoque = function() {
-            const n = document.getElementById('osProdutoEstoqueBusca').value; 
-            const qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
-            const valTotal = parseFloat(document.getElementById('osEstoqueTotal').value);
-            const perc = parseFloat(document.getElementById('osEstoquePerc').value) || 0;
+       window.addAoCarrinhoOS_Estoque = function() {
+           const n = document.getElementById('osProdutoEstoqueBusca').value; 
+           const qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
+           const valTotal = parseFloat(document.getElementById('osEstoqueTotal').value);
+           const perc = parseFloat(document.getElementById('osEstoquePerc').value) || 0;
 
-            if (!n || isNaN(valTotal)) return alert("Selecione um produto do estoque válido.");
-            
-            const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
-            if (!p) return alert("Produto não encontrado no estoque!");
-            
-            carrinhoOS.push({ idProd: p.id, nome: `[Estoque] ${p.nome} (Qtd: ${qtd})`, valor: valTotal, qtdBaixa: qtd, percOriginal: perc, ehEstoque: true, categoriaOS: 'material' });
-            
-            document.getElementById('osProdutoEstoqueBusca').value = ''; 
-            document.getElementById('osEstoqueValUn').value = ''; 
-            document.getElementById('osEstoqueQtd').value = 1; 
-            document.getElementById('osEstoquePerc').value = 0; 
-            document.getElementById('osEstoqueTotal').value = '';
-            window.atualizarCarrinhoOS();
-        };
+           if (!n || isNaN(valTotal)) return alert("Selecione um produto do estoque válido.");
+           
+           const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
+           if (!p) return alert("Produto não encontrado no estoque!");
+           
+           carrinhoOS.push({ idProd: p.id, nome: `[Estoque] ${p.nome} (Qtd: ${qtd})`, valor: valTotal, qtdBaixa: qtd, percOriginal: perc, ehEstoque: true, categoriaOS: 'material' });
+           
+           document.getElementById('osProdutoEstoqueBusca').value = ''; 
+           document.getElementById('osEstoqueValUn').value = ''; 
+           document.getElementById('osEstoqueQtd').value = 1; 
+           document.getElementById('osEstoquePerc').value = 0; 
+           document.getElementById('osEstoqueTotal').value = '';
+           window.atualizarCarrinhoOS();
+       };
 
-        window.addAoCarrinhoOS_Externo = function() {
-            const n = document.getElementById('osMatExternoNome').value; 
-            const qtd = parseInt(document.getElementById('osMatExternoQtd').value) || 1;
-            const valTotal = parseFloat(document.getElementById('osMatExternoTotal').value);
-            const valUn = parseFloat(document.getElementById('osMatExternoValor').value) || 0;
-            const perc = parseFloat(document.getElementById('osMatExternoPerc').value) || 0;
+       window.addAoCarrinhoOS_Externo = function() {
+           const n = document.getElementById('osMatExternoNome').value; 
+           const qtd = parseInt(document.getElementById('osMatExternoQtd').value) || 1;
+           const valTotal = parseFloat(document.getElementById('osMatExternoTotal').value);
+           const valUn = parseFloat(document.getElementById('osMatExternoValor').value) || 0;
+           const perc = parseFloat(document.getElementById('osMatExternoPerc').value) || 0;
 
-            if (!n || isNaN(valTotal) || valTotal === 0) return alert("Preencha o Nome e Valor da Compra Externa.");
-            
-            carrinhoOS.push({ nome: `[Externo] ${n} (Qtd: ${qtd})`, valor: valTotal, valorOriginal: valUn, qtdBaixa: qtd, percOriginal: perc, ehEstoque: false, categoriaOS: 'material' });
-            
-            document.getElementById('osMatExternoNome').value = ''; 
-            document.getElementById('osMatExternoValor').value = ''; 
-            document.getElementById('osMatExternoQtd').value = 1; 
-            document.getElementById('osMatExternoPerc').value = 0; 
-            document.getElementById('osMatExternoTotal').value = ''; 
-            window.atualizarCarrinhoOS();
-        };
+           if (!n || isNaN(valTotal) || valTotal === 0) return alert("Preencha o Nome e Valor da Compra Externa.");
+           
+           carrinhoOS.push({ nome: `[Externo] ${n} (Qtd: ${qtd})`, valor: valTotal, valorOriginal: valUn, qtdBaixa: qtd, percOriginal: perc, ehEstoque: false, categoriaOS: 'material' });
+           
+           document.getElementById('osMatExternoNome').value = ''; 
+           document.getElementById('osMatExternoValor').value = ''; 
+           document.getElementById('osMatExternoQtd').value = 1; 
+           document.getElementById('osMatExternoPerc').value = 0; 
+           document.getElementById('osMatExternoTotal').value = ''; 
+           window.atualizarCarrinhoOS();
+       };
 
-        window.addAoCarrinhoOS_Avulso = function() {
-            const n = document.getElementById('osMaoDeObraDesc').value; 
-            const v = parseFloat(document.getElementById('osMaoDeObraValor').value);
-            if (!n || isNaN(v)) return alert("Preencha a descrição do Serviço e o Valor.");
-            
-            carrinhoOS.push({ nome: `[Serviço] ${n}`, valor: v, valorOriginal: v, ehEstoque: false, categoriaOS: 'servico' });
-            document.getElementById('osMaoDeObraDesc').value = ''; 
-            document.getElementById('osMaoDeObraValor').value = ''; 
-            window.atualizarCarrinhoOS();
-        };
+       window.addAoCarrinhoOS_Avulso = function() {
+           const n = document.getElementById('osMaoDeObraDesc').value; 
+           const v = parseFloat(document.getElementById('osMaoDeObraValor').value);
+           if (!n || isNaN(v)) return alert("Preencha a descrição do Serviço e o Valor.");
+           
+           carrinhoOS.push({ nome: `[Serviço] ${n}`, valor: v, valorOriginal: v, ehEstoque: false, categoriaOS: 'servico' });
+           document.getElementById('osMaoDeObraDesc').value = ''; 
+           document.getElementById('osMaoDeObraValor').value = ''; 
+           window.atualizarCarrinhoOS();
+       };
 
-        window.editarItemCarrinhoOS = function(idx) {
-            const item = carrinhoOS[idx];
-            carrinhoOS.splice(idx, 1);
-            window.atualizarCarrinhoOS();
-            
-            if (item.ehEstoque) {
-                let nomePuro = item.nome.replace('[Estoque] ', '').split(' (Qtd:');
-                document.getElementById('osProdutoEstoqueBusca').value = nomePuro;
-                document.getElementById('osEstoqueQtd').value = item.qtdBaixa || 1;
-                document.getElementById('osEstoquePerc').value = item.percOriginal || 0;
-                window.preencherValorEstoqueOS(); 
-                document.getElementById('osEstoqueQtd').focus();
-            } else if (item.nome.startsWith('[Externo]')) {
-                let nomePuro = item.nome.replace('[Externo] ', '').split(' (Qtd:');
-                document.getElementById('osMatExternoNome').value = nomePuro;
-                document.getElementById('osMatExternoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
-                document.getElementById('osMatExternoQtd').value = item.qtdBaixa || 1; 
-                document.getElementById('osMatExternoPerc').value = item.percOriginal || 0; 
-                window.calcTotalExternoOS(); 
-                document.getElementById('osMatExternoValor').focus();
-            } else {
-                let nomePuro = item.nome.replace('[Serviço] ', '');
-                document.getElementById('osMaoDeObraDesc').value = nomePuro;
-                document.getElementById('osMaoDeObraValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
-                document.getElementById('osMaoDeObraValor').focus();
-            }
-        };
-        
-        window.removerDoCarrinhoOS = function(idx) { carrinhoOS.splice(idx, 1); window.atualizarCarrinhoOS(); }
+       window.editarItemCarrinhoOS = function(idx) {
+           const item = carrinhoOS[idx];
+           carrinhoOS.splice(idx, 1);
+           window.atualizarCarrinhoOS();
+           
+           if (item.ehEstoque) {
+               let nomePuro = item.nome.replace('[Estoque] ', '').split(' (Qtd:');
+               document.getElementById('osProdutoEstoqueBusca').value = nomePuro;
+               document.getElementById('osEstoqueQtd').value = item.qtdBaixa || 1;
+               document.getElementById('osEstoquePerc').value = item.percOriginal || 0;
+               window.preencherValorEstoqueOS(); 
+               document.getElementById('osEstoqueQtd').focus();
+           } else if (item.nome.startsWith('[Externo]')) {
+               let nomePuro = item.nome.replace('[Externo] ', '').split(' (Qtd:');
+               document.getElementById('osMatExternoNome').value = nomePuro;
+               document.getElementById('osMatExternoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
+               document.getElementById('osMatExternoQtd').value = item.qtdBaixa || 1; 
+               document.getElementById('osMatExternoPerc').value = item.percOriginal || 0; 
+               window.calcTotalExternoOS(); 
+               document.getElementById('osMatExternoValor').focus();
+           } else {
+               let nomePuro = item.nome.replace('[Serviço] ', '');
+               document.getElementById('osMaoDeObraDesc').value = nomePuro;
+               document.getElementById('osMaoDeObraValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
+               document.getElementById('osMaoDeObraValor').focus();
+           }
+       };
+       
+       window.removerDoCarrinhoOS = function(idx) { carrinhoOS.splice(idx, 1); window.atualizarCarrinhoOS(); }
 
-        window.atualizarCarrinhoOS = function() {
-            const div = document.getElementById('listaCarrinhoOS'); div.innerHTML = ''; let tItens = 0;
-            if (carrinhoOS.length === 0) { div.innerHTML = 'Nenhum material/serviço lançado.'; } else {
-                carrinhoOS.forEach((item, i) => { 
-                    tItens += item.valor; 
-                    div.innerHTML += `
-                    <div class="cart-item">
-                        <span>${item.nome}</span>
-                        <span>R$ ${item.valor.toFixed(2)} 
-                            <button class="btn-acao edit" style="padding:2px 6px;margin-left:10px;" onclick="editarItemCarrinhoOS(${i})" title="Editar Item">✏️</button>
-                            <button class="btn-danger" style="padding:2px 6px;margin-left:5px;" onclick="removerDoCarrinhoOS(${i})">X</button>
-                        </span>
-                    </div>`; 
-                });
-            }
-            
-            let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
-            let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
-            let km = kmFin > kmIni ? (kmFin - kmIni) : 0;
-            let valKm = parseFloat(document.getElementById('osValorKm').value) || 0;
-            
-            document.getElementById('osTotalGeral').innerText = `TOTAL OS: R$ ${(tItens + (km * valKm)).toFixed(2)}`;
-        }
+       window.atualizarCarrinhoOS = function() {
+           const div = document.getElementById('listaCarrinhoOS'); div.innerHTML = ''; let tItens = 0;
+           if (carrinhoOS.length === 0) { div.innerHTML = 'Nenhum material/serviço lançado.'; } else {
+               carrinhoOS.forEach((item, i) => { 
+                   tItens += item.valor; 
+                   div.innerHTML += `
+                   <div class="cart-item">
+                       <span>${item.nome}</span>
+                       <span>R$ ${item.valor.toFixed(2)} 
+                           <button class="btn-acao edit" style="padding:2px 6px;margin-left:10px;" onclick="editarItemCarrinhoOS(${i})" title="Editar Item">✏️</button>
+                           <button class="btn-danger" style="padding:2px 6px;margin-left:5px;" onclick="removerDoCarrinhoOS(${i})">X</button>
+                       </span>
+                   </div>`; 
+               });
+           }
+           
+           let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
+           let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
+           let km = kmFin > kmIni ? (kmFin - kmIni) : 0;
+           let valKm = parseFloat(document.getElementById('osValorKm').value) || 0;
+           
+           document.getElementById('osTotalGeral').innerText = `TOTAL OS: R$ ${(tItens + (km * valKm)).toFixed(2)}`;
+       }
 
-        window.salvarOrdemDeServico = async function() {
-            const numOS = parseInt(document.getElementById('osNumero').value); const cliNome = document.getElementById('osClienteBusca').value; const venc = document.getElementById('osVencimento').value;
-            if (!cliNome) return alert("Preencha o Cliente da OS.");
-            
-            let cli = clientesGlobais.find(c => c.nome.toLowerCase() === cliNome.toLowerCase());
-            let cId = cli ? cli.id : 'avulso';
-            let cNome = cli ? cli.nome : cliNome;
+       window.salvarOrdemDeServico = async function() {
+           const numOS = parseInt(document.getElementById('osNumero').value); const cliNome = document.getElementById('osClienteBusca').value; const venc = document.getElementById('osVencimento').value;
+           if (!cliNome) return alert("Preencha o Cliente da OS.");
+           
+           let cli = clientesGlobais.find(c => c.nome.toLowerCase() === cliNome.toLowerCase());
+           let cId = cli ? cli.id : 'avulso';
+           let cNome = cli ? cli.nome : cliNome;
 
-            let tItens = carrinhoOS.reduce((acc, i) => acc + i.valor, 0);
-            
-            let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
-            let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
-            let kTotal = kmFin > kmIni ? (kmFin - kmIni) : 0;
-            let tKm = kTotal * (parseFloat(document.getElementById('osValorKm').value) || 0);
+           let tItens = carrinhoOS.reduce((acc, i) => acc + i.valor, 0);
+           
+           let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
+           let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
+           let kTotal = kmFin > kmIni ? (kmFin - kmIni) : 0;
+           let tKm = kTotal * (parseFloat(document.getElementById('osValorKm').value) || 0);
 
-            let originalDoc = null;
-            if (editandoDocId) {
-                const snapAntigo = await get(ref(db, 'caixa/' + editandoDocId));
-                originalDoc = snapAntigo.val();
-                
-                // DEVOLVE O ESTOQUE ANTIGO ANTES DE SALVAR O NOVO
-                if (originalDoc && originalDoc.itens) {
-                    let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
-                    for (let oldItem of antigosItens) {
-                        if (oldItem.ehEstoque && oldItem.idProd) {
-                            const snapP = await get(ref(db, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
-                            if (pDb) { await update(ref(db, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); }
-                        }
-                    }
-                }
-            }
+           let originalDoc = null;
+           if (editandoDocId) {
+               const snapAntigo = await get(ref(db, 'caixa/' + editandoDocId));
+               originalDoc = snapAntigo.val();
+               
+               // DEVOLVE O ESTOQUE ANTIGO ANTES DE SALVAR O NOVO
+               if (originalDoc && originalDoc.itens) {
+                   let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
+                   for (let oldItem of antigosItens) {
+                       if (oldItem.ehEstoque && oldItem.idProd) {
+                           const snapP = await get(ref(db, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
+                           if (pDb) { await update(ref(db, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); }
+                       }
+                   }
+               }
+           }
 
-            const docOS = {
-                tipo: 'ORDEM DE SERVIÇO', os: numOS, vencimento: venc, 
-                dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
-                timestamp: originalDoc ? originalDoc.timestamp : Date.now(),
-                clienteId: cId, clienteNome: cNome, funcionario: document.getElementById('osFuncionario').value || 'N/A',
-                equipe: document.getElementById('osEquipe').value || 'N/A', inicio: document.getElementById('osInicio').value || '',
-                fim: document.getElementById('osFim').value || '', pessoas: document.getElementById('osQtdPessoas').value || 1,
-                kmInicial: kmIni, kmFinal: kmFin, kmTotal: kTotal, kmValor: document.getElementById('osValorKm').value || 0,
-                kmCusto: tKm, itens: carrinhoOS, total: (tItens + tKm), fotoAnexo: fotoAtualOS_Base64, 
-                assinaturaBase64: originalDoc ? originalDoc.assinaturaBase64 : null
-            };
+           const docOS = {
+               tipo: 'ORDEM DE SERVIÇO', os: numOS, vencimento: venc, 
+               dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
+               timestamp: originalDoc ? originalDoc.timestamp : Date.now(),
+               clienteId: cId, clienteNome: cNome, 
+               equipe: document.getElementById('osEquipe').value || 'N/A', inicio: document.getElementById('osInicio').value || '',
+               fim: document.getElementById('osFim').value || '', pessoas: document.getElementById('osQtdPessoas').value || 1,
+               kmInicial: kmIni, kmFinal: kmFin, kmTotal: kTotal, kmValor: document.getElementById('osValorKm').value || 0,
+               kmCusto: tKm, itens: carrinhoOS, total: (tItens + tKm), fotoAnexo: fotoAtualOS_Base64, 
+               assinaturaBase64: originalDoc ? originalDoc.assinaturaBase64 : null,
+               vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' // GRAVA O NOME DO VENDEDOR AQUI
+           };
 
             try {
                 if (editandoDocId) {
@@ -1666,17 +1806,19 @@
                 } else {
                     await set(push(ref(db, 'caixa')), docOS); 
                 }
+
+                if(!editandoDocId) window.registrarMovimentoCaixa('entrada', (tItens + tKm));
                 
                 for (let item of carrinhoOS) {
-                    if (item.ehEstoque && item.idProd) {
-                        const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
-                        if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
-                    }
-                }
-                
-                alert(editandoDocId ? "Ordem de Serviço Atualizada!" : "OS Salva! Estoque atualizado.");
-                carrinhoOS = []; window.atualizarCarrinhoOS(); 
-               ['osClienteBusca','osFuncionario','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
+                   if (item.ehEstoque && item.idProd) {
+                       const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
+                       if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
+                   }
+               }
+               
+               alert(editandoDocId ? "Ordem de Serviço Atualizada!" : "OS Salva! Estoque atualizado.");
+               carrinhoOS = []; window.atualizarCarrinhoOS(); 
+               ['osClienteBusca','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
                document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
                fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
                window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO'); window.carregarSelectsGerais(); 
@@ -1685,431 +1827,424 @@
                document.getElementById('btnCancelarEdicaoOS').style.display = 'none';
                document.getElementById('colCancelarEdicaoOS').style.display = 'none';
                
-            } catch(e) { alert("Erro ao salvar: " + e); }
-        }
+           } catch(e) { alert("Erro ao salvar: " + e); }
+       }
 
-        // --- GERADOR DE PDF ---
-        window.gerarPDFdaOS = function() {
-            let valKm = parseFloat(document.getElementById('osValorKm').value) || 0;
-            let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
-            let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
-            let km = kmFin > kmIni ? (kmFin - kmIni) : 0;
-            
-            let objVirtual = {
-                os: document.getElementById('osNumero').value,
-                tipo: 'ORDEM DE SERVIÇO',
-                clienteNome: document.getElementById('osClienteBusca').value || "Não Preenchido",
-                funcionario: document.getElementById('osFuncionario').value,
-                equipe: document.getElementById('osEquipe').value,
-                inicio: document.getElementById('osInicio').value,
-                fim: document.getElementById('osFim').value,
-                pessoas: document.getElementById('osQtdPessoas').value,
-                kmInicial: kmIni, kmFinal: kmFin, kmTotal: km, kmValor: valKm, kmCusto: km * valKm,
-                itens: carrinhoOS, total: carrinhoOS.reduce((acc, i) => acc + i.valor, 0) + (km * valKm),
-                fotoAnexo: fotoAtualOS_Base64, dataStr: new Date().toLocaleString('pt-BR')
-            };
-            window.construirPDF(objVirtual);
-        }
+       // --- GERADOR DE PDF ---
+       window.gerarPDFdaOS = function() {
+           let valKm = parseFloat(document.getElementById('osValorKm').value) || 0;
+           let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
+           let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
+           let km = kmFin > kmIni ? (kmFin - kmIni) : 0;
+           
+           let objVirtual = {
+               os: document.getElementById('osNumero').value,
+               tipo: 'ORDEM DE SERVIÇO',
+               clienteNome: document.getElementById('osClienteBusca').value || "Não Preenchido",
+               equipe: document.getElementById('osEquipe').value,
+               inicio: document.getElementById('osInicio').value,
+               fim: document.getElementById('osFim').value,
+               pessoas: document.getElementById('osQtdPessoas').value,
+               kmInicial: kmIni, kmFinal: kmFin, kmTotal: km, kmValor: valKm, kmCusto: km * valKm,
+               itens: carrinhoOS, total: carrinhoOS.reduce((acc, i) => acc + i.valor, 0) + (km * valKm),
+               fotoAnexo: fotoAtualOS_Base64, dataStr: new Date().toLocaleString('pt-BR'),
+               vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema'
+           };
+           window.construirPDF(objVirtual);
+       }
 
 
-        // ================================================================
-        // MÓDULO 5: CAIXA E NOVOS BOTÕES (VER PDF E CUPOM)
-        // ================================================================
-        
-        onValue(ref(db, 'caixa'), function(snapshot) {
-            caixaGlobal = []; const dados = snapshot.val();
-            if (dados) { Object.keys(dados).forEach(key => caixaGlobal.push({ id: key, ...dados[key] })); }
-            caixaGlobal.sort((a, b) => b.timestamp - a.timestamp); renderizarTabelaCaixa();
-        });
-        
-        function renderizarTabelaCaixa() {
-            const tabela = document.getElementById('tabelaCaixa'); tabela.innerHTML = '';
-            if (caixaGlobal.length === 0) { tabela.innerHTML = '<tr><td colspan="8" style="text-align:center;">Nenhum documento registrado.</td></tr>'; return; }
+       // ================================================================
+       // MÓDULO 5: CAIXA E NOVOS BOTÕES (VER PDF E CUPOM)
+       // ================================================================
+       
+       onValue(ref(db, 'caixa'), function(snapshot) {
+           caixaGlobal = []; const dados = snapshot.val();
+           if (dados) { Object.keys(dados).forEach(key => caixaGlobal.push({ id: key, ...dados[key] })); }
+           caixaGlobal.sort((a, b) => b.timestamp - a.timestamp); renderizarTabelaCaixa();
+       });
+       
+       function renderizarTabelaCaixa() {
+           const tabela = document.getElementById('tabelaCaixa'); tabela.innerHTML = '';
+           if (caixaGlobal.length === 0) { tabela.innerHTML = '<tr><td colspan="8" style="text-align:center;">Nenhum documento registrado.</td></tr>'; return; }
 
-            caixaGlobal.forEach(v => {
-                const tr = document.createElement('tr'); 
-                const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
-                let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
+           caixaGlobal.forEach(v => {
+               const tr = document.createElement('tr'); 
+               const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
+               let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
 
-                let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#f1c40f;">✏️ Ed</button>`;
-                acoesHtml += `<button class="btn-acao nota" onclick="window.open('https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=5688dbb5-e022-4412-8c30-aef8fad8f24b&response_mode=fragment&response_type=code&scope=openid&nonce=a38a4d2f-7a43-4324-86e7-9aad256a98d7')" title="Emitir NFe Sebrae">🧾 NFe</button>`;
-                acoesHtml += `<button class="btn-acao nota" onclick="window.open('https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional', '_blank')" title="Emitir NFS-e Nacional">🧾 NFS-e</button>`;
-                acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
-                if (!v.assinaturaBase64) {
-                    acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
-                }
-                acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
-                acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
-                acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
+               let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#f1c40f;">✏️ Ed</button>`;
+               acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
+               if (!v.assinaturaBase64) {
+                   acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
+               }
+               acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
+               acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
+               acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
 
-                let corTipo = v.tipo === 'VENDA' ? '#3498db' : '#f39c12';
+               let corTipo = v.tipo === 'VENDA' ? '#3498db' : (v.tipo === 'ORCAMENTO' ? '#9b59b6' : (v.tipo === 'DESPESA' ? '#e74c3c' : '#f39c12'));
+               let sigla = v.tipo === 'VENDA' ? 'VD' : (v.tipo === 'ORCAMENTO' ? 'ORC' : (v.tipo === 'DESPESA' ? 'DESP' : (v.tipo === 'FECHAMENTO' ? 'FECH' : 'OS')));
 
-                tr.innerHTML = `
-                    <td style="font-weight: bold; color: #f1c40f;">${v.os || '-'}</td>
-                    <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${v.tipo === 'VENDA' ? 'VD' : 'OS'}</span></td>
-                    <td style="font-weight: bold;">${v.dataStr.split(' ')}</td>
-                    <td style="font-weight: bold;">${v.clienteNome}</td>
-                    <td style="font-weight: bold;">${vencForm}</td>
-                    <td style="color:#2ecc71; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
-                    <td style="font-size: 11px; font-weight: bold;">${temAss}</td>
-                    <td class="acoes-flex">${acoesHtml}</td>
-                `; 
-                tabela.appendChild(tr);
-            });
-        }
-        
-        // --- FUNÇÃO PARA EDITAR DOCUMENTOS ---
-        window.editarDocumentoCaixa = function(id) {
-            try {
-                const doc = caixaGlobal.find(x => x.id === id);
-                if (!doc) return alert("Documento não encontrado no sistema.");
+               if(v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+                   acoesHtml = `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Registro">🗑️</button>`;
+               }
 
-                editandoDocId = id;
-                
-                let tipoDoc = (doc.tipo || '').toUpperCase();
-                let isVenda = tipoDoc.includes('VENDA') || tipoDoc.includes('RECIBO');
-                let isOS = tipoDoc.includes('ORDEM') || tipoDoc.includes('OS');
+               tr.innerHTML = `
+                   <td style="font-weight: bold; color: #f1c40f;">${v.os || '-'}</td>
+                   <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
+                   <td style="font-weight: bold;">${v.dataStr.split(' ')}</td>
+                   <td style="font-weight: bold;">${v.clienteNome}</td>
+                   <td style="font-weight: bold;">${vencForm}</td>
+                   <td style="color:${v.tipo==='DESPESA'?'#e74c3c':'#2ecc71'}; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
+                   <td style="font-size: 11px; font-weight: bold;">${(v.tipo==='DESPESA'||v.tipo==='FECHAMENTO')?'-':temAss}</td>
+                   <td class="acoes-flex">${acoesHtml}</td>
+               `; 
+               tabela.appendChild(tr);
+           });
+       }
+       
+       // --- FUNÇÃO PARA EDITAR DOCUMENTOS ---
+       window.editarDocumentoCaixa = function(id) {
+           try {
+               const doc = caixaGlobal.find(x => x.id === id);
+               if (!doc) return alert("Documento não encontrado no sistema.");
 
-                if (isVenda) {
-                    window.abrirAba('tabVendas', document.getElementById('btnTabVendas'));
-                    
-                    document.getElementById('vendaOS').value = doc.os || '';
-                    document.getElementById('vendaVencimento').value = doc.vencimento || '';
-                    document.getElementById('vendaClienteBusca').value = doc.clienteNome || '';
-                    
-                    carrinhoVenda = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
-                    window.atualizarCarrinhoVenda();
-                    
-                    document.getElementById('btnCancelarEdicaoVenda').style.display = 'block';
-                    alert(`MODO DE EDIÇÃO ATIVADO!\nVocê está editando a Venda Nº ${doc.os || 'S/N'}.`);
-                    window.scrollTo(0,0);
-                    
-                } else if (isOS) {
-                    window.abrirAba('tabOS', document.getElementById('btnTabOS'));
-                    
-                    document.getElementById('osNumero').value = doc.os || '';
-                    document.getElementById('osClienteBusca').value = doc.clienteNome || '';
-                    document.getElementById('osVencimento').value = doc.vencimento || '';
-                    document.getElementById('osFuncionario').value = doc.funcionario || '';
-                    document.getElementById('osEquipe').value = doc.equipe || '';
-                    document.getElementById('osInicio').value = doc.inicio || '';
-                    document.getElementById('osFim').value = doc.fim || '';
-                    document.getElementById('osQtdPessoas').value = doc.pessoas || 1;
-                    document.getElementById('osKmInicial').value = doc.kmInicial || 0;
-                    document.getElementById('osKmFinal').value = doc.kmFinal || 0;
-                    document.getElementById('osValorKm').value = doc.kmValor || 2.50;
-                    
-                    carrinhoOS = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
-                    
-                    fotoAtualOS_Base64 = doc.fotoAnexo || '';
-                    if(fotoAtualOS_Base64) {
-                        document.getElementById('previewFotoOS').src = fotoAtualOS_Base64;
-                        document.getElementById('previewFotoOS').style.display = 'block';
-                    } else {
-                        document.getElementById('previewFotoOS').src = '';
-                        document.getElementById('previewFotoOS').style.display = 'none';
-                    }
+               editandoDocId = id;
+               
+               let tipoDoc = (doc.tipo || '').toUpperCase();
+               let isVenda = tipoDoc.includes('VENDA') || tipoDoc.includes('RECIBO') || tipoDoc.includes('ORCAMENTO');
+               let isOS = tipoDoc.includes('ORDEM') || tipoDoc.includes('OS');
 
-                    window.calcularDeslocamentoOS();
-                    window.atualizarCarrinhoOS();
-                    
-                    document.getElementById('btnCancelarEdicaoOS').style.display = 'block';
-                    document.getElementById('colCancelarEdicaoOS').style.display = 'block';
-                    
-                    alert(`MODO DE EDIÇÃO ATIVADO!\nVocê está editando a OS Nº ${doc.os || 'S/N'}.`);
-                    window.scrollTo(0,0);
-                } else {
-                    alert("Tipo de documento não reconhecido pelo sistema: " + tipoDoc);
-                }
-            } catch (erro) {
-                alert("Ocorreu um erro ao carregar os dados para edição: " + erro.message);
-                console.error(erro);
-            }
-        }
+               if (isVenda) {
+                   window.abrirAba('tabVendas', document.getElementById('btnTabVendas'));
+                   
+                   document.getElementById('vendaTipoDoc').value = doc.tipo;
+                   document.getElementById('vendaOS').value = doc.os || '';
+                   document.getElementById('vendaVencimento').value = doc.vencimento || '';
+                   document.getElementById('vendaClienteBusca').value = doc.clienteNome || '';
+                   
+                   carrinhoVenda = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
+                   window.atualizarCarrinhoVenda();
+                   
+                   document.getElementById('btnCancelarEdicaoVenda').style.display = 'block';
+                   alert(`MODO DE EDIÇÃO ATIVADO!\nVocê está editando o Documento Nº ${doc.os || 'S/N'}.`);
+                   window.scrollTo(0,0);
+                   
+               } else if (isOS) {
+                   window.abrirAba('tabOS', document.getElementById('btnTabOS'));
+                   
+                   document.getElementById('osNumero').value = doc.os || '';
+                   document.getElementById('osClienteBusca').value = doc.clienteNome || '';
+                   document.getElementById('osVencimento').value = doc.vencimento || '';
+                   document.getElementById('osEquipe').value = doc.equipe || '';
+                   document.getElementById('osInicio').value = doc.inicio || '';
+                   document.getElementById('osFim').value = doc.fim || '';
+                   document.getElementById('osQtdPessoas').value = doc.pessoas || 1;
+                   document.getElementById('osKmInicial').value = doc.kmInicial || 0;
+                   document.getElementById('osKmFinal').value = doc.kmFinal || 0;
+                   document.getElementById('osValorKm').value = doc.kmValor || 2.50;
+                   
+                   carrinhoOS = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
+                   
+                   fotoAtualOS_Base64 = doc.fotoAnexo || '';
+                   if(fotoAtualOS_Base64) {
+                       document.getElementById('previewFotoOS').src = fotoAtualOS_Base64;
+                       document.getElementById('previewFotoOS').style.display = 'block';
+                   } else {
+                       document.getElementById('previewFotoOS').src = '';
+                       document.getElementById('previewFotoOS').style.display = 'none';
+                   }
 
-        // --- CONSTRUÇÃO DO PDF ---
-        window.gerarPDF_Historico = function(id) {
-            const doc = caixaGlobal.find(x => x.id === id);
-            if(doc) window.construirPDF(doc);
-        }
+                   window.calcularDeslocamentoOS();
+                   window.atualizarCarrinhoOS();
+                   
+                   document.getElementById('btnCancelarEdicaoOS').style.display = 'block';
+                   document.getElementById('colCancelarEdicaoOS').style.display = 'block';
+                   
+                   alert(`MODO DE EDIÇÃO ATIVADO!\nVocê está editando a OS Nº ${doc.os || 'S/N'}.`);
+                   window.scrollTo(0,0);
+               } else {
+                   alert("Tipo de documento não suportado para edição: " + tipoDoc);
+               }
+           } catch (erro) {
+               alert("Ocorreu um erro ao carregar os dados para edição: " + erro.message);
+           }
+       }
 
-        window.construirPDF = function(doc) {
-            const formataDataHora = (isoStr) => {
-                if(!isoStr || isoStr === 'Não informado' || isoStr === '') return "-";
-                let d = new Date(isoStr);
-                return isNaN(d) ? isoStr : (d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}));
-            };
+       // --- CONSTRUÇÃO DO PDF ---
+       window.gerarPDF_Historico = function(id) {
+           const doc = caixaGlobal.find(x => x.id === id);
+           if(doc) window.construirPDF(doc);
+       }
 
-            let htmlTabelas = '';
-            let blocoDados = '';
+       window.construirPDF = function(doc) {
+           const formataDataHora = (isoStr) => {
+               if(!isoStr || isoStr === 'Não informado' || isoStr === '') return "-";
+               let d = new Date(isoStr);
+               return isNaN(d) ? isoStr : (d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}));
+           };
 
-            // Construção das Tabelas e Blocos de Informação
-            if (doc.tipo === 'ORDEM DE SERVIÇO') {
-                let matHtml = ''; let servHtml = '';
-                let totalMat = 0; let totalServ = 0;
+           let htmlTabelas = '';
+           let blocoDados = '';
 
-                // Segurança: Converte pra array antes de rodar o forEach do PDF
-                let itensGarantidos = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
+           // Construção das Tabelas e Blocos de Informação
+           if (doc.tipo === 'ORDEM DE SERVIÇO') {
+               let matHtml = ''; let servHtml = '';
+               let totalMat = 0; let totalServ = 0;
 
-                if(itensGarantidos.length > 0) {
-                    itensGarantidos.forEach(i => {
-                        let tdHtml = `<tr><td style="font-size: 9px; padding: 4px 6px;">${i.nome}</td><td class="text-right" style="font-size: 10px; padding: 4px 6px;">R$ ${i.valor.toFixed(2)}</td></tr>`;
-                        if(i.categoriaOS === 'servico') { servHtml += tdHtml; totalServ += i.valor; } 
-                        else { matHtml += tdHtml; totalMat += i.valor; }
-                    });
-                }
-                
-                if(!matHtml) matHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum material lançado.</td></tr>`;
-                if(!servHtml) servHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum serviço lançado.</td></tr>`;
+               let itensGarantidos = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
 
-                blocoDados = `
-                    <div class="info-card">
-                        <div class="card-title">DADOS DA ORDEM DE SERVIÇO</div>
-                        <div class="grid-3">
+               if(itensGarantidos.length > 0) {
+                   itensGarantidos.forEach(i => {
+                       let tdHtml = `<tr><td style="font-size: 9px; padding: 4px 6px;">${i.nome}</td><td class="text-right" style="font-size: 10px; padding: 4px 6px;">R$ ${i.valor.toFixed(2)}</td></tr>`;
+                       if(i.categoriaOS === 'servico') { servHtml += tdHtml; totalServ += i.valor; } 
+                       else { matHtml += tdHtml; totalMat += i.valor; }
+                   });
+               }
+               
+               if(!matHtml) matHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum material lançado.</td></tr>`;
+               if(!servHtml) servHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum serviço lançado.</td></tr>`;
+
+               blocoDados = `
+                   <div class="info-card">
+                       <div class="card-title">DADOS DA ORDEM DE SERVIÇO</div>
+                       <div class="grid-3">
+                          <div><strong>Cliente:</strong><br>${doc.clienteNome}</div>
+                          <div><strong>Atendente / Técnico:</strong><br>${doc.vendedor || doc.funcionario || 'Sistema'}</div>
+                          <div><strong>Equipe:</strong><br>${doc.equipe || 'Não informada'} (Pessoas: ${doc.pessoas || 1})</div>
+                       </div>
+                   </div>
+                   <div class="info-card">
+                       <div class="card-title">EXECUÇÃO E DESLOCAMENTO</div>
+                       <div class="grid-4">
+                          <div><strong>Início:</strong><br>${formataDataHora(doc.inicio)}</div>
+                          <div><strong>Término:</strong><br>${formataDataHora(doc.fim)}</div>
+                          <div><strong>Deslocamento:</strong><br>${doc.kmTotal || 0} km rodados</div>
+                          <div><strong>Custo Km:</strong><br>R$ ${parseFloat(doc.kmCusto||0).toFixed(2)}</div>
+                       </div>
+                   </div>
+               `;
+
+               htmlTabelas = `
+                   <div class="tabelas-container">
+                       <div class="tabela-box">
+                           <div class="card-title">MATERIAIS E PEÇAS</div>
+                           <table class="tabela-bonita">
+                              <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
+                              <tbody>${matHtml}</tbody>
+                              <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalMat.toFixed(2)}</th></tr></tfoot>
+                           </table>
+                       </div>
+                       <div class="tabela-box">
+                           <div class="card-title">MÃO DE OBRA / SERVIÇOS</div>
+                           <table class="tabela-bonita">
+                              <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
+                              <tbody>${servHtml}</tbody>
+                              <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalServ.toFixed(2)}</th></tr></tfoot>
+                           </table>
+                       </div>
+                   </div>
+               `;
+           } else {
+               let todosHtml = '';
+               let itensGarantidos = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
+               
+               if(itensGarantidos.length > 0) {
+                   itensGarantidos.forEach(i => { 
+                       todosHtml += `<tr><td style="font-size: 9px; padding: 4px 6px;">${i.nome}</td><td class="text-right" style="width: 120px; font-size: 10px; padding: 4px 6px;">R$ ${i.valor.toFixed(2)}</td></tr>`; 
+                   });
+               } else { todosHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum item lançado.</td></tr>`; }
+
+               blocoDados = `
+                   <div class="info-card">
+                       <div class="card-title">DADOS DO DOCUMENTO</div>
+                       <div class="grid-3">
                            <div><strong>Cliente:</strong><br>${doc.clienteNome}</div>
-                            <div><strong>Técnico:</strong><br>${doc.funcionario || 'Não informado'}</div>
-                           <div><strong>Equipe:</strong><br>${doc.equipe || 'Não informada'} (Pessoas: ${doc.pessoas || 1})</div>
-                        </div>
-                    </div>
-                    <div class="info-card">
-                        <div class="card-title">EXECUÇÃO E DESLOCAMENTO</div>
-                        <div class="grid-4">
-                           <div><strong>Início:</strong><br>${formataDataHora(doc.inicio)}</div>
-                           <div><strong>Término:</strong><br>${formataDataHora(doc.fim)}</div>
-                           <div><strong>Deslocamento:</strong><br>${doc.kmTotal || 0} km rodados</div>
-                           <div><strong>Custo Km:</strong><br>R$ ${parseFloat(doc.kmCusto||0).toFixed(2)}</div>
-                        </div>
-                    </div>
-                `;
+                           <div><strong>Data de Emissão:</strong><br>${doc.dataStr}</div>
+                           <div><strong>Atendente/Vendedor:</strong><br>${doc.vendedor || 'Sistema'}</div>
+                       </div>
+                   </div>
+               `;
 
-                htmlTabelas = `
-                    <div class="tabelas-container">
-                        <div class="tabela-box">
-                            <div class="card-title">MATERIAIS E PEÇAS</div>
-                            <table class="tabela-bonita">
-                               <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
-                               <tbody>${matHtml}</tbody>
-                               <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalMat.toFixed(2)}</th></tr></tfoot>
-                            </table>
-                        </div>
-                        <div class="tabela-box">
-                            <div class="card-title">MÃO DE OBRA / SERVIÇOS</div>
-                            <table class="tabela-bonita">
-                               <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
-                               <tbody>${servHtml}</tbody>
-                               <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalServ.toFixed(2)}</th></tr></tfoot>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            } else {
-                let todosHtml = '';
-                let itensGarantidos = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
-                
-                if(itensGarantidos.length > 0) {
-                    itensGarantidos.forEach(i => { 
-                        todosHtml += `<tr><td style="font-size: 9px; padding: 4px 6px;">${i.nome}</td><td class="text-right" style="width: 120px; font-size: 10px; padding: 4px 6px;">R$ ${i.valor.toFixed(2)}</td></tr>`; 
-                    });
-                } else { todosHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum item lançado.</td></tr>`; }
+               htmlTabelas = `
+                   <div class="tabela-box" style="margin-top: 15px;">
+                       <div class="card-title">PRODUTOS / ITENS DO DOCUMENTO</div>
+                       <table class="tabela-bonita">
+                          <thead><tr><th>Descrição do Item</th><th class="text-right">Valor Parcial</th></tr></thead>
+                          <tbody>${todosHtml}</tbody>
+                       </table>
+                   </div>
+               `;
+           }
 
-                blocoDados = `
-                    <div class="info-card">
-                        <div class="card-title">DADOS DO CLIENTE</div>
-                        <div class="grid-2">
-                           <div><strong>Nome do Cliente:</strong><br>${doc.clienteNome}</div>
-                            <div><strong>Data de Emissão:</strong><br>${doc.dataStr}</div>
-                        </div>
-                    </div>
-                `;
+           // Tratamento de Imagens e Assinatura
+           let fotoHTML = doc.fotoAnexo ? `<div class="foto-box"><div class="card-title">REGISTRO FOTOGRÁFICO</div><img src="${doc.fotoAnexo}"></div>` : '';
+           
+           let assinaturaHTML = doc.assinaturaBase64 
+               ? `<div class="ass-box"><img src="${doc.assinaturaBase64}"><div class="ass-linha" style="color: #27ae60;">Assinatura Digital Confirmada</div><div class="ass-nome">${doc.clienteNome}</div></div>` 
+               : `<div class="ass-box" style="margin-top: 40px;"><div class="ass-linha">Assinatura do Cliente</div></div>`;
 
-                htmlTabelas = `
-                    <div class="tabela-box" style="margin-top: 15px;">
-                        <div class="card-title">PRODUTOS / ITENS DA VENDA</div>
-                        <table class="tabela-bonita">
-                           <thead><tr><th>Descrição do Item</th><th class="text-right">Valor Parcial</th></tr></thead>
-                           <tbody>${todosHtml}</tbody>
-                        </table>
-                    </div>
-                `;
-            }
+           // Tratamento do Cabeçalho
+           let logoHeader = `<img src="https://image2url.com/r2/default/images/1775222635762-bb7b4bc7-d027-4c9a-abc4-add5cdbf79ba.png" class="logo-img">`;
+           let cnpjeTel = [];
+           if(empresaGlobal.cnpj) cnpjeTel.push(`CNPJ: ${empresaGlobal.cnpj}`);
+           if(empresaGlobal.telefone) cnpjeTel.push(`Contato: ${empresaGlobal.telefone}`);
+           let contatosHeader = cnpjeTel.length > 0 ? cnpjeTel.join(' | ') : '';
 
-            // Tratamento de Imagens e Assinatura
-            let fotoHTML = doc.fotoAnexo ? `<div class="foto-box"><div class="card-title">REGISTRO FOTOGRÁFICO</div><img src="${doc.fotoAnexo}"></div>` : '';
-            
-            let assinaturaHTML = doc.assinaturaBase64 
-                ? `<div class="ass-box"><img src="${doc.assinaturaBase64}"><div class="ass-linha" style="color: #27ae60;">Assinatura Digital Confirmada</div><div class="ass-nome">${doc.clienteNome}</div></div>` 
-                : `<div class="ass-box" style="margin-top: 40px;"><div class="ass-linha">Assinatura do Cliente</div></div>`;
-
-            // Tratamento do Cabeçalho
-            let logoHeader = `<img src="https://image2url.com/r2/default/images/1775222635762-bb7b4bc7-d027-4c9a-abc4-add5cdbf79ba.png" class="logo-img">`;
-            let cnpjeTel = [];
-            if(empresaGlobal.cnpj) cnpjeTel.push(`CNPJ: ${empresaGlobal.cnpj}`);
-            if(empresaGlobal.telefone) cnpjeTel.push(`Contato: ${empresaGlobal.telefone}`);
-            let contatosHeader = cnpjeTel.length > 0 ? cnpjeTel.join(' | ') : '';
-
-            const htmlPDF = `
-                <html>
-                <head>
-                    <title>Doc Nº ${doc.os}</title>
-                    <style>
-                        @page { size: A4; margin: 10mm; }
-                        body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; font-size: 11px; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                        
-                        /* HEADER APRIMORADO */
-                        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #2c3e50; padding-bottom: 15px; margin-bottom: 15px; }
-                        .logo-container { width: 25%; text-align: left; }
-                        .logo-img { max-height: 65px; max-width: 100%; object-fit: contain; }
-                        .sem-logo { width: 60px; height: 60px; background: #ecf0f1; border: 1px dashed #bdc3c7; display: flex; align-items: center; justify-content: center; color: #95a5a6; font-weight: bold; border-radius: 4px; }
-                        .empresa-info { width: 45%; text-align: center; }
-                        .empresa-nome { font-size: 15px; font-weight: bold; color: #2c3e50; text-transform: uppercase; margin-bottom: 3px; }
-                        .empresa-detalhes { font-size: 10px; color: #555; }
-                        .doc-info { width: 30%; text-align: right; }
-                        .doc-tipo { font-size: 12px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
-                        .doc-numero { font-size: 20px; font-weight: 900; color: #e74c3c; margin: 4px 0; }
-                        
-                        /* CARDS DE INFORMAÇÃO */
-                        .info-card { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
-                        .card-title { font-size: 10px; font-weight: 800; color: #34495e; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; letter-spacing: 0.5px; }
-                        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-                        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-                        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
-                        
-                        /* TABELAS MODERNAS */
-                        .tabelas-container { display: flex; gap: 15px; margin-top: 15px; }
-                        .tabela-box { flex: 1; }
-                        .tabela-bonita { width: 100%; border-collapse: collapse; border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 1px #dee2e6; }
-                        .tabela-bonita th { background-color: #2c3e50; color: #ffffff; padding: 4px 6px; font-size: 10px; text-transform: uppercase; }
-                        .tabela-bonita td { border-bottom: 1px solid #e9ecef; }
-                        .tabela-bonita tbody tr:nth-child(even) { background-color: #f8f9fa; }
-                        .tabela-bonita tfoot th { background-color: #e9ecef; color: #2c3e50; font-size: 11px; border-top: 2px solid #ced4da; padding: 6px; }
-                        
-                        /* UTILITÁRIOS */
-                        .text-right { text-align: right; }
-                        .text-center { text-align: center; }
-                        .text-muted { color: #6c757d; font-style: italic; }
-                        
-                        /* TOTAIS E FOTO */
-                        .total-destaque { background-color: #2c3e50; color: #f1c40f; font-size: 16px; font-weight: 900; text-align: right; padding: 10px 15px; margin-top: 15px; border-radius: 6px; }
-                        .foto-box { text-align: center; margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; }
-                        .foto-box img { max-height: 180px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-                        
-                        /* ASSINATURAS */
-                        .area-assinaturas { display: flex; justify-content: space-around; margin-top: 25px; align-items: flex-end; }
-                        .ass-box { text-align: center; width: 40%; }
-                        .ass-box img { max-height: 60px; margin-bottom: 5px; }
-                        .ass-linha { border-top: 1px solid #34495e; padding-top: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-                        .ass-nome { font-size: 11px; color: #555; margin-top: 2px; }
-                        
-                        .rodape { text-align: center; margin-top: 20px; font-size: 9px; color: #adb5bd; border-top: 1px dashed #dee2e6; padding-top: 8px; }
+           const htmlPDF = `
+               <html>
+               <head>
+                   <title>Doc Nº ${doc.os}</title>
+                   <style>
+                       @page { size: A4; margin: 10mm; }
+                       body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; font-size: 11px; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                        
-                      /* BOTÃO DE IMPRESSÃO FLUTUANTE */
-                        @media print {
-                            .btn-imprimir-flutuante { display: none !important; }
-                        }
-                        .btn-imprimir-flutuante {
-                            position: fixed;
-                            bottom: 30px;
-                            right: 30px; 
-                            background-color: #27ae60;
-                            color: white;
-                            border: none;
-                            padding: 12px 20px;
-                            font-size: 14px;
-                            font-weight: bold;
-                            border-radius: 6px;
-                            cursor: pointer;
-                            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-                            z-index: 1000;
-                        }
-                        .btn-imprimir-flutuante:hover {
-                            background-color: #2ecc71;
-                        }                  
- 
+                       .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #2c3e50; padding-bottom: 15px; margin-bottom: 15px; }
+                       .logo-container { width: 25%; text-align: left; }
+                       .logo-img { max-height: 65px; max-width: 100%; object-fit: contain; }
+                       .empresa-info { width: 45%; text-align: center; }
+                       .empresa-nome { font-size: 15px; font-weight: bold; color: #2c3e50; text-transform: uppercase; margin-bottom: 3px; }
+                       .empresa-detalhes { font-size: 10px; color: #555; }
+                       .doc-info { width: 30%; text-align: right; }
+                       .doc-tipo { font-size: 12px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
+                       .doc-numero { font-size: 20px; font-weight: 900; color: #e74c3c; margin: 4px 0; }
+                       
+                       .info-card { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+                       .card-title { font-size: 10px; font-weight: 800; color: #34495e; text-transform: uppercase; margin-bottom: 8px; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; letter-spacing: 0.5px; }
+                       .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+                       .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+                       .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+                       
+                       .tabelas-container { display: flex; gap: 15px; margin-top: 15px; }
+                       .tabela-box { flex: 1; }
+                       .tabela-bonita { width: 100%; border-collapse: collapse; border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 1px #dee2e6; }
+                       .tabela-bonita th { background-color: #2c3e50; color: #ffffff; padding: 4px 6px; font-size: 10px; text-transform: uppercase; }
+                       .tabela-bonita td { border-bottom: 1px solid #e9ecef; }
+                       .tabela-bonita tbody tr:nth-child(even) { background-color: #f8f9fa; }
+                       .tabela-bonita tfoot th { background-color: #e9ecef; color: #2c3e50; font-size: 11px; border-top: 2px solid #ced4da; padding: 6px; }
+                       
+                       .text-right { text-align: right; }
+                       .text-center { text-align: center; }
+                       .text-muted { color: #6c757d; font-style: italic; }
+                       
+                       .total-destaque { background-color: #2c3e50; color: #f1c40f; font-size: 16px; font-weight: 900; text-align: right; padding: 10px 15px; margin-top: 15px; border-radius: 6px; }
+                       .foto-box { text-align: center; margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; }
+                       .foto-box img { max-height: 180px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+                       
+                       .area-assinaturas { display: flex; justify-content: space-around; margin-top: 25px; align-items: flex-end; }
+                       .ass-box { text-align: center; width: 40%; }
+                       .ass-box img { max-height: 60px; margin-bottom: 5px; }
+                       .ass-linha { border-top: 1px solid #34495e; padding-top: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+                       .ass-nome { font-size: 11px; color: #555; margin-top: 2px; }
+                       
+                       .rodape { text-align: center; margin-top: 20px; font-size: 9px; color: #adb5bd; border-top: 1px dashed #dee2e6; padding-top: 8px; }
+                      
+                       @media print {
+                           .btn-imprimir-flutuante { display: none !important; }
+                       }
+                       .btn-imprimir-flutuante {
+                           position: fixed;
+                           bottom: 30px;
+                           right: 30px; 
+                           background-color: #27ae60;
+                           color: white;
+                           border: none;
+                           padding: 12px 20px;
+                           font-size: 14px;
+                           font-weight: bold;
+                           border-radius: 6px;
+                           cursor: pointer;
+                           box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                           z-index: 1000;
+                       }
+                       .btn-imprimir-flutuante:hover {
+                           background-color: #2ecc71;
+                       }                  
                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <div class="logo-container">${logoHeader}</div>
-                        <div class="empresa-info">
-                            <div class="empresa-nome">${empresaGlobal.nome}</div>
-                            <div class="empresa-detalhes">${empresaGlobal.endereco}</div>
-                            <div class="empresa-detalhes">${contatosHeader}</div>
-                        </div>
-                        <div class="doc-info">
-                            <div class="doc-tipo">${doc.tipo === 'ORDEM DE SERVIÇO' ? 'ORDEM DE SERVIÇO' : 'RECIBO DE VENDA'}</div>
-                            <div class="doc-numero">Nº ${doc.os || 'S/N'}</div>
-                            <div style="font-size: 10px; color: #7f8c8d;">Emitido em: ${doc.dataStr.split(' ')}</div>
-                        </div>
-                    </div>
+               </head>
+               <body>
+                   <div class="header">
+                       <div class="logo-container">${logoHeader}</div>
+                       <div class="empresa-info">
+                           <div class="empresa-nome">${empresaGlobal.nome}</div>
+                           <div class="empresa-detalhes">${empresaGlobal.endereco}</div>
+                           <div class="empresa-detalhes">${contatosHeader}</div>
+                       </div>
+                       <div class="doc-info">
+                           <div class="doc-tipo">${doc.tipo}</div>
+                           <div class="doc-numero">Nº ${doc.os || 'S/N'}</div>
+                           <div style="font-size: 10px; color: #7f8c8d;">Emitido em: ${doc.dataStr.split(' ')}</div>
+                       </div>
+                   </div>
 
-                    ${blocoDados}
-                    ${htmlTabelas}
+                   ${blocoDados}
+                   ${htmlTabelas}
 
-                    <div class="total-destaque">TOTAL GERAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
-                    
-                    ${fotoHTML}
+                   <div class="total-destaque">TOTAL GERAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
+                   
+                   ${fotoHTML}
 
-                    <div class="area-assinaturas">
-                        <div class="ass-box" style="margin-top: 40px;">
-                            <div class="ass-linha">Assinatura da Empresa / Técnico</div>
-                        </div>
-                        ${assinaturaHTML}
-                    </div>
+                   <div class="area-assinaturas">
+                       <div class="ass-box" style="margin-top: 40px;">
+                           <div class="ass-linha">Assinatura da Empresa / Técnico</div>
+                       </div>
+                       ${assinaturaHTML}
+                   </div>
 
-                    <div class="rodape">Documento gerado eletronicamente pelo sistema FH CONTROL.</div>
-                    
-                    <button class="btn-imprimir-flutuante" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
-                </body>
-                </html>
-            `;
-            let j = window.open('', '', 'width=900,height=750'); j.document.write(htmlPDF); j.document.close();
-        }
+                   <div class="rodape">Documento gerado eletronicamente pelo sistema FH CONTROL.</div>
+                   
+                   <button class="btn-imprimir-flutuante" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+               </body>
+               </html>
+           `;
+           let j = window.open('', '', 'width=900,height=750'); j.document.write(htmlPDF); j.document.close();
+       }
 
-        // --- IMPRIMIR CUPOM TÉRMICO (80mm) COM DADOS DA EMPRESA ---
-        window.imprimirCupom = function(id) {
-            const doc = caixaGlobal.find(x => x.id === id);
-            if(!doc) return;
+       // --- IMPRIMIR CUPOM TÉRMICO (80mm) COM DADOS DA EMPRESA ---
+       window.imprimirCupom = function(id) {
+           const doc = caixaGlobal.find(x => x.id === id);
+           if(!doc) return;
 
-            let itensHtml = '';
-            let itensGarantidos = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
+           let itensHtml = '';
+           let itensGarantidos = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
 
-            if(doc.tipo === 'ORDEM DE SERVIÇO') {
-                let mats = itensGarantidos.filter(i => i.categoriaOS !== 'servico');
-                let servs = itensGarantidos.filter(i => i.categoriaOS === 'servico');
-                
-                if (mats.length > 0) {
-                    itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MATERIAIS --</td></tr>`;
-                    mats.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
-                }
+           if(doc.tipo === 'ORDEM DE SERVIÇO') {
+               let mats = itensGarantidos.filter(i => i.categoriaOS !== 'servico');
+               let servs = itensGarantidos.filter(i => i.categoriaOS === 'servico');
+               
+               if (mats.length > 0) {
+                   itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MATERIAIS --</td></tr>`;
+                   mats.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+               }
 
-                if (servs.length > 0) {
-                    itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MAO DE OBRA --</td></tr>`;
-                    servs.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
-                }
+               if (servs.length > 0) {
+                   itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MAO DE OBRA --</td></tr>`;
+                   servs.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+               }
 
-                if(doc.kmCusto > 0) {
-                    itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- DESLOCAMENTO --</td></tr>`;
-                    itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${doc.kmTotal} km rodados</td><td style="text-align:right;">R$ ${doc.kmCusto.toFixed(2)}</td></tr>`;
-                }
+               if(doc.kmCusto > 0) {
+                   itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- DESLOCAMENTO --</td></tr>`;
+                   itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${doc.kmTotal} km rodados</td><td style="text-align:right;">R$ ${doc.kmCusto.toFixed(2)}</td></tr>`;
+               }
 
-            } else { 
-                if(itensGarantidos) itensGarantidos.forEach(i => { itensHtml += `<tr><td style="padding-bottom:5px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
-            }
+           } else { 
+               if(itensGarantidos) itensGarantidos.forEach(i => { itensHtml += `<tr><td style="padding-bottom:5px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+           }
 
-            // Cabeçalho da Empresa Dinâmico no Cupom
-            let logoCupom = empresaGlobal.logo ? `<div class="center"><img src="${empresaGlobal.logo}" style="max-height: 60px; margin-bottom: 5px;"></div>` : '';
-            let contatoCupom = [];
-            if(empresaGlobal.cnpj) contatoCupom.push(`CNPJ: ${empresaGlobal.cnpj}`);
-            if(empresaGlobal.telefone) contatoCupom.push(`Tel: ${empresaGlobal.telefone}`);
-            let cTxt = contatoCupom.length > 0 ? `<div class="center" style="font-size: 10px;">${contatoCupom.join(' | ')}</div>` : '';
-            let endCupom = empresaGlobal.endereco ? `<div class="center" style="font-size: 10px;">${empresaGlobal.endereco}</div>` : '';
+           // Cabeçalho da Empresa Dinâmico no Cupom
+           let logoCupom = empresaGlobal.logo ? `<div class="center"><img src="${empresaGlobal.logo}" style="max-height: 60px; margin-bottom: 5px;"></div>` : '';
+           let contatoCupom = [];
+           if(empresaGlobal.cnpj) contatoCupom.push(`CNPJ: ${empresaGlobal.cnpj}`);
+           if(empresaGlobal.telefone) contatoCupom.push(`Tel: ${empresaGlobal.telefone}`);
+           let cTxt = contatoCupom.length > 0 ? `<div class="center" style="font-size: 10px;">${contatoCupom.join(' | ')}</div>` : '';
+           let endCupom = empresaGlobal.endereco ? `<div class="center" style="font-size: 10px;">${empresaGlobal.endereco}</div>` : '';
 
-            let htmlCupom = `
+           let htmlCupom = `
                <html>
                 <head>
                    <title></title>
                     <style>
-                        @page { margin: 0; } /* Remove o cabeçalho e rodapé automáticos do navegador */
+                        @page { margin: 0; } 
                         body { font-family: 'Courier New', Courier, monospace; width: 300px; margin: 0 auto; padding: 15px; color: #000; font-size: 12px; }
                         .center { text-align: center; }
                         .bold { font-weight: bold; }
@@ -2117,7 +2252,6 @@
                         table { width: 100%; font-size: 12px; border-collapse: collapse; }
                         td { vertical-align: top; }
                         
-                        /* BOTÃO DE IMPRESSÃO FLUTUANTE */
                         @media print {
                             .btn-imprimir-flutuante { display: none !important; }
                         }
@@ -2152,6 +2286,7 @@
                     <div>Doc Nº: <span class="bold">${doc.os || 'S/N'}</span> (${doc.tipo})</div>
                     <div>Data: ${doc.dataStr}</div>
                     <div>Cliente: ${doc.clienteNome}</div>
+                    <div>Atendente: ${doc.vendedor || doc.funcionario || 'Sistema'}</div>
                     <div class="line"></div>
                    <table>${itensHtml}</table>
                     <div class="line"></div>
@@ -2166,74 +2301,253 @@
                     <button class="btn-imprimir-flutuante" onclick="window.print()">🖨️ Imprimir Cupom</button>
                 </body>
                 </html>
-            `;
-            let janela = window.open('', '', 'width=400,height=600');
-            janela.document.write(htmlCupom);
-            janela.document.close();
-        }
+           `;
+           let janela = window.open('', '', 'width=400,height=600');
+           janela.document.write(htmlCupom);
+           janela.document.close();
+       }
 
-        // --- CANCELAR E ESTORNAR ---
-        window.cancelarVenda = async function(id) {
-            if (!confirm("ATENÇÃO: Deseja CANCELAR este documento?\nEle será apagado e os materiais retornarão automaticamente para o estoque.")) return;
-            try {
-                const snap = await get(ref(db, 'caixa/' + id)); const vCanc = snap.val();
-                if (vCanc && vCanc.itens) {
-                    let itensGarantidos = Array.isArray(vCanc.itens) ? vCanc.itens : Object.values(vCanc.itens);
-                    for (let item of itensGarantidos) {
-                        if (item.ehEstoque && item.idProd) {
-                            const snapP = await get(ref(db, 'produtos/' + item.idProd)); let pDb = snapP.val();
-                            if (pDb) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: (pDb.quantidade || 0) + item.qtdBaixa }); }
-                        }
-                    }
-                }
-                await remove(ref(db, 'caixa/' + id)); alert("Cancelado com sucesso! Os itens já retornaram ao estoque.");
-            } catch(erro) { alert("Erro ao cancelar: " + erro); }
-        }
+       // --- CANCELAR E ESTORNAR ---
+       window.cancelarVenda = async function(id) {
+           if (!confirm("ATENÇÃO: Deseja CANCELAR este documento?\nEle será apagado e os materiais retornarão automaticamente para o estoque.")) return;
+           try {
+               const snap = await get(ref(db, 'caixa/' + id)); const vCanc = snap.val();
+               if (vCanc && vCanc.itens && vCanc.tipo !== 'DESPESA' && vCanc.tipo !== 'FECHAMENTO') {
+                   let itensGarantidos = Array.isArray(vCanc.itens) ? vCanc.itens : Object.values(vCanc.itens);
+                   for (let item of itensGarantidos) {
+                       if (item.ehEstoque && item.idProd && (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO')) {
+                           const snapP = await get(ref(db, 'produtos/' + item.idProd)); let pDb = snapP.val();
+                           if (pDb) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: (pDb.quantidade || 0) + item.qtdBaixa }); }
+                       }
+                   }
+               }
+               await remove(ref(db, 'caixa/' + id)); alert("Cancelado com sucesso!");
+           } catch(erro) { alert("Erro ao cancelar: " + erro); }
+       }
 
-        // --- ENVIAR WHATSAPP / COPIAR LINK ---
-        window.copiarLinkAssinatura = function(id) {
-            const link = window.location.origin + window.location.pathname + "?assinar=" + id;
+       // --- ENVIAR WHATSAPP / COPIAR LINK ---
+       window.copiarLinkAssinatura = function(id) {
+           const link = window.location.origin + window.location.pathname + "?assinar=" + id;
            navigator.clipboard.writeText(link).then(() => alert("Link copiado! Você já pode colar no WhatsApp.")).catch(() => alert("Erro ao copiar. O Link é: " + link));
-        }
+       }
 
-        window.enviarOSWhatsApp = function(id) {
-            const v = caixaGlobal.find(x => x.id === id); if (!v) return;
-            const c = clientesGlobais.find(x => x.id === v.clienteId);
-            let tel = ''; if (c && c.telefone) { tel = c.telefone.replace(/\D/g, ''); if (tel.length === 11 || tel.length === 10) { tel = '55' + tel; } }
-            let venc = v.vencimento ? v.vencimento.split('-').reverse().join('/') : 'À vista';
+       window.enviarOSWhatsApp = function(id) {
+           const v = caixaGlobal.find(x => x.id === id); if (!v) return;
+           const c = clientesGlobais.find(x => x.id === v.clienteId);
+           let tel = ''; if (c && c.telefone) { tel = c.telefone.replace(/\D/g, ''); if (tel.length === 11 || tel.length === 10) { tel = '55' + tel; } }
+           let venc = v.vencimento ? v.vencimento.split('-').reverse().join('/') : 'À vista';
 
-            let msg = `Olá *${v.clienteNome}*, tudo bem?\n\n`;
-            let titulo = v.tipo === 'ORDEM DE SERVIÇO' ? 'sua ordem de serviço' : 'sua nota de compra';
-            msg += `Aqui está ${titulo} *Nº ${v.os || 'S/N'}* com vencimento para o dia *${venc}*.\n\n`;
-            
-            if (v.tipo === 'ORDEM DE SERVIÇO') {
-                msg += `*Equipe Executora:* ${v.equipe || 'Não informada'}\n`;
-                if(v.kmTotal > 0) msg += `*Deslocamento:* ${v.kmTotal} km (R$ ${parseFloat(v.kmCusto).toFixed(2)})\n`;
-                msg += `\n`;
-            }
+           let msg = `Olá *${v.clienteNome}*, tudo bem?\n\n`;
+           let titulo = v.tipo === 'ORDEM DE SERVIÇO' ? 'sua ordem de serviço' : 'sua nota/orçamento';
+           msg += `Aqui está ${titulo} *Nº ${v.os || 'S/N'}* com vencimento para o dia *${venc}*.\n\n`;
+           
+           if (v.tipo === 'ORDEM DE SERVIÇO') {
+               msg += `*Equipe Executora:* ${v.equipe || 'Não informada'}\n`;
+               if(v.kmTotal > 0) msg += `*Deslocamento:* ${v.kmTotal} km (R$ ${parseFloat(v.kmCusto).toFixed(2)})\n`;
+               msg += `\n`;
+           }
 
-            msg += `*Resumo dos Itens/Serviços:*\n`;
-            
-            let itensGarantidos = v.itens ? (Array.isArray(v.itens) ? v.itens : Object.values(v.itens)) : [];
-            if(itensGarantidos) itensGarantidos.forEach(i => { msg += `- ${i.nome}: R$ ${i.valor.toFixed(2)}\n`; });
-            
-            msg += `\n*Valor Total: R$ ${parseFloat(v.total).toFixed(2)}*\n\n`;
+           msg += `*Resumo dos Itens/Serviços:*\n`;
+           
+           let itensGarantidos = v.itens ? (Array.isArray(v.itens) ? v.itens : Object.values(v.itens)) : [];
+           if(itensGarantidos) itensGarantidos.forEach(i => { msg += `- ${i.nome}: R$ ${i.valor.toFixed(2)}\n`; });
+           
+           msg += `\n*Valor Total: R$ ${parseFloat(v.total).toFixed(2)}*\n\n`;
 
-            if (!v.assinaturaBase64) {
-                const link = window.location.origin + window.location.pathname + "?assinar=" + v.id;
-                msg += `⚠️ Solicitamos por gentileza que confirme a ciência deste documento acessando o link seguro abaixo e realizando sua assinatura digital:\n\n${link}\n\n`;
-            } else { msg += `✅ Documento confirmado com assinatura digital do cliente.\n\n`; }
+           if (!v.assinaturaBase64 && (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO')) {
+               const link = window.location.origin + window.location.pathname + "?assinar=" + v.id;
+               msg += `⚠️ Solicitamos por gentileza que confirme a ciência deste documento acessando o link seguro abaixo e realizando sua assinatura digital:\n\n${link}\n\n`;
+           } else if (v.assinaturaBase64) { 
+               msg += `✅ Documento confirmado com assinatura digital do cliente.\n\n`; 
+           }
 
-            msg += `Agradecemos a preferência! *${empresaGlobal.nome}*`;
-            window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`, '_blank');
-        }
+           msg += `Agradecemos a preferência! *${empresaGlobal.nome}*`;
+           window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`, '_blank');
+       }
 
 
-        // --- 6. SEGURANÇA (BACKUP E RESTAURAÇÃO) ---
-        window.fazerBackupLocal = async function() { try { const snap = await get(ref(db, '/')); const json = JSON.stringify(snap.val(), null, 2); const blob = new Blob([json], { type: "application/json" }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `FH_Backup_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.json`; a.click(); alert("Backup Local finalizado!"); } catch (e) { alert("Erro: " + e); } }
-        window.fazerBackupNuvem = async function() { try { const snap = await get(ref(db, '/')); const d = snap.val(); if (d && d.backups) delete d.backups; await set(ref(db, 'backups/backup_' + Date.now()), { data: new Date().toLocaleString('pt-BR'), conteudo: d }); alert("Cópia salva na nuvem!"); } catch(e) { alert("Erro: " + e); } }
-        window.restaurarBackupLocal = function() { const f = document.getElementById('arquivoRestore').files; if (!f || f.length === 0) return alert("Selecione um arquivo."); if (!confirm("RISCO: Substituir tudo?")) return; const r = new FileReader(); r.onload = async function(e) { try { await set(ref(db, '/'), JSON.parse(e.target.result)); alert("Restauração Concluída!"); window.location.reload(); } catch (err) { alert("Falha ao restaurar: " + err); } }; r.readAsText(f); }
+       // --- 6. SEGURANÇA (BACKUP E RESTAURAÇÃO) ---
+       window.fazerBackupLocal = async function() { try { const snap = await get(ref(db, '/')); const json = JSON.stringify(snap.val(), null, 2); const blob = new Blob([json], { type: "application/json" }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `FH_Backup_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.json`; a.click(); alert("Backup Local finalizado!"); } catch (e) { alert("Erro: " + e); } }
+       window.fazerBackupNuvem = async function() { try { const snap = await get(ref(db, '/')); const d = snap.val(); if (d && d.backups) delete d.backups; await set(ref(db, 'backups/backup_' + Date.now()), { data: new Date().toLocaleString('pt-BR'), conteudo: d }); alert("Cópia salva na nuvem!"); } catch(e) { alert("Erro: " + e); } }
+       window.restaurarBackupLocal = function() { const f = document.getElementById('arquivoRestore').files; if (!f || f.length === 0) return alert("Selecione um arquivo."); if (!confirm("RISCO: Substituir tudo?")) return; const r = new FileReader(); r.onload = async function(e) { try { await set(ref(db, '/'), JSON.parse(e.target.result)); alert("Restauração Concluída!"); window.location.reload(); } catch (err) { alert("Falha ao restaurar: " + err); } }; r.readAsText(f); }
+       
+        // ================================================================
+        // NOVO MOTOR DE LOGIN (SENHAS INDIVIDUAIS E ADMIN)
+        // ================================================================
         
+        window.mostrarFormAdmin = function() {
+            document.getElementById('botoesPerfil').style.display = 'none';
+            document.getElementById('formLoginAdmin').style.display = 'block';
+            document.getElementById('inputSenhaAdmin').value = '';
+            document.getElementById('inputSenhaAdmin').focus();
+        };
+
+        window.mostrarFormBalcao = function() {
+            document.getElementById('botoesPerfil').style.display = 'none';
+            document.getElementById('formLoginBalcao').style.display = 'block';
+            document.getElementById('inputUserBalcao').value = '';
+            document.getElementById('inputSenhaBalcao').value = '';
+            document.getElementById('inputUserBalcao').focus();
+        };
+
+        window.voltarParaPerfis = function() {
+            document.getElementById('formLoginAdmin').style.display = 'none';
+            document.getElementById('formLoginBalcao').style.display = 'none';
+            document.getElementById('botoesPerfil').style.display = 'block';
+        };
+
+        window.logarAdmin = function() {
+            let senhaDigitada = document.getElementById('inputSenhaAdmin').value;
+            let adminUser = window.usuariosGlobais.find(u => u.role === 'admin');
+            let senhaCorreta = adminUser ? adminUser.senha : 'admin';
+            
+            if (senhaDigitada === senhaCorreta) {
+                window.entrarSistema(adminUser || { nome: 'Administrador', role: 'admin' });
+            } else {
+                alert("Senha Mestra Incorreta!");
+            }
+        };
+
+        window.logarBalcao = function() {
+            let u = document.getElementById('inputUserBalcao').value.trim();
+            let p = document.getElementById('inputSenhaBalcao').value.trim();
+            
+            if(!u || !p) return alert("Preencha seu Login e Senha!");
+            
+            let validUser = window.usuariosGlobais.find(x => x.login === u && x.senha === p && x.role === 'balcao');
+            if(validUser) {
+                window.entrarSistema(validUser);
+            } else {
+                alert("Login ou Senha Incorretos!");
+            }
+        };
+
+        window.entrarSistema = function(user) {
+            window.usuarioLogado = user;
+            document.getElementById('telaLogin').style.display = 'none';
+            document.getElementById('appSidebar').style.display = 'flex';
+            document.getElementById('appMainContent').style.display = 'block';
+            document.getElementById('blocoUserLogado').style.display = 'block';
+            document.getElementById('nomeUserLogado').innerText = "👨‍💻 " + user.nome;
+            
+            document.getElementById('btnTabCaixa').style.display = 'block';
+
+            if(user.role === 'balcao') {
+                document.getElementById('btnTabConfig').style.display = 'none';
+                window.abrirAba('tabVendas', document.getElementById('btnTabVendas'));
+            } else {
+                document.getElementById('btnTabConfig').style.display = 'block';
+                window.abrirAba('tabCaixa', document.getElementById('btnTabCaixa'));
+            }
+        };
+
+        window.fazerLogout = function() {
+            window.usuarioLogado = null;
+            window.voltarParaPerfis();
+            document.getElementById('telaLogin').style.display = 'flex';
+            document.getElementById('appSidebar').style.display = 'none';
+            document.getElementById('appMainContent').style.display = 'none';
+        };
+
+        // --- GESTÃO DE FUNCIONÁRIOS (SALVAR VENDEDORES DO BALCÃO) ---
+        window.salvarFuncionario = function() {
+            if(window.usuarioLogado.role !== 'admin') return alert("Sem permissão.");
+            const d = { 
+                nome: document.getElementById('cadFuncNome').value, 
+                login: document.getElementById('cadFuncLogin').value, 
+                senha: document.getElementById('cadFuncSenha').value, 
+                role: "balcao" 
+            };
+            set(push(ref(db, 'usuarios')), d).then(() => { 
+                alert('Vendedor Cadastrado com Sucesso!'); 
+                document.getElementById('formFuncionario').reset(); 
+            });
+        };
+
+        window.renderTabelaFuncionarios = function() {
+            const tab = document.getElementById('tabelaFuncionarios');
+            if(tab) {
+                tab.innerHTML = '';
+                // Filtra apenas quem é do balcao para mostrar na tabela
+                let vendedores = window.usuariosGlobais.filter(u => u.role === 'balcao');
+                if (vendedores.length === 0) {
+                    tab.innerHTML = '<tr><td colspan="3" style="text-align:center;">Nenhum funcionário cadastrado.</td></tr>';
+                } else {
+                    vendedores.forEach(u => {
+                        tab.innerHTML += `<tr><td>${u.nome}</td><td>${u.login}</td><td><button class="btn-danger" style="padding:4px 8px; font-size:10px;" onclick="excluirFuncionario('${u.id}')">Excluir</button></td></tr>`;
+                    });
+                }
+            }
+        };
+
+        window.excluirFuncionario = function(id) {
+            if(window.usuarioLogado.role !== 'admin') return;
+            if(confirm("Deseja apagar o acesso deste vendedor?")) {
+                remove(ref(db, 'usuarios/' + id));
+            }
+        };
+
+        // --- SALVAR A NOVA SENHA MESTRA DO ADMINISTRADOR ---
+        window.salvarSenhaAdmin = function() {
+            if(window.usuarioLogado.role !== 'admin') return alert("Sem permissão.");
+            const d = { 
+                nome: "Administrador", 
+                login: "admin", 
+                senha: document.getElementById('cadAdminSenha').value, 
+                role: "admin" 
+            };
+            
+            let adminAtual = window.usuariosGlobais.find(u => u.role === 'admin');
+            if(adminAtual) {
+                update(ref(db, 'usuarios/' + adminAtual.id), d).then(() => { alert('Sua Senha de Administrador foi atualizada!'); });
+            } else {
+                set(push(ref(db, 'usuarios')), d).then(() => { alert('Senha Mestra Configurada!'); });
+            }
+        };
+
+        // --- PAINEL DO CAIXA ---
+        window.atualizarPainelCaixa = function() {
+            if(document.getElementById('dashEntradas')) {
+                document.getElementById('dashEntradas').innerText = `R$ ${parseFloat(window.caixaFinanceiro.entradas || 0).toFixed(2)}`;
+                document.getElementById('dashSaidas').innerText = `R$ ${parseFloat(window.caixaFinanceiro.saidas || 0).toFixed(2)}`;
+                let saldo = (window.caixaFinanceiro.entradas || 0) - (window.caixaFinanceiro.saidas || 0);
+                document.getElementById('dashSaldo').innerText = `R$ ${saldo.toFixed(2)}`;
+            }
+        };
+
+        window.registrarMovimentoCaixa = function(tipo, valor) {
+            let updates = {};
+            if(tipo === 'entrada') updates['entradas'] = (window.caixaFinanceiro.entradas || 0) + valor;
+            if(tipo === 'saida') updates['saidas'] = (window.caixaFinanceiro.saidas || 0) + valor;
+            update(ref(db, 'caixaStatus'), updates);
+        };
+
+        window.salvarDespesa = function() {
+            let m = document.getElementById('motivoDespesa').value; 
+            let v = parseFloat(document.getElementById('valorDespesa').value);
+            if(!m || isNaN(v) || v <= 0) return alert("Preencha o motivo e o valor corretamente.");
+            
+            window.registrarMovimentoCaixa('saida', v);
+            let doc = { tipo: 'DESPESA', dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(), clienteNome: m, total: v };
+            set(push(ref(db, 'caixa')), doc).then(() => {
+                document.getElementById('modalDespesa').style.display='none'; 
+                document.getElementById('motivoDespesa').value=''; 
+                document.getElementById('valorDespesa').value=''; 
+                alert("Despesa registrada e abatida do caixa!");
+            });
+        };
+
+        window.fecharCaixa = function() {
+            let saldo = (window.caixaFinanceiro.entradas || 0) - (window.caixaFinanceiro.saidas || 0);
+            if(!confirm(`FECHAMENTO DE CAIXA\n\nEntradas: R$ ${window.caixaFinanceiro.entradas}\nSaídas: R$ ${window.caixaFinanceiro.saidas}\nSaldo Restante: R$ ${saldo.toFixed(2)}\n\nDeseja realizar o Fechamento? O Painel será ZERADO para o dia seguinte.`)) return;
+            
+            let doc = { tipo: 'FECHAMENTO', dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(), clienteNome: 'Fechamento de Caixa', total: saldo };
+            set(push(ref(db, 'caixa')), doc).then(() => {
+                set(ref(db, 'caixaStatus'), { entradas: 0, saidas: 0 }); 
+                alert("Caixa fechado com sucesso! Saldo zerado.");
+            });
+        };
+
    } // Fim de bloqueio assinatura remota
    
 </script>
