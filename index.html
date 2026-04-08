@@ -321,9 +321,10 @@
            font-size: 13px;
        }
        
+       /* Ajuste nas cores conforme solicitado - Números Brancos em Negrito */
        .cart-total { 
            font-size: 20px; 
-           color: #f1c40f; 
+           color: #ffffff; 
            text-align: right; 
            font-weight: bold; 
            padding: 10px 0; 
@@ -400,9 +401,9 @@
        .user-info-sidebar { margin-top: auto; border-top: 1px solid #7f8c8d; padding-top: 15px; text-align: center; font-size: 12px; color: #f1c40f; }
        
        /* --- Dashboard Caixa --- */
-       .dash-card { padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); color: #fff;}
-       .dash-card h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; opacity: 0.9;}
-       .dash-card h2 { margin: 0; font-size: 24px; border: none; padding: 0;}
+       .dash-card { padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); color: #fff;}
+       .dash-card h3 { margin: 0 0 10px 0; font-size: 13px; text-transform: uppercase; opacity: 0.9;}
+       .dash-card h2 { margin: 0; font-size: 22px; border: none; padding: 0;}
 
        /* =========================================
           RESPONSIVIDADE (MOBILE)
@@ -558,12 +559,12 @@
    <button class="menu-btn active" id="btnTabClientes" onclick="abrirAba('tabClientes', this)">👥 Clientes</button>
    <button class="menu-btn" id="btnTabEstoque" onclick="abrirAba('tabEstoque', this)">📦 Estoque</button>
    <button class="menu-btn" id="btnTabVendas" onclick="abrirAba('tabVendas', this)">🛒 Venda / Orçamentos</button>
-   <button class="menu-btn" id="btnTabOS" onclick="abrirAba('tabOS', this)" style="color: #f1c40f;">📝 OS</button>
+   <button class="menu-btn" id="btnTabOS" onclick="abrirAba('tabOS', this)" style="color: #ffffff;">📝 OS</button>
    <button class="menu-btn" id="btnTabCaixa" onclick="abrirAba('tabCaixa', this)">💰 Caixa / Relatórios</button>
    <button class="menu-btn" id="btnTabConfig" onclick="abrirAba('tabConfig', this)">⚙️ Config / Empresa</button>
    
    <div class="user-info-sidebar" id="blocoUserLogado" style="display: none;">
-       <span id="nomeUserLogado">Admin</span><br>
+       <span id="nomeUserLogado" style="color: #ffffff; font-weight:bold;">Admin</span><br>
        <button class="btn-danger" style="margin-top: 8px; width: 100%; padding: 5px;" onclick="fazerLogout()">Sair do Sistema</button>
    </div>
 </div>
@@ -632,7 +633,7 @@
    <div id="modalVisualizar" class="modal">
        <div class="modal-content">
            <span class="close-btn" onclick="fecharModal()">&times;</span>
-           <h2 style="margin-top: 0; color: #f1c40f;">Ficha do Cliente</h2>
+           <h2 style="margin-top: 0; color: #ffffff;">Ficha do Cliente</h2>
            <div id="detalhesCliente"></div>
        </div>
    </div>
@@ -653,7 +654,7 @@
                         <div class="col"><label>Preço de Custo (R$)</label><input type="number" step="0.01" id="prodCusto" required></div>
                         <div class="col"><label>Margem de Lucro (%)</label><input type="number" step="0.1" id="prodMargem" required></div>
                         <div class="col"><label>Preço de Venda (R$)</label><input type="number" step="0.01" id="prodVenda" readonly style="font-weight: bold; color: #2c3e50;"></div>
-                        <div class="col"><label style="color: #f1c40f;">Qtd. Estoque</label><input type="number" step="1" id="prodQtd" value="0" required></div>
+                        <div class="col"><label style="color: #ffffff;">Qtd. Estoque</label><input type="number" step="1" id="prodQtd" value="0" required></div>
                     </div>
                     <div class="form-group"><label>Foto do Produto (Opcional)</label><input type="file" id="prodFoto" accept="image/*" style="padding: 5px; border: 1px solid #7f8c8d; border-radius: 4px; background: #ecf0f1;"></div>
                 </div>
@@ -693,14 +694,14 @@
             
             <div class="row form-group" style="background-color: #1a252f; padding: 12px; border-radius: 6px; border: 1px solid #7f8c8d;">
                 <div class="col">
-                    <label style="color: #f1c40f;">Tipo de Documento</label>
-                    <select id="vendaTipoDoc" style="font-weight: bold; background-color: #2c3e50; color: #f1c40f; border: 1px solid #f1c40f;">
+                    <label style="color: #ffffff;">Tipo de Documento</label>
+                    <select id="vendaTipoDoc" style="font-weight: bold; background-color: #2c3e50; color: #ffffff; border: 1px solid #ffffff;">
                         <option value="VENDA">🛒 Venda Direta (Baixa Estoque)</option>
                         <option value="ORCAMENTO">📄 Apenas Orçamento (Simulação)</option>
                     </select>
                 </div>
-                <div class="col"><label style="color: #f1c40f;">Nº da Venda</label><input type="number" id="vendaOS" style="font-weight: bold; color: #e74c3c;"></div>
-                <div class="col" style="flex: 1.5;"><label style="color: #f1c40f;">Data Vencimento</label><input type="date" id="vendaVencimento" style="font-weight: bold;"></div>
+                <div class="col"><label style="color: #ffffff;">Nº da Venda</label><input type="number" id="vendaOS" style="font-weight: bold; color: #e74c3c;"></div>
+                <div class="col" style="flex: 1.5;"><label style="color: #ffffff;">Data Vencimento</label><input type="date" id="vendaVencimento" style="font-weight: bold;"></div>
             </div>
 
             <div class="row form-group">
@@ -711,7 +712,7 @@
                 </div>
             </div>
             
-            <div class="bloco-lancamento" style="border-color: #f1c40f;">
+            <div class="bloco-lancamento" style="border-color: #ffffff;">
                 <div class="row form-group">
                     <div class="col" style="flex: 2;">
                         <label>2. Buscar do Estoque (Nome ou Bipe)</label>
@@ -850,7 +851,7 @@
             </div>
 
             <div style="background-color: #1a252f; padding: 12px; border-radius: 6px; margin-top: 15px;">
-                <h4 style="margin-top: 0; color: #f1c40f; font-size: 14px;">Lista do Carrinho da OS</h4>
+                <h4 style="margin-top: 0; color: #ffffff; font-size: 14px;">Lista do Carrinho da OS</h4>
                 <div id="listaCarrinhoOS" style="margin-bottom: 10px; font-size: 13px;">Nenhum material/serviço lançado.</div>
                 <div class="cart-total" id="osTotalGeral" style="border-top: 1px solid #7f8c8d; padding-top: 10px; color: #2ecc71;">TOTAL OS: R$ 0,00</div>
             </div>
@@ -882,25 +883,30 @@
        <div class="container">
            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
                <div>
-                   <h2 style="border: none; padding: 0; margin: 0;">Caixa / Histórico</h2>
+                   <h2 style="border: none; padding: 0; margin: 0; color: #ffffff;">Caixa / Histórico</h2>
                </div>
            </div>
 
            <div class="row" style="margin-bottom: 15px;">
+               <div class="col dash-card" style="background-color: #34495e; border: 1px solid #7f8c8d;">
+                   <h3 style="color: #ecf0f1;">Caixa Inicial do Dia</h3><h2 id="dashInicial" style="color: #ffffff;">R$ 0,00</h2>
+               </div>
                <div class="col dash-card" style="background-color: #27ae60;">
-                   <h3>Entradas (Vendas + OS)</h3><h2 id="dashEntradas">R$ 0,00</h2>
+                   <h3 style="color: #ecf0f1;">Entradas (Vendas+OS)</h3><h2 id="dashEntradas" style="color: #ffffff;">R$ 0,00</h2>
                </div>
                <div class="col dash-card" style="background-color: #e74c3c;">
-                   <h3>Saídas (Despesas)</h3><h2 id="dashSaidas">R$ 0,00</h2>
+                   <h3 style="color: #ecf0f1;">Saídas (Despesas)</h3><h2 id="dashSaidas" style="color: #ffffff;">R$ 0,00</h2>
                </div>
                <div class="col dash-card" style="background-color: #2980b9;">
-                   <h3>Saldo em Caixa</h3><h2 id="dashSaldo">R$ 0,00</h2>
+                   <h3 style="color: #ecf0f1;">Balanço Final do Dia</h3><h2 id="dashSaldo" style="color: #ffffff;">R$ 0,00</h2>
                </div>
            </div>
            
            <div class="row" style="margin-bottom: 20px;">
-               <div class="col"><button class="btn-danger" style="padding: 12px; font-size: 13px;" onclick="document.getElementById('modalDespesa').style.display='flex'">➖ Lançar Despesa do Caixa</button></div>
-               <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #f39c12; color: #fff; font-size: 13px;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia (Zerar Valores)</button></div>
+               <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #34495e; color: #fff; font-size: 12px; border: 1px solid #7f8c8d;" onclick="definirCaixaInicial()">💵 Informar Caixa Inicial</button></div>
+               <div class="col"><button class="btn-danger" style="padding: 12px; font-size: 12px;" onclick="document.getElementById('modalDespesa').style.display='flex'">➖ Lançar Despesa</button></div>
+               <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #8e44ad; color: #fff; font-size: 12px;" onclick="gerarRelatorioMensal()">📄 Resumo Mensal PDF</button></div>
+               <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #f39c12; color: #fff; font-size: 12px;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia</button></div>
            </div>
 
            <div class="table-responsive">
@@ -955,7 +961,7 @@
                </div>
            </form>
 
-           <h2 style="margin-top: 40px;">3. Dados da Minha Empresa</h2>
+           <h2 style="margin-top: 40px; color:#ffffff;">3. Dados da Minha Empresa</h2>
            <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Esses dados sairão no cabeçalho dos seus PDFs e Cupons Fiscais/Recibos.</p>
            
            <form id="formEmpresa">
@@ -979,7 +985,7 @@
        </div>
 
        <div class="container">
-           <h2>Gestão e Backups</h2>
+           <h2 style="color:#ffffff;">Gestão e Backups</h2>
            <div class="row" style="margin-top: 20px;">
                <div class="col"><button class="btn-primary" style="background-color: #2980b9;" onclick="fazerBackupLocal()">📥 1. Baixar Backup (PC)</button></div>
                <div class="col"><button class="btn-primary" style="background-color: #8e44ad;" onclick="fazerBackupNuvem()">☁️ 2. Salvar na Nuvem</button></div>
@@ -1012,7 +1018,7 @@
    // ================= VARIÁVEIS GLOBAIS =================
    window.usuarioLogado = null;
    window.usuariosGlobais = [];
-   window.caixaFinanceiro = { entradas: 0, saidas: 0 };
+   window.caixaFinanceiro = { entradas: 0, saidas: 0, caixaInicial: 0 };
    
    let clientesGlobais = [];
    let produtosGlobais = [];
@@ -1214,9 +1220,9 @@
             if(adminUser) document.getElementById('cadAdminSenha').value = adminUser.senha;
         });
 
-        // CARREGA PAINEL DO CAIXA
+        // CARREGA PAINEL DO CAIXA (ENTRADAS/SAIDAS/CAIXA INICIAL)
         onValue(ref(db, 'caixaStatus'), s => {
-            window.caixaFinanceiro = s.val() || { entradas: 0, saidas: 0 };
+            window.caixaFinanceiro = s.val() || { entradas: 0, saidas: 0, caixaInicial: 0 };
             if(window.atualizarPainelCaixa) window.atualizarPainelCaixa();
         });
 
@@ -1357,7 +1363,7 @@
                let alert = ((p.quantidade || 0) <= 3) ? 'linha-alerta' : '';
                const tr = document.createElement('tr'); tr.className = alert;
                
-               tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#f1c40f;">${p.codigo || '-'}</td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
+               tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#ffffff;">${p.codigo || '-'}</td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#ffffff;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
                <td class="acoes-flex">
                    <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️ Ed</button>
                    <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
@@ -1566,7 +1572,7 @@
                 timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
                 clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total, 
                 assinaturaBase64: originalDoc ? originalDoc.assinaturaBase64 : null,
-                vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' // GRAVA O NOME DO VENDEDOR AQUI
+                vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' 
             };
 
            try {
@@ -1797,7 +1803,7 @@
                kmInicial: kmIni, kmFinal: kmFin, kmTotal: kTotal, kmValor: document.getElementById('osValorKm').value || 0,
                kmCusto: tKm, itens: carrinhoOS, total: (tItens + tKm), fotoAnexo: fotoAtualOS_Base64, 
                assinaturaBase64: originalDoc ? originalDoc.assinaturaBase64 : null,
-               vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' // GRAVA O NOME DO VENDEDOR AQUI
+               vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' 
            };
 
             try {
@@ -1855,7 +1861,7 @@
 
 
        // ================================================================
-       // MÓDULO 5: CAIXA E NOVOS BOTÕES (VER PDF E CUPOM)
+       // MÓDULO 5: CAIXA E NOVOS BOTÕES (VER PDF E CUPOM E RELATÓRIO)
        // ================================================================
        
        onValue(ref(db, 'caixa'), function(snapshot) {
@@ -1873,7 +1879,7 @@
                const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
                let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
 
-               let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#f1c40f;">✏️ Ed</button>`;
+               let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#ffffff;">✏️ Ed</button>`;
                acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
                if (!v.assinaturaBase64) {
                    acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
@@ -1890,7 +1896,7 @@
                }
 
                tr.innerHTML = `
-                   <td style="font-weight: bold; color: #f1c40f;">${v.os || '-'}</td>
+                   <td style="font-weight: bold; color: #ffffff;">${v.os || '-'}</td>
                    <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
                    <td style="font-weight: bold;">${v.dataStr.split(' ')}</td>
                    <td style="font-weight: bold;">${v.clienteNome}</td>
@@ -1971,7 +1977,7 @@
            }
        }
 
-       // --- CONSTRUÇÃO DO PDF ---
+       // --- CONSTRUÇÃO DO PDF (DOCUMENTOS) ---
        window.gerarPDF_Historico = function(id) {
            const doc = caixaGlobal.find(x => x.id === id);
            if(doc) window.construirPDF(doc);
@@ -2127,7 +2133,7 @@
                        .text-center { text-align: center; }
                        .text-muted { color: #6c757d; font-style: italic; }
                        
-                       .total-destaque { background-color: #2c3e50; color: #f1c40f; font-size: 16px; font-weight: 900; text-align: right; padding: 10px 15px; margin-top: 15px; border-radius: 6px; }
+                       .total-destaque { background-color: #2c3e50; color: #ffffff; font-size: 16px; font-weight: 900; text-align: right; padding: 10px 15px; margin-top: 15px; border-radius: 6px; }
                        .foto-box { text-align: center; margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 6px; border: 1px solid #e9ecef; }
                        .foto-box img { max-height: 180px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
                        
@@ -2505,14 +2511,31 @@
             }
         };
 
-        // --- PAINEL DO CAIXA ---
+        // --- PAINEL DO CAIXA E FUNÇÕES DE RELATÓRIO ---
         window.atualizarPainelCaixa = function() {
             if(document.getElementById('dashEntradas')) {
-                document.getElementById('dashEntradas').innerText = `R$ ${parseFloat(window.caixaFinanceiro.entradas || 0).toFixed(2)}`;
-                document.getElementById('dashSaidas').innerText = `R$ ${parseFloat(window.caixaFinanceiro.saidas || 0).toFixed(2)}`;
-                let saldo = (window.caixaFinanceiro.entradas || 0) - (window.caixaFinanceiro.saidas || 0);
+                let cIni = window.caixaFinanceiro.caixaInicial || 0;
+                let ent = window.caixaFinanceiro.entradas || 0;
+                let sai = window.caixaFinanceiro.saidas || 0;
+                
+                document.getElementById('dashInicial').innerText = `R$ ${cIni.toFixed(2)}`;
+                document.getElementById('dashEntradas').innerText = `R$ ${ent.toFixed(2)}`;
+                document.getElementById('dashSaidas').innerText = `R$ ${sai.toFixed(2)}`;
+                
+                let saldo = cIni + ent - sai;
                 document.getElementById('dashSaldo').innerText = `R$ ${saldo.toFixed(2)}`;
             }
+        };
+
+        window.definirCaixaInicial = function() {
+            let valorStr = prompt("Informe o valor com que o Caixa está começando hoje (ex: 150.50):");
+            if(!valorStr) return;
+            let valor = parseFloat(valorStr.replace(',', '.'));
+            if(isNaN(valor)) return alert("Valor inválido. Use pontos ou vírgulas para centavos.");
+            
+            update(ref(db, 'caixaStatus'), { caixaInicial: valor }).then(() => {
+                alert("Caixa inicial definido com sucesso!");
+            });
         };
 
         window.registrarMovimentoCaixa = function(tipo, valor) {
@@ -2538,15 +2561,118 @@
         };
 
         window.fecharCaixa = function() {
-            let saldo = (window.caixaFinanceiro.entradas || 0) - (window.caixaFinanceiro.saidas || 0);
-            if(!confirm(`FECHAMENTO DE CAIXA\n\nEntradas: R$ ${window.caixaFinanceiro.entradas}\nSaídas: R$ ${window.caixaFinanceiro.saidas}\nSaldo Restante: R$ ${saldo.toFixed(2)}\n\nDeseja realizar o Fechamento? O Painel será ZERADO para o dia seguinte.`)) return;
+            let cIni = window.caixaFinanceiro.caixaInicial || 0;
+            let ent = window.caixaFinanceiro.entradas || 0;
+            let sai = window.caixaFinanceiro.saidas || 0;
+            let saldo = cIni + ent - sai;
+            
+            if(!confirm(`FECHAMENTO DE CAIXA\n\nCaixa Inicial: R$ ${cIni.toFixed(2)}\nTotal de Entradas: R$ ${ent.toFixed(2)}\nTotal de Saídas: R$ ${sai.toFixed(2)}\n\nSaldo Restante na Gaveta: R$ ${saldo.toFixed(2)}\n\nDeseja realizar o Fechamento? O Painel será ZERADO para o dia seguinte.`)) return;
             
             let doc = { tipo: 'FECHAMENTO', dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(), clienteNome: 'Fechamento de Caixa', total: saldo };
             set(push(ref(db, 'caixa')), doc).then(() => {
-                set(ref(db, 'caixaStatus'), { entradas: 0, saidas: 0 }); 
+                set(ref(db, 'caixaStatus'), { entradas: 0, saidas: 0, caixaInicial: 0 }); 
                 alert("Caixa fechado com sucesso! Saldo zerado.");
             });
         };
+
+        // --- RELATÓRIO MENSAL EM PDF ---
+        window.gerarRelatorioMensal = function() {
+            let mesPadrao = new Date().toLocaleDateString('pt-BR').substring(3); // Pega MM/AAAA
+            let mesAno = prompt("Digite o mês e ano para gerar o relatório (Ex: 04/2026):", mesPadrao);
+            if(!mesAno) return;
+            
+            let relatorio = caixaGlobal.filter(doc => {
+                if(!doc.dataStr) return false;
+                return doc.dataStr.includes(mesAno);
+            });
+            
+            if(relatorio.length === 0) return alert("Nenhum registro de Caixa encontrado para o período: " + mesAno);
+            
+            let totEntradas = 0;
+            let totSaidas = 0;
+            let linhasHtml = '';
+            
+            // Inverte para ficar cronológico (do dia 1 ao dia 31)
+            [...relatorio].reverse().forEach(v => {
+                let isEntrada = (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO');
+                let isSaida = (v.tipo === 'DESPESA');
+                
+                if(isEntrada) totEntradas += parseFloat(v.total) || 0;
+                if(isSaida) totSaidas += parseFloat(v.total) || 0;
+                
+                if(isEntrada || isSaida) {
+                    let cor = isEntrada ? '#27ae60' : '#e74c3c';
+                    let sinal = isEntrada ? '+' : '-';
+                    linhasHtml += `
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${v.dataStr.split(' ')}</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${v.os || '-'}</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${v.tipo}</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${v.clienteNome}</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #ddd; color: ${cor}; font-weight: bold; text-align: right;">${sinal} R$ ${parseFloat(v.total).toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            let saldoMes = totEntradas - totSaidas;
+            let corSaldo = saldoMes >= 0 ? '#2980b9' : '#e74c3c';
+            
+            let htmlPDF = `
+                <html>
+                <head>
+                    <title>Relatório Mensal - ${mesAno}</title>
+                    <style>
+                        @page { size: A4; margin: 15mm; }
+                        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #333; }
+                        h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
+                        h3 { text-align: center; color: #7f8c8d; margin-top: 0; font-size: 14px; }
+                        .resumo { display: flex; justify-content: space-between; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #ddd; }
+                        .resumo div { text-align: center; font-size: 14px; text-transform: uppercase; }
+                        .resumo div span { display: block; font-size: 22px; font-weight: bold; margin-top: 5px; }
+                        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                        th { background: #2c3e50; color: #fff; padding: 10px; text-align: left; text-transform: uppercase; }
+                        @media print { .btn-print { display: none; } }
+                        .btn-print { display: block; width: 100%; max-width: 300px; margin: 30px auto; padding: 15px; background: #27ae60; color: #fff; text-align: center; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: none; cursor: pointer; }
+                    </style>
+                </head>
+                <body>
+                    <h2>BALANÇO FINANCEIRO - ${mesAno}</h2>
+                    <h3>${empresaGlobal.nome || 'Minha Empresa'}</h3>
+                    
+                    <div class="resumo">
+                        <div style="color: #27ae60;">Total de Entradas<span>R$ ${totEntradas.toFixed(2)}</span></div>
+                        <div style="color: #e74c3c;">Total de Saídas<span>R$ ${totSaidas.toFixed(2)}</span></div>
+                        <div style="color: ${corSaldo};">Balanço do Mês<span>R$ ${saldoMes.toFixed(2)}</span></div>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Nº Doc</th>
+                                <th>Tipo</th>
+                                <th>Descrição / Cliente</th>
+                                <th style="text-align: right;">Valor (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${linhasHtml}
+                        </tbody>
+                    </table>
+                    
+                    <div style="text-align: center; margin-top: 40px; font-size: 11px; color: #7f8c8d;">
+                        Documento gerado automaticamente pelo sistema FH Control.
+                    </div>
+                    
+                    <button class="btn-print" onclick="window.print()">🖨️ Imprimir PDF</button>
+                </body>
+                </html>
+            `;
+            let j = window.open('', '', 'width=900,height=700');
+            j.document.write(htmlPDF);
+            j.document.close();
+        }
 
    } // Fim de bloqueio assinatura remota
    
