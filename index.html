@@ -4,6 +4,9 @@
    <meta charset="UTF-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>FH Control - ERP & PDV</title>
+   
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
    <style>
        /* =========================================
           ESTILOS GERAIS E PALETA DE CORES
@@ -647,7 +650,8 @@
                 <div class="bloco-lancamento">
                     <div class="row form-group">
                         <div class="col" style="flex: 2;"><label>Nome do Produto/Serviço</label><input type="text" id="prodNome" required></div>
-                        <div class="col" style="flex: 1;"><label>Código de Barras</label><input type="text" id="prodCodigo" placeholder="Bipar código..."></div>
+                        <div class="col" style="flex: 1;"><label>Cód. Barras</label><input type="text" id="prodCodigo" placeholder="Bipar código..."></div>
+                        <div class="col" style="flex: 0.8;"><label>NCM</label><input type="text" id="prodNcm" placeholder="NCM..."></div>
                         <div class="col" style="flex: 1.5;"><label>Categoria</label><input type="text" id="prodCategoria" placeholder="Ex: Cabos, Eletrônica..." required></div>
                     </div>
                     <div class="row form-group">
@@ -667,6 +671,18 @@
 
         <div class="container">
             <h2>Produtos no Estoque</h2>
+            
+            <div style="background-color: #1a252f; padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px dashed #3498db; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="margin: 0; color: #3498db; font-size: 14px;">📥 Importar do Excel</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #bdc3c7;">A planilha deve ter as colunas: Nome, Codigo, Categoria, Custo, Margem, Venda, Quantidade, NCM.</p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="file" id="importarXls" accept=".xls, .xlsx, .csv" style="width: auto; background: #fff; padding: 5px; border-radius: 4px;">
+                    <button type="button" class="btn-primary" style="background-color: #3498db; margin: 0; width: auto; padding: 8px 15px;" onclick="executarImportacaoExcel()">🚀 IMPORTAR ARQUIVO</button>
+                </div>
+            </div>
+            
             <div class="toolbar">
                 <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar Nome, Código ou Categoria..." onkeyup="filtrarProdutos()">
                 <div class="pagination">
@@ -678,7 +694,7 @@
             <p style="font-size: 11px; color: #e74c3c; margin-top: 0;">Atenção: Qtd ≤ 3 piscará vermelho.</p>
             <div class="table-responsive">
                 <table>
-                   <thead><tr><th>Foto</th><th>Código</th><th>Nome</th><th>Categoria</th><th>Qtd</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
+                   <thead><tr><th>Foto</th><th>Cód / NCM</th><th>Nome</th><th>Categoria</th><th>Qtd</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
                     <tbody id="tabelaEstoque"></tbody>
                 </table>
             </div>
@@ -1363,7 +1379,10 @@
                let alert = ((p.quantidade || 0) <= 3) ? 'linha-alerta' : '';
                const tr = document.createElement('tr'); tr.className = alert;
                
-               tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#ffffff;">${p.codigo || '-'}</td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#ffffff;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
+               // COLUNA CÓDIGO E NCM
+               let ncmTxt = p.ncm ? `NCM: ${p.ncm}` : 'NCM: -';
+               
+               tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#ffffff;">${p.codigo || '-'}<br><span style="font-size:9px;color:#bdc3c7;">${ncmTxt}</span></td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#ffffff;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
                <td class="acoes-flex">
                    <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️ Ed</button>
                    <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
@@ -1373,18 +1392,30 @@
        }
 
        document.getElementById('formProduto').addEventListener('submit', e => {
-           e.preventDefault(); const d = { nome: document.getElementById('prodNome').value, codigo: document.getElementById('prodCodigo').value, categoria: document.getElementById('prodCategoria').value, custo: document.getElementById('prodCusto').value, margem: document.getElementById('prodMargem').value, venda: document.getElementById('prodVenda').value, quantidade: parseInt(document.getElementById('prodQtd').value) || 0, foto: fotoBase64Atual };
+           e.preventDefault(); 
+           const d = { 
+               nome: document.getElementById('prodNome').value, 
+               codigo: document.getElementById('prodCodigo').value, 
+               ncm: document.getElementById('prodNcm').value, 
+               categoria: document.getElementById('prodCategoria').value, 
+               custo: document.getElementById('prodCusto').value, 
+               margem: document.getElementById('prodMargem').value, 
+               venda: document.getElementById('prodVenda').value, 
+               quantidade: parseInt(document.getElementById('prodQtd').value) || 0, 
+               foto: fotoBase64Atual 
+           };
            if (editandoProdId) { update(ref(db, 'produtos/' + editandoProdId), d).then(() => window.cancelarEdicaoProd()); } else { set(push(ref(db, 'produtos')), d).then(() => { document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; }); }
        });
 
        window.editarProd = function(id) { 
            const p = produtosGlobais.find(x => x.id === id); 
            if(!p) return; 
-           ['nome','codigo','categoria','custo','margem','venda','qtd'].forEach(k => { 
+           ['nome','codigo','ncm','categoria','custo','margem','venda','qtd'].forEach(k => { 
                let campo = document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1));
                if(campo) {
                    if (k === 'qtd') campo.value = p.quantidade || 0;
                    else if (k === 'codigo') campo.value = p.codigo || '';
+                   else if (k === 'ncm') campo.value = p.ncm || '';
                    else campo.value = p[k] || 0;
                }
            }); 
@@ -2672,6 +2703,91 @@
             let j = window.open('', '', 'width=900,height=700');
             j.document.write(htmlPDF);
             j.document.close();
+        }
+
+        // --- IMPORTAÇÃO DE EXCEL (PRODUTOS) ---
+        window.executarImportacaoExcel = function() {
+            if(window.usuarioLogado && window.usuarioLogado.role !== 'admin') {
+                alert("Apenas o administrador pode importar planilhas.");
+                return;
+            }
+
+            const inputArquivo = document.getElementById('importarXls');
+            const file = inputArquivo.files;
+            
+            if (!file) {
+                return alert("Por favor, clique em 'Escolher arquivo' e selecione sua planilha primeiro!");
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.SheetNames;
+                    const worksheet = workbook.Sheets[firstSheet];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    if(json.length === 0) return alert("A planilha está vazia ou no formato incorreto.");
+                    
+                    if(!confirm(`Foram encontrados ${json.length} produtos na planilha.\nDeseja importar todos para o sistema? Isso pode levar alguns segundos.`)) {
+                        inputArquivo.value = '';
+                        return;
+                    }
+
+                    let importados = 0;
+
+                    // Inteligência para converter valores com vírgula (ex: "5,30") em números
+                    const parseDinheiro = (val) => {
+                        if (val === undefined || val === null || val === '') return 0;
+                        if (typeof val === 'number') return val;
+                        let limpo = val.toString().replace(/\./g, '').replace(',', '.');
+                        return parseFloat(limpo) || 0;
+                    };
+                    
+                    json.forEach(linha => {
+                        let pNome = linha['Nome'] || linha['NOME'] || linha['nome'];
+                        if (!pNome) return; // Se não tiver nome, ignora a linha
+
+                        // Lendo as colunas EXATAMENTE como estão no seu arquivo
+                        let pCusto = parseDinheiro(linha['Valor de custo'] || linha['Custo']);
+                        let pVenda = parseDinheiro(linha['Valor de venda'] || linha['Venda']);
+                        let pQtd = parseDinheiro(linha['Estoque'] || linha['Quantidade']);
+                        let pNcm = linha['NCM'] || linha['ncm'] || linha['Ncm'] || '';
+
+                        let pMargem = 0;
+                        if (pCusto > 0) {
+                            pMargem = ((pVenda - pCusto) / pCusto) * 100;
+                        }
+
+                        let pCodigo = linha['Código de barra'] || linha['Código'] || linha['Codigo'];
+
+                        const novoProd = {
+                            nome: pNome.toString().trim(),
+                            codigo: (pCodigo || '').toString().trim(),
+                            ncm: (pNcm || '').toString().trim(),
+                            categoria: linha['Categoria'] || 'Geral',
+                            custo: pCusto,
+                            margem: parseFloat(pMargem.toFixed(2)),
+                            venda: pVenda,
+                            quantidade: parseInt(pQtd),
+                            foto: ""
+                        };
+
+                        // Envia pro Firebase
+                        set(push(ref(db, 'produtos')), novoProd);
+                        importados++;
+                    });
+
+                    alert(`✅ Importação concluída! ${importados} produtos do seu arquivo foram salvos no estoque com sucesso.`);
+                    inputArquivo.value = ''; // Limpa o botão
+                    
+                } catch(erro) {
+                    alert("Erro ao ler a planilha: " + erro);
+                    inputArquivo.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
    } // Fim de bloqueio assinatura remota
