@@ -2825,7 +2825,7 @@
             j.document.close();
         }
 
-      // --- IMPORTAÇÃO DIRETA (CARGA DE DADOS EMBUTIDA NO FH CONTROL) ---
+     // --- IMPORTAÇÃO DIRETA (COM PROTEÇÃO CONTRA ERRO SILENCIOSO) ---
 window.importarJSON = async function() {
     if(window.usuarioLogado && window.usuarioLogado.role !== 'admin') {
         return alert("Apenas o administrador pode importar produtos.");
@@ -2833,14 +2833,13 @@ window.importarJSON = async function() {
 
     const campoUpload = document.getElementById('importarXls');
 
-    // SE NÃO TIVER ARQUIVO SELECIONADO, ELE RODA A SUA LISTA GIGANTE AUTOMATICAMENTE
     if (!campoUpload || !campoUpload.files || campoUpload.files.length === 0) {
         if(!confirm("Deseja importar a lista de produtos gravada na memória do sistema?")) return;
 
         document.body.style.cursor = 'wait';
 
-        // Aqui está EXATAMENTE a lista que você colou, protegida dentro do sistema
-        const dadosBrutos = `Código	Nome	Código de barra	Valor de custo	Valor de venda	Estoque	NCM	Cadastrado em
+        try {
+            const dadosBrutos = `Código	Nome	Código de barra	Valor de custo	Valor de venda	Estoque	NCM	Cadastrado em
 2,0706E+12	ABRACADEIRA  BR 1/2		0,63	1,26	50,00		06/04/2026 13:35:07
 2,02996E+12	ABRACADEIRA  BR 3/4		0,66	1,32	50,00		06/04/2026 14:14:19
 2,00347E+12	ABRACADEIRA  PR 3/4		0,69	1,38	50,00		06/04/2026 14:16:56
@@ -3478,67 +3477,77 @@ XTEN48422	VARETA DE SOLDA FOSCOPER PRATEADO		2,80	4,20	30,00		10/03/2026 09:29:4
 75478	VENTOSA P/VIDRO ATE 43KG *BESTFER	7,89921E+12	32,86	49,29	2,00		10/03/2026 10:57:36
 75479	VENTOSA P/VIDRO ATE 70KG *BESTFER	7,89921E+12	48,38	72,57	2,00		10/03/2026 11:00:40`;
 
-        const linhas = dadosBrutos.split('\n');
-        let importados = 0;
-        let ignorados = 0;
+            const linhas = dadosBrutos.split('\n');
+            let importados = 0;
 
-        const corrigirCodigo = (val) => {
-            if(!val) return "";
-            val = val.trim();
-            if(val.includes('E+')) {
-                // Tira a vírgula do padrão do Excel, transforma em número real e remove notação científica
-                return Number(val.replace(',', '.')).toLocaleString('fullwide', {useGrouping:false});
-            }
-            return val;
-        };
-
-        const parseDinheiro = (val) => {
-            if (!val) return 0;
-            let limpo = val.toString().replace(/\./g, '').replace(',', '.').trim();
-            return Number.parseFloat(limpo) || 0;
-        };
-
-        for (let i = 1; i < linhas.length; i++) { // Pula a linha 0 (cabeçalho)
-            if (linhas[i].trim() === '') continue;
-            
-            // O Excel separa usando um espaço grande invisível chamado TAB (\t)
-            let col = linhas[i].split('\t');
-            
-            if (col.length < 5) continue; // Pula se a linha estiver quebrada
-
-            let pCusto = parseDinheiro(col);
-            let pVenda = parseDinheiro(col);
-            let pMargem = pCusto > 0 ? ((pVenda - pCusto) / pCusto) * 100 : 0;
-            if (!Number.isFinite(pMargem) || Number.isNaN(pMargem)) pMargem = 0;
-
-            const novoProd = {
-                codigo: corrigirCodigo(col),
-                nome: col ? col.trim() : "",
-                codigo_barra: corrigirCodigo(col),
-                custo: pCusto,
-                venda: pVenda,
-                margem: Number.parseFloat(pMargem.toFixed(2)),
-                quantidade: parseDinheiro(col),
-                ncm: col ? col.trim() : "",
-                categoria: 'Geral',
-                foto: ""
+            const corrigirCodigo = (val) => {
+                if(!val) return "";
+                val = val.trim();
+                if(val.includes('E+')) {
+                    return Number(val.replace(',', '.')).toLocaleString('fullwide', {useGrouping:false});
+                }
+                return val;
             };
 
-            await set(push(ref(db, 'produtos')), novoProd);
-            importados++;
-        }
+            const parseDinheiro = (val) => {
+                if (!val) return 0;
+                let limpo = val.toString().replace(/\./g, '').replace(',', '.').trim();
+                return Number.parseFloat(limpo) || 0;
+            };
 
-        document.body.style.cursor = 'default';
-        alert(`✅ SUCESSO ABSOLUTO!\n\nForam importados exatamente ${importados} produtos para o estoque do FH Control.\nTodos os códigos com "E+" foram consertados!`);
-        try { if(window.filtrarProdutos) window.filtrarProdutos(); } catch(e) {} 
-        return;
+            for (let i = 1; i < linhas.length; i++) { 
+                if (linhas[i].trim() === '') continue;
+                
+                let col = linhas[i].split('\t');
+                if (col.length < 5) continue; 
+
+                let pCusto = parseDinheiro(col);
+                let pVenda = parseDinheiro(col);
+                let pMargem = pCusto > 0 ? ((pVenda - pCusto) / pCusto) * 100 : 0;
+
+                const novoProd = {
+                    codigo: corrigirCodigo(col),
+                    nome: col ? String(col).trim() : "",
+                    codigo_barra: corrigirCodigo(col),
+                    custo: pCusto,
+                    venda: pVenda,
+                    margem: Number.parseFloat(pMargem.toFixed(2)) || 0,
+                    quantidade: parseDinheiro(col),
+                    ncm: col ? String(col).trim() : "",
+                    categoria: 'Geral',
+                    foto: ""
+                };
+
+                // Salvamento Universal: Tenta a versão nova do Firebase (v9), se não, usa a antiga (v8)
+                if (typeof set === 'function' && typeof push === 'function' && typeof ref === 'function') {
+                    let databaseVar = typeof db !== 'undefined' ? db : (window.db || null);
+                    if (!databaseVar) throw new Error("A variável 'db' do Firebase não foi encontrada no sistema!");
+                    await set(push(ref(databaseVar, 'produtos')), novoProd);
+                } else if (window.firebase && window.firebase.database) {
+                    await window.firebase.database().ref('produtos').push(novoProd);
+                } else {
+                    throw new Error("Comandos do Firebase não foram reconhecidos. Verifique a sua conexão com o banco!");
+                }
+                
+                importados++;
+            }
+
+            document.body.style.cursor = 'default';
+            alert(`✅ SUCESSO ABSOLUTO!\n\nForam importados exatamente ${importados} produtos.\nTodos os códigos quebrados com "E+" foram consertados!`);
+            try { if(window.filtrarProdutos) window.filtrarProdutos(); } catch(e) {} 
+            return;
+
+        } catch (erro) {
+            document.body.style.cursor = 'default';
+            alert(`❌ ERRO GRAVE PAROU A IMPORTAÇÃO:\n\nMotivo: ${erro.message}\n\nAperte F12 no seu teclado e olhe a aba "Console" para ver mais detalhes!`);
+            console.error("Erro completo da importação:", erro);
+        }
     }
     
-    // CASO VOCÊ QUEIRA USAR ALGUM ARQUIVO FUTURAMENTE...
-    alert("Para importar essa lista principal que você colou, NÃO selecione nenhum arquivo, apenas clique no botão Importar.");
+    alert("Para importar aquela lista gigante gravada no código, NÃO selecione nenhum arquivo! Apenas clique em Importar com o botão vazio.");
     campoUpload.value = '';
 }
-
+      
    } // Fim de bloqueio assinatura remota
    
 </script>
