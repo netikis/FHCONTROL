@@ -2825,7 +2825,7 @@
             j.document.close();
         }
 
-     // --- IMPORTAÇÃO DIRETA (COM PROTEÇÃO CONTRA ERRO SILENCIOSO) ---
+     // --- IMPORTAÇÃO DIRETA (COM PROTEÇÃO CONTRA ERRO SILENCIOSO E TYPEERROR) ---
 window.importarJSON = async function() {
     if(window.usuarioLogado && window.usuarioLogado.role !== 'admin') {
         return alert("Apenas o administrador pode importar produtos.");
@@ -3481,8 +3481,10 @@ XTEN48422	VARETA DE SOLDA FOSCOPER PRATEADO		2,80	4,20	30,00		10/03/2026 09:29:4
             let importados = 0;
 
             const corrigirCodigo = (val) => {
-                if(!val) return "";
-                val = val.trim();
+                if (val === null || val === undefined) return "";
+                // AQUI ESTÁ A MÁGICA: Forçando a variável virar texto (String) antes do trim()
+                val = String(val).trim();
+                
                 if(val.includes('E+')) {
                     return Number(val.replace(',', '.')).toLocaleString('fullwide', {useGrouping:false});
                 }
@@ -3491,7 +3493,7 @@ XTEN48422	VARETA DE SOLDA FOSCOPER PRATEADO		2,80	4,20	30,00		10/03/2026 09:29:4
 
             const parseDinheiro = (val) => {
                 if (!val) return 0;
-                let limpo = val.toString().replace(/\./g, '').replace(',', '.').trim();
+                let limpo = String(val).replace(/\./g, '').replace(',', '.').trim();
                 return Number.parseFloat(limpo) || 0;
             };
 
@@ -3544,7 +3546,7 @@ XTEN48422	VARETA DE SOLDA FOSCOPER PRATEADO		2,80	4,20	30,00		10/03/2026 09:29:4
         }
     }
     
-    alert("Para importar aquela lista gigante gravada no código, NÃO selecione nenhum arquivo! Apenas clique em Importar com o botão vazio.");
+    alert("Para importar a lista, NÃO selecione nenhum arquivo! Apenas clique em Importar com o botão vazio.");
     campoUpload.value = '';
 }
       
