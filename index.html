@@ -2825,7 +2825,7 @@
             j.document.close();
         }
 
-       // --- IMPORTAÇÃO DEFINITIVA (COM MOTOR NATIVO DE CSV E JSON) ---
+// --- IMPORTAÇÃO DEFINITIVA (BLINDADA CONTRA ERROS DE TEXTO/COLUNAS) ---
 window.importarJSON = async function() {
     if(window.usuarioLogado && window.usuarioLogado.role !== 'admin') {
         return alert("Apenas o administrador pode importar produtos.");
@@ -2834,13 +2834,15 @@ window.importarJSON = async function() {
     const campoUpload = document.getElementById('importarXls');
 
     if (!campoUpload || !campoUpload.files || campoUpload.files.length === 0) {
-        return alert("Por favor, selecione o seu ficheiro .CSV ou .JSON primeiro!");
+        return alert("Por favor, selecione o seu arquivo .CSV ou .JSON primeiro!");
     }
 
     const arquivoFisico = campoUpload.files;
-    const nomeArq = arquivoFisico.name.toLowerCase();
+    
+    // BLINDAGEM 1: Garante que o nome do arquivo existe antes de converter
+    const nomeArq = (arquivoFisico && arquivoFisico.name) ? String(arquivoFisico.name).toLowerCase() : '';
 
-    // 🚜 Motor Nativo: Lê o ficheiro CSV sem precisar de bibliotecas externas
+    // Motor Nativo: Lê o arquivo CSV sem precisar de bibliotecas externas
     const converterCsvParaJson = (texto) => {
         const linhas = texto.split(/\r?\n/);
         if(linhas.length < 2) return [];
@@ -2857,14 +2859,18 @@ window.importarJSON = async function() {
             return colunas;
         };
 
-        const cabecalhos = lerLinha(linhas).map(h => h.trim().toLowerCase());
+        // BLINDAGEM 2: Garante que o cabeçalho não é undefined antes de converter
+        const cabecalhos = lerLinha(linhas).map(h => h ? String(h).trim().toLowerCase() : '');
+        
         const resultado = [];
         for(let i = 1; i < linhas.length; i++) {
-            if(linhas[i].trim() === '') continue; // Pula linhas em branco
+            if(linhas[i].trim() === '') continue; 
             let colunas = lerLinha(linhas[i]);
             let obj = {};
             for(let j = 0; j < cabecalhos.length; j++) {
-                obj[cabecalhos[j]] = colunas[j] ? colunas[j].trim() : '';
+                if (cabecalhos[j] !== '') {
+                    obj[cabecalhos[j]] = colunas[j] ? colunas[j].trim() : '';
+                }
             }
             resultado.push(obj);
         }
@@ -2875,7 +2881,13 @@ window.importarJSON = async function() {
         const acharValor = (linha, nomesPossiveis) => {
             if (!linha) return "";
             let chaves = Object.keys(linha);
-            let chaveEncontrada = chaves.find(k => nomesPossiveis.includes(k.toString().toLowerCase().trim()));
+            
+            // BLINDAGEM 3: Garante que a chave existe antes de comparar
+            let chaveEncontrada = chaves.find(k => {
+                if (!k) return false;
+                return nomesPossiveis.includes(String(k).toLowerCase().trim());
+            });
+            
             return chaveEncontrada ? linha[chaveEncontrada] : "";
         };
 
@@ -2887,7 +2899,7 @@ window.importarJSON = async function() {
         };
 
         let importados = 0; let ignorados = 0;
-        document.body.style.cursor = 'wait'; // Muda o rato para "a carregar"
+        document.body.style.cursor = 'wait';
 
         for (let i = 0; i < lista.length; i++) {
             let linha = lista[i];
@@ -2905,9 +2917,9 @@ window.importarJSON = async function() {
             if (!Number.isFinite(pMargem) || Number.isNaN(pMargem)) pMargem = 0;
 
             const novoProd = {
-                nome: pNome.toString().trim(),
-                codigo: (pCodigo || '').toString().trim(),
-                ncm: (pNcm || '').toString().trim(),
+                nome: String(pNome).trim(),
+                codigo: String(pCodigo || '').trim(),
+                ncm: String(pNcm || '').trim(),
                 categoria: 'Geral',
                 custo: pCusto,
                 margem: Number.parseFloat(pMargem.toFixed(2)),
@@ -2920,19 +2932,21 @@ window.importarJSON = async function() {
             importados++;
         }
 
-        document.body.style.cursor = 'default'; // Volta o rato ao normal
+        document.body.style.cursor = 'default';
         
         if (importados === 0) {
-            alert(`⚠️ NADA FOI IMPORTADO. O ficheiro estava vazio ou os nomes das colunas não foram reconhecidos.`);
+            alert(`⚠️ NADA FOI IMPORTADO. O arquivo estava vazio ou os nomes das colunas não foram reconhecidos.`);
         } else {
-            alert(`✅ SUCESSO ABSOLUTO!\n\n✔️ ${importados} produtos salvos no estoque do FH Control.\n❌ ${ignorados} linhas vazias ignoradas.`);
-            if(window.filtrarProdutos) window.filtrarProdutos(); 
+            alert(`✅ SUCESSO ABSOLUTO!\n\n✔️ ${importados} produtos salvos no estoque.\n❌ ${ignorados} linhas vazias ignoradas.`);
+            
+            // BLINDAGEM 4: Recarrega a tabela de forma segura
+            try { if(window.filtrarProdutos) window.filtrarProdutos(); } catch(e) {} 
         }
     };
 
     try {
         let textoFisico = await arquivoFisico.text();
-        textoFisico = textoFisico.replace(/^\uFEFF/, ''); // Limpa sujidade de codificação do Windows
+        textoFisico = textoFisico.replace(/^\uFEFF/, ''); 
         
         let jsonPronto = [];
 
@@ -2944,21 +2958,21 @@ window.importarJSON = async function() {
             catch(e) { jsonPronto = (new Function("return " + textoFisico))(); }
         } 
         else {
-            return alert("Formato não suportado. Selecione o ficheiro que termina em .CSV ou .JSON.");
+            return alert("Formato não suportado. Selecione o arquivo .CSV ou .JSON.");
         }
 
         if (!Array.isArray(jsonPronto) || jsonPronto.length === 0) {
-            throw new Error("Não foi possível encontrar a lista de produtos. Verifique se o ficheiro não está vazio.");
+            throw new Error("Não foi possível encontrar a lista de produtos.");
         }
 
-        alert("⏳ A ler o ficheiro CSV e a preparar o envio para o banco de dados...\n\nClique em OK e aguarde alguns segundos sem clicar em mais nada. Uma mensagem de SUCESSO vai saltar no ecrã quando os 636 produtos estiverem guardados!");
+        alert("⏳ Lendo arquivo e preparando o envio para o banco de dados...\n\nClique em OK e aguarde alguns segundos. Uma mensagem de SUCESSO aparecerá na tela!");
         
         await injetarNoBanco(jsonPronto);
         campoUpload.value = ''; 
 
     } catch(erro) {
         document.body.style.cursor = 'default';
-        alert(`❌ ERRO AO LER O FICHEIRO:\n\n${erro.message}`);
+        alert(`❌ ERRO AO LER O ARQUIVO:\n\n${erro.message}`);
         console.error("Erro completo:", erro);
         campoUpload.value = '';
     }
