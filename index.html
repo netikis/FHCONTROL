@@ -324,7 +324,6 @@
            font-size: 13px;
        }
        
-       /* Ajuste nas cores conforme solicitado - Números Brancos em Negrito */
        .cart-total { 
            font-size: 20px; 
            color: #ffffff; 
@@ -575,7 +574,7 @@
 <div class="main-content" id="appMainContent">
 
    <div id="tabClientes" class="tab-content active">
-        
+       
         <div class="container">
             <h2 id="tituloCliente">Cadastro de Cliente</h2>
             <form id="formCliente">
@@ -625,7 +624,7 @@
             </div>
             <div class="table-responsive">
                 <table>
-                   <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr></thead>
                     <tbody id="tabelaClientes"></tbody>
                 </table>
             </div>
@@ -643,7 +642,7 @@
 
 
    <div id="tabEstoque" class="tab-content">
-        
+       
         <div class="container">
             <h2 id="tituloProduto">Cadastro de Produto / Serviço</h2>
             <form id="formProduto">
@@ -674,12 +673,12 @@
             
             <div style="background-color: #1a252f; padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px dashed #3498db; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <h3 style="margin: 0; color: #3498db; font-size: 14px;">📥 Importar do Excel</h3>
-                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #bdc3c7;">A planilha deve ter as colunas: Nome, Codigo, Categoria, Custo, Margem, Venda, Quantidade, NCM.</p>
+                    <h3 style="margin: 0; color: #3498db; font-size: 14px;">📥 Importar do JSON</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #bdc3c7;">Selecione o arquivo .json convertido da sua planilha.</p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="file" id="importarXls" accept=".xls, .xlsx, .csv" style="width: auto; background: #fff; padding: 5px; border-radius: 4px;">
-                    <button type="button" class="btn-primary" style="background-color: #3498db; margin: 0; width: auto; padding: 8px 15px;" onclick="executarImportacaoExcel()">🚀 IMPORTAR ARQUIVO</button>
+                    <input type="file" id="importarXls" accept=".json" style="width: auto; background: #fff; padding: 5px; border-radius: 4px;">
+                    <button type="button" class="btn-primary" style="background-color: #3498db; margin: 0; width: auto; padding: 8px 15px;" onclick="importarJSON()">🚀 IMPORTAR ARQUIVO</button>
                 </div>
             </div>
             
@@ -694,7 +693,7 @@
             <p style="font-size: 11px; color: #e74c3c; margin-top: 0;">Atenção: Qtd ≤ 3 piscará vermelho.</p>
             <div class="table-responsive">
                 <table>
-                   <thead><tr><th>Foto</th><th>Cód / NCM</th><th>Nome</th><th>Categoria</th><th>Qtd</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Foto</th><th>Cód / NCM</th><th>Nome</th><th>Categoria</th><th>Qtd</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
                     <tbody id="tabelaEstoque"></tbody>
                 </table>
             </div>
@@ -704,7 +703,7 @@
 
 
    <div id="tabVendas" class="tab-content">
-        
+       
         <div class="container">
             <h2>Novo Orçamento / Venda Direta</h2>
             
@@ -778,7 +777,7 @@
 
 
    <div id="tabOS" class="tab-content">
-        
+       
         <div class="container">
             <h2 style="color: #3498db;">Ordem de Serviço (Em Campo)</h2>
             <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Preencha com atenção os valores e quantidades. O sistema calcula o total para você.</p>
@@ -1612,7 +1611,7 @@
                 } else {
                     await set(push(ref(db, 'caixa')), doc); 
                 }
-                
+               
                 // REGRA DE CAIXA E ESTOQUE (SÓ BAIXA SE FOR VENDA)
                 if (tipoDocSelecionado === 'VENDA') {
                     if(!editandoDocId) window.registrarMovimentoCaixa('entrada', total);
@@ -1845,7 +1844,7 @@
                 }
 
                 if(!editandoDocId) window.registrarMovimentoCaixa('entrada', (tItens + tKm));
-                
+               
                 for (let item of carrinhoOS) {
                    if (item.ehEstoque && item.idProd) {
                        const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
@@ -2369,7 +2368,7 @@
        }
 
        window.enviarOSWhatsApp = function(id) {
-           const v = caixaGlobal.find(x => x.id === id); if (!v) return;
+           const v = caixaGlobal.find(x => x.id === v.clienteId);
            const c = clientesGlobais.find(x => x.id === v.clienteId);
            let tel = ''; if (c && c.telefone) { tel = c.telefone.replace(/\D/g, ''); if (tel.length === 11 || tel.length === 10) { tel = '55' + tel; } }
            let venc = v.vencimento ? v.vencimento.split('-').reverse().join('/') : 'À vista';
@@ -2705,90 +2704,115 @@
             j.document.close();
         }
 
-        // --- IMPORTAÇÃO DE EXCEL (PRODUTOS) ---
-        window.executarImportacaoExcel = function() {
-            if(window.usuarioLogado && window.usuarioLogado.role !== 'admin') {
-                alert("Apenas o administrador pode importar planilhas.");
-                return;
-            }
+      // --- IMPORTAÇÃO VIA ARQUIVO JSON (BLINDAGEM MÁXIMA) ---
 
-            const inputArquivo = document.getElementById('importarXls');
-            const file = inputArquivo.files;
+    window.importarJSON = async function() {
+    if(window.usuarioLogado && window.usuarioLogado.role !== 'admin') {
+        return alert("Apenas o administrador pode importar produtos.");
+    }
+
+    // Usando nomes de variáveis exclusivos para evitar conflitos no sistema
+    const campoUpload = document.getElementById('importarXls');
+    
+    if (!campoUpload || !campoUpload.files || campoUpload.files.length === 0) {
+        return alert("Por favor, clique em 'Escolher ficheiro' e selecione o arquivo primeiro!");
+    }
+    
+    const arquivoFisico = campoUpload.files;
+    
+    // Trava de segurança para o Erro: "not of type Blob"
+    if (!(arquivoFisico instanceof Blob)) {
+        return alert("ERRO DE PERMISSÃO: O seu navegador impediu a leitura deste arquivo por segurança.");
+    }
+
+    const leitorArquivo = new FileReader();
+    
+    leitorArquivo.onload = async function(e) {
+        try {
+            let textoLimpo = e.target.result;
+            if (textoLimpo) textoLimpo = textoLimpo.replace(/^\uFEFF/, ''); 
             
-            if (!file) {
-                return alert("Por favor, clique em 'Escolher arquivo' e selecione sua planilha primeiro!");
+            const jsonParseado = JSON.parse(textoLimpo);
+
+            if(!Array.isArray(jsonParseado) || jsonParseado.length === 0) {
+                campoUpload.value = '';
+                return alert("O arquivo está vazio ou não possui uma lista válida.");
             }
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheet = workbook.SheetNames;
-                    const worksheet = workbook.Sheets[firstSheet];
-                    const json = XLSX.utils.sheet_to_json(worksheet);
-
-                    if(json.length === 0) return alert("A planilha está vazia ou no formato incorreto.");
-                    
-                    if(!confirm(`Foram encontrados ${json.length} produtos na planilha.\nDeseja importar todos para o sistema? Isso pode levar alguns segundos.`)) {
-                        inputArquivo.value = '';
-                        return;
-                    }
-
-                    let importados = 0;
-
-                    // Inteligência para converter valores com vírgula (ex: "5,30") em números
-                    const parseDinheiro = (val) => {
-                        if (val === undefined || val === null || val === '') return 0;
-                        if (typeof val === 'number') return val;
-                        let limpo = val.toString().replace(/\./g, '').replace(',', '.');
-                        return parseFloat(limpo) || 0;
-                    };
-                    
-                    json.forEach(linha => {
-                        let pNome = linha['Nome'] || linha['NOME'] || linha['nome'];
-                        if (!pNome) return; // Se não tiver nome, ignora a linha
-
-                        // Lendo as colunas EXATAMENTE como estão no seu arquivo
-                        let pCusto = parseDinheiro(linha['Valor de custo'] || linha['Custo']);
-                        let pVenda = parseDinheiro(linha['Valor de venda'] || linha['Venda']);
-                        let pQtd = parseDinheiro(linha['Estoque'] || linha['Quantidade']);
-                        let pNcm = linha['NCM'] || linha['ncm'] || linha['Ncm'] || '';
-
-                        let pMargem = 0;
-                        if (pCusto > 0) {
-                            pMargem = ((pVenda - pCusto) / pCusto) * 100;
-                        }
-
-                        let pCodigo = linha['Código de barra'] || linha['Código'] || linha['Codigo'];
-
-                        const novoProd = {
-                            nome: pNome.toString().trim(),
-                            codigo: (pCodigo || '').toString().trim(),
-                            ncm: (pNcm || '').toString().trim(),
-                            categoria: linha['Categoria'] || 'Geral',
-                            custo: pCusto,
-                            margem: parseFloat(pMargem.toFixed(2)),
-                            venda: pVenda,
-                            quantidade: parseInt(pQtd),
-                            foto: ""
-                        };
-
-                        // Envia pro Firebase
-                        set(push(ref(db, 'produtos')), novoProd);
-                        importados++;
-                    });
-
-                    alert(`✅ Importação concluída! ${importados} produtos do seu arquivo foram salvos no estoque com sucesso.`);
-                    inputArquivo.value = ''; // Limpa o botão
-                    
-                } catch(erro) {
-                    alert("Erro ao ler a planilha: " + erro);
-                    inputArquivo.value = '';
-                }
+            const acharValor = (linha, nomesPossiveis) => {
+                if (!linha) return "";
+                let chaves = Object.keys(linha);
+                let chaveEncontrada = chaves.find(k => {
+                    if (!k) return false;
+                    return nomesPossiveis.includes(k.toString().toLowerCase().trim());
+                });
+                return chaveEncontrada ? linha[chaveEncontrada] : "";
             };
-            reader.readAsArrayBuffer(file);
+
+            const parseDinheiro = (val) => {
+                if (val === undefined || val === null || val === '') return 0;
+                if (typeof val === 'number') return val;
+                let limpo = val.toString().replace(/R\$/g, '').replace(/\./g, '').replace(',', '.').trim();
+                return parseFloat(limpo) || 0;
+            };
+
+            let importados = 0;
+            let ignorados = 0;
+
+            for (let i = 0; i < jsonParseado.length; i++) {
+                let linha = jsonParseado[i];
+                let pNome = acharValor(linha, ['nome', 'produto', 'descrição', 'descricao', 'item']);
+                
+                if (!pNome || pNome.toString().trim() === "") { ignorados++; continue; }
+
+                let pCusto = parseDinheiro(acharValor(linha, ['valor de custo', 'custo', 'preco de custo']));
+                let pVenda = parseDinheiro(acharValor(linha, ['valor de venda', 'venda', 'preco de venda']));
+                let pQtd = parseDinheiro(acharValor(linha, ['estoque', 'quantidade', 'qtd']));
+                let pNcm = acharValor(linha, ['ncm']);
+                let pCodigo = acharValor(linha, ['código de barra', 'código de barras', 'codigo']);
+
+                let pMargem = 0;
+                if (pCusto > 0) pMargem = ((pVenda - pCusto) / pCusto) * 100;
+                if (!isFinite(pMargem) || isNaN(pMargem)) pMargem = 0;
+
+                const novoProd = {
+                    nome: pNome.toString().trim(),
+                    codigo: (pCodigo || '').toString().trim(),
+                    ncm: (pNcm || '').toString().trim(),
+                    categoria: 'Geral',
+                    custo: pCusto,
+                    margem: parseFloat(pMargem.toFixed(2)),
+                    venda: pVenda,
+                    quantidade: parseInt(pQtd) || 0,
+                    foto: ""
+                };
+
+                await set(push(ref(db, 'produtos')), novoProd);
+                importados++;
+            }
+
+            if (importados === 0) {
+                let colunasLidas = Object.keys(jsonParseado || {}).join(" | ");
+                alert(`⚠️ NADA FOI IMPORTADO.\nAs colunas que o sistema enxergou foram:\n[ ${colunasLidas} ]`);
+            } else {
+                alert(`✅ SUCESSO!\n✔️ ${importados} produtos importados.\n❌ ${ignorados} linhas ignoradas.`);
+                if(window.filtrarProdutos) window.filtrarProdutos(); 
+            }
+            
+            campoUpload.value = ''; 
+            
+        } catch(erro) {
+            alert(`❌ ERRO AO CONVERTER:\n${erro.message}`);
+            campoUpload.value = '';
         }
+    };
+    
+    leitorArquivo.onerror = function() {
+        alert("Ocorreu um erro no navegador ao tentar ler o arquivo.");
+    };
+    
+    leitorArquivo.readAsText(arquivoFisico);
+}
 
    } // Fim de bloqueio assinatura remota
    
