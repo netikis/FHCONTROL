@@ -1410,7 +1410,7 @@
                // COLUNA CÓDIGO E NCM
                let ncmTxt = p.ncm ? `NCM: ${p.ncm}` : 'NCM: -';
                
-               tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#ffffff;">${p.codigo || '-'}<br><span style="font-size:9px;color:#bdc3c7;">${ncmTxt}</span></td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#ffffff;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${parseFloat(p.custo).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
+               tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#ffffff;">${p.codigo || '-'}<br><span style="font-size:9px;color:#bdc3c7;">${ncmTxt}</span></td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#ffffff;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${(parseFloat(String(p.custo).replace(',', '.')) || 0).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
                <td class="acoes-flex">
                    <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️ Ed</button>
                    <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
