@@ -2704,14 +2704,12 @@
             j.document.close();
         }
 
-      // --- IMPORTAÇÃO VIA ARQUIVO JSON (BLINDAGEM MÁXIMA) ---
-
-    window.importarJSON = async function() {
+// --- IMPORTAÇÃO VIA ARQUIVO JSON (VERSÃO NUVEM / GITHUB) ---
+window.importarJSON = async function() {
     if(window.usuarioLogado && window.usuarioLogado.role !== 'admin') {
         return alert("Apenas o administrador pode importar produtos.");
     }
 
-    // Usando nomes de variáveis exclusivos para evitar conflitos no sistema
     const campoUpload = document.getElementById('importarXls');
     
     if (!campoUpload || !campoUpload.files || campoUpload.files.length === 0) {
@@ -2720,10 +2718,7 @@
     
     const arquivoFisico = campoUpload.files;
     
-    // Trava de segurança para o Erro: "not of type Blob"
-    if (!(arquivoFisico instanceof Blob)) {
-        return alert("ERRO DE PERMISSÃO: O seu navegador impediu a leitura deste arquivo por segurança.");
-    }
+    // REMOVI A TRAVA DE SEGURANÇA LOCAL AQUI! O GitHub Pages lê nativamente.
 
     const leitorArquivo = new FileReader();
     
@@ -2795,20 +2790,16 @@
                 let colunasLidas = Object.keys(jsonParseado || {}).join(" | ");
                 alert(`⚠️ NADA FOI IMPORTADO.\nAs colunas que o sistema enxergou foram:\n[ ${colunasLidas} ]`);
             } else {
-                alert(`✅ SUCESSO!\n✔️ ${importados} produtos importados.\n❌ ${ignorados} linhas ignoradas.`);
+                alert(`✅ SUCESSO!\n✔️ ${importados} produtos importados para o estoque.\n❌ ${ignorados} linhas ignoradas.`);
                 if(window.filtrarProdutos) window.filtrarProdutos(); 
             }
             
             campoUpload.value = ''; 
             
         } catch(erro) {
-            alert(`❌ ERRO AO CONVERTER:\n${erro.message}`);
+            alert(`❌ ERRO AO LER O ARQUIVO:\n${erro.message}`);
             campoUpload.value = '';
         }
-    };
-    
-    leitorArquivo.onerror = function() {
-        alert("Ocorreu um erro no navegador ao tentar ler o arquivo.");
     };
     
     leitorArquivo.readAsText(arquivoFisico);
