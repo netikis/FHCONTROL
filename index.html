@@ -224,6 +224,7 @@
        .btn-acao.pdf:hover { background-color: #3498db; color: #fff; border-color: #3498db;}
        .btn-acao.del:hover { background-color: #e74c3c; color: #fff; border-color: #e74c3c;}
        .btn-acao.edit:hover { background-color: #f1c40f; color: #000; border-color: #f1c40f;}
+       .btn-acao.receber:hover { background-color: #27ae60; color: #fff; border-color: #27ae60;}
 
        /* --- Tabelas --- */
        .table-responsive {
@@ -716,6 +717,15 @@
                     </select>
                 </div>
                 <div class="col"><label style="color: #ffffff;">Nº da Venda</label><input type="number" id="vendaOS" style="font-weight: bold; color: #e74c3c;"></div>
+                
+                <div class="col">
+                    <label style="color: #ffffff;">Status Pgto</label>
+                    <select id="vendaStatusPag" style="font-weight: bold; background-color: #2c3e50; color: #f1c40f; border: 1px solid #ffffff;">
+                        <option value="PAGO" selected>✅ PAGO (Soma no Caixa)</option>
+                        <option value="PENDENTE">⏳ PENDENTE (Não Soma)</option>
+                    </select>
+                </div>
+                
                 <div class="col" style="flex: 1.5;"><label style="color: #ffffff;">Data Vencimento</label><input type="date" id="vendaVencimento" style="font-weight: bold;"></div>
             </div>
 
@@ -788,13 +798,22 @@
                         <label style="color: #3498db;">Nº da OS</label>
                         <input type="number" id="osNumero" style="font-weight: bold; color: #e74c3c;">
                     </div>
+                    
+                    <div class="col">
+                        <label style="color: #3498db;">Status Pgto</label>
+                        <select id="osStatusPag" style="font-weight: bold; background-color: #2c3e50; color: #f1c40f; border: 1px solid #3498db;">
+                            <option value="PENDENTE" selected>⏳ PENDENTE (Não Soma)</option>
+                            <option value="PAGO">✅ PAGO (Soma no Caixa)</option>
+                        </select>
+                    </div>
+
                     <div class="col" style="flex: 1.5;">
                         <label style="color: #3498db;">Cliente (Ou nome avulso)</label>
                         <input type="text" id="osClienteBusca" list="listaClientesNomesOS" placeholder="Registrado ou avulso...">
                         <datalist id="listaClientesNomesOS"></datalist>
                     </div>
                     <div class="col">
-                        <label style="color: #3498db;">Data Vencimento (Opcional)</label>
+                        <label style="color: #3498db;">Vencimento</label>
                         <input type="date" id="osVencimento" style="font-weight: bold;">
                     </div>
                 </div>
@@ -907,7 +926,7 @@
                    <h3 style="color: #ecf0f1;">Caixa Inicial do Dia</h3><h2 id="dashInicial" style="color: #ffffff;">R$ 0,00</h2>
                </div>
                <div class="col dash-card" style="background-color: #27ae60;">
-                   <h3 style="color: #ecf0f1;">Entradas (Vendas+OS)</h3><h2 id="dashEntradas" style="color: #ffffff;">R$ 0,00</h2>
+                   <h3 style="color: #ecf0f1;">Entradas (PAGAS)</h3><h2 id="dashEntradas" style="color: #ffffff;">R$ 0,00</h2>
                </div>
                <div class="col dash-card" style="background-color: #e74c3c;">
                    <h3 style="color: #ecf0f1;">Saídas (Despesas)</h3><h2 id="dashSaidas" style="color: #ffffff;">R$ 0,00</h2>
@@ -934,6 +953,7 @@
                            <th>Cliente</th>
                            <th>Vencimento</th>
                            <th>Total</th>
+                           <th>Status Pgto</th>
                            <th>Assinatura</th>
                            <th style="min-width: 380px;">Ações</th>
                        </tr>
@@ -1062,11 +1082,17 @@
 
        if (idAba === 'tabVendas') {
            window.carregarSelectsGerais();
-           if(!editandoDocId) window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA'); 
+           if(!editandoDocId) {
+               window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
+               document.getElementById('vendaStatusPag').value = 'PAGO'; 
+           }
        }
        if (idAba === 'tabOS') {
            window.carregarSelectsGerais();
-           if(!editandoDocId) window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO'); 
+           if(!editandoDocId) {
+               window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO'); 
+               document.getElementById('osStatusPag').value = 'PENDENTE';
+           }
            window.calcularDeslocamentoOS(); 
        }
    };
@@ -1092,6 +1118,9 @@
        ['osClienteBusca','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
        document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
        fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
+
+       document.getElementById('vendaStatusPag').value = 'PAGO';
+       document.getElementById('osStatusPag').value = 'PENDENTE';
 
        window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
        window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO');
@@ -1424,8 +1453,7 @@
        window.excluirProd = function(id) { if(confirm("Excluir produto do estoque?")) remove(ref(db, 'produtos/' + id)); }
 
 
-       // --- FUNÇÕES COMPARTILHADAS (CORRIGIDAS PARA GLOBAIS) ---
-
+       // --- FUNÇÕES COMPARTILHADAS GLOBAIS ---
        window.gerarProximoNumeroDoc = function(inputId, valorInicial, tipoDoc) {
            let maxNum = valorInicial; 
            caixaGlobal.forEach(v => { 
@@ -1569,6 +1597,9 @@
            const os = parseInt(document.getElementById('vendaOS').value); 
            const v = document.getElementById('vendaVencimento').value; 
            const n = document.getElementById('vendaClienteBusca').value; 
+           const statusPag = document.getElementById('vendaStatusPag').value; // PAGO ou PENDENTE
+           const tipoDocSelecionado = document.getElementById('vendaTipoDoc').value;
+
            if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
            
            let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
@@ -1595,9 +1626,8 @@
                }
            }
 
-            const tipoDocSelecionado = document.getElementById('vendaTipoDoc').value;
             const doc = { 
-                tipo: tipoDocSelecionado, os: os, vencimento: v, 
+                tipo: tipoDocSelecionado, os: os, vencimento: v, statusPagamento: statusPag,
                 dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
                 timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
                 clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total, 
@@ -1612,9 +1642,20 @@
                     await set(push(ref(db, 'caixa')), doc); 
                 }
                
-                // REGRA DE CAIXA E ESTOQUE (SÓ BAIXA SE FOR VENDA)
+                // CONTROLE DE CAIXA E ESTOQUE (SÓ BAIXA ESTOQUE SE FOR VENDA)
                 if (tipoDocSelecionado === 'VENDA') {
-                    if(!editandoDocId) window.registrarMovimentoCaixa('entrada', total);
+                    
+                    // Lógica Financeira (Edição e Nova)
+                    if (editandoDocId && originalDoc) {
+                        let statusAntigo = originalDoc.statusPagamento || 'PAGO';
+                        let valorAntigo = originalDoc.total || 0;
+                        if (statusAntigo === 'PAGO') window.registrarMovimentoCaixa('entrada', -valorAntigo); // remove o velho
+                        if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total); // adiciona o novo
+                    } else {
+                        if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
+                    }
+
+                    // Baixa de Estoque
                     for (let item of carrinhoVenda) {
                         if (item.ehEstoque && item.idProd) {
                             const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
@@ -1626,6 +1667,7 @@
                alert(editandoDocId ? "Venda Atualizada com Sucesso!" : "Venda Registrada!"); 
                carrinhoVenda = []; window.atualizarCarrinhoVenda(); 
                document.getElementById('vendaClienteBusca').value = ''; 
+               document.getElementById('vendaStatusPag').value = 'PAGO';
                window.carregarSelectsGerais(); 
                window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
                
@@ -1792,7 +1834,11 @@
        }
 
        window.salvarOrdemDeServico = async function() {
-           const numOS = parseInt(document.getElementById('osNumero').value); const cliNome = document.getElementById('osClienteBusca').value; const venc = document.getElementById('osVencimento').value;
+           const numOS = parseInt(document.getElementById('osNumero').value); 
+           const cliNome = document.getElementById('osClienteBusca').value; 
+           const venc = document.getElementById('osVencimento').value;
+           const statusPag = document.getElementById('osStatusPag').value; // PAGO ou PENDENTE
+           
            if (!cliNome) return alert("Preencha o Cliente da OS.");
            
            let cli = clientesGlobais.find(c => c.nome.toLowerCase() === cliNome.toLowerCase());
@@ -1805,6 +1851,7 @@
            let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
            let kTotal = kmFin > kmIni ? (kmFin - kmIni) : 0;
            let tKm = kTotal * (parseFloat(document.getElementById('osValorKm').value) || 0);
+           let totalGeral = tItens + tKm;
 
            let originalDoc = null;
            if (editandoDocId) {
@@ -1824,14 +1871,14 @@
            }
 
            const docOS = {
-               tipo: 'ORDEM DE SERVIÇO', os: numOS, vencimento: venc, 
+               tipo: 'ORDEM DE SERVIÇO', os: numOS, vencimento: venc, statusPagamento: statusPag,
                dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
                timestamp: originalDoc ? originalDoc.timestamp : Date.now(),
                clienteId: cId, clienteNome: cNome, 
                equipe: document.getElementById('osEquipe').value || 'N/A', inicio: document.getElementById('osInicio').value || '',
                fim: document.getElementById('osFim').value || '', pessoas: document.getElementById('osQtdPessoas').value || 1,
                kmInicial: kmIni, kmFinal: kmFin, kmTotal: kTotal, kmValor: document.getElementById('osValorKm').value || 0,
-               kmCusto: tKm, itens: carrinhoOS, total: (tItens + tKm), fotoAnexo: fotoAtualOS_Base64, 
+               kmCusto: tKm, itens: carrinhoOS, total: totalGeral, fotoAnexo: fotoAtualOS_Base64, 
                assinaturaBase64: originalDoc ? originalDoc.assinaturaBase64 : null,
                vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' 
            };
@@ -1843,8 +1890,17 @@
                     await set(push(ref(db, 'caixa')), docOS); 
                 }
 
-                if(!editandoDocId) window.registrarMovimentoCaixa('entrada', (tItens + tKm));
+                // CONTROLE FINANCEIRO DE CAIXA
+                if (editandoDocId && originalDoc) {
+                    let statusAntigo = originalDoc.statusPagamento || 'PAGO';
+                    let valorAntigo = originalDoc.total || 0;
+                    if (statusAntigo === 'PAGO') window.registrarMovimentoCaixa('entrada', -valorAntigo);
+                    if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', totalGeral);
+                } else {
+                    if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', totalGeral);
+                }
                
+                // CONTROLE DE ESTOQUE
                 for (let item of carrinhoOS) {
                    if (item.ehEstoque && item.idProd) {
                        const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
@@ -1856,6 +1912,7 @@
                carrinhoOS = []; window.atualizarCarrinhoOS(); 
                ['osClienteBusca','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
                document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
+               document.getElementById('osStatusPag').value = 'PENDENTE';
                fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
                window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO'); window.carregarSelectsGerais(); 
                
@@ -1902,20 +1959,41 @@
        
        function renderizarTabelaCaixa() {
            const tabela = document.getElementById('tabelaCaixa'); tabela.innerHTML = '';
-           if (caixaGlobal.length === 0) { tabela.innerHTML = '<tr><td colspan="8" style="text-align:center;">Nenhum documento registrado.</td></tr>'; return; }
+           if (caixaGlobal.length === 0) { tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum documento registrado.</td></tr>'; return; }
 
            caixaGlobal.forEach(v => {
                const tr = document.createElement('tr'); 
                const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
                let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
 
+               // Tratamento visual do Status de Pagamento
+               let statusStr = v.statusPagamento || 'PAGO'; 
+               let txtBadge = '';
+               if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+                   txtBadge = '-';
+               } else if (statusStr === 'PAGO') {
+                   txtBadge = '<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO</span>';
+               } else {
+                   txtBadge = '<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE</span>';
+               }
+
                let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#ffffff;">✏️ Ed</button>`;
                acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
+               
                if (!v.assinaturaBase64) {
                    acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
                }
+               
                acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
                acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
+               
+               // BOTÕES DE DAR BAIXA OU ESTORNAR PAGAMENTO
+               if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PENDENTE') {
+                   acoesHtml += `<button class="btn-acao receber" style="border-color:#27ae60; color:#27ae60;" onclick="marcarComoPago('${v.id}')" title="Registrar Pagamento">💰 Receber</button>`;
+               } else if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PAGO') {
+                   acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${v.id}')" title="Desfazer Pagamento">🔄 Estornar</button>`;
+               }
+
                acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
 
                let corTipo = v.tipo === 'VENDA' ? '#3498db' : (v.tipo === 'ORCAMENTO' ? '#9b59b6' : (v.tipo === 'DESPESA' ? '#e74c3c' : '#f39c12'));
@@ -1932,11 +2010,37 @@
                    <td style="font-weight: bold;">${v.clienteNome}</td>
                    <td style="font-weight: bold;">${vencForm}</td>
                    <td style="color:${v.tipo==='DESPESA'?'#e74c3c':'#2ecc71'}; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
+                   <td style="text-align: center;">${txtBadge}</td>
                    <td style="font-size: 11px; font-weight: bold;">${(v.tipo==='DESPESA'||v.tipo==='FECHAMENTO')?'-':temAss}</td>
                    <td class="acoes-flex">${acoesHtml}</td>
                `; 
                tabela.appendChild(tr);
            });
+       }
+
+       // --- AÇÕES RÁPIDAS DE PAGAMENTO DIRETO NA TABELA ---
+       window.marcarComoPago = async function(id) {
+           const doc = caixaGlobal.find(x => x.id === id);
+           if (!doc) return;
+           if(confirm(`💰 CONFIRMAR RECEBIMENTO\n\nDeseja confirmar o recebimento de R$ ${doc.total.toFixed(2)} do(a) cliente ${doc.clienteNome}?\n\nEste valor será adicionado no Caixa de hoje.`)) {
+               try {
+                   await update(ref(db, 'caixa/' + id), { statusPagamento: 'PAGO' });
+                   window.registrarMovimentoCaixa('entrada', doc.total);
+                   alert('Pagamento recebido com sucesso! Caixa Atualizado.');
+               } catch(e) { alert("Erro ao atualizar: " + e); }
+           }
+       }
+
+       window.estornarPagamento = async function(id) {
+           const doc = caixaGlobal.find(x => x.id === id);
+           if (!doc) return;
+           if(confirm(`🔄 ESTORNAR PAGAMENTO\n\nDeseja desfazer este recebimento?\nO valor de R$ ${doc.total.toFixed(2)} será RETIRADO do painel do Caixa Atual.`)) {
+               try {
+                   await update(ref(db, 'caixa/' + id), { statusPagamento: 'PENDENTE' });
+                   window.registrarMovimentoCaixa('entrada', -doc.total); // Tira das entradas
+                   alert('Pagamento estornado com sucesso.');
+               } catch(e) { alert("Erro ao atualizar: " + e); }
+           }
        }
        
        // --- FUNÇÃO PARA EDITAR DOCUMENTOS ---
@@ -1958,6 +2062,7 @@
                    document.getElementById('vendaOS').value = doc.os || '';
                    document.getElementById('vendaVencimento').value = doc.vencimento || '';
                    document.getElementById('vendaClienteBusca').value = doc.clienteNome || '';
+                   document.getElementById('vendaStatusPag').value = doc.statusPagamento || 'PAGO';
                    
                    carrinhoVenda = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
                    window.atualizarCarrinhoVenda();
@@ -1970,6 +2075,7 @@
                    window.abrirAba('tabOS', document.getElementById('btnTabOS'));
                    
                    document.getElementById('osNumero').value = doc.os || '';
+                   document.getElementById('osStatusPag').value = doc.statusPagamento || 'PAGO';
                    document.getElementById('osClienteBusca').value = doc.clienteNome || '';
                    document.getElementById('osVencimento').value = doc.vencimento || '';
                    document.getElementById('osEquipe').value = doc.equipe || '';
@@ -2329,7 +2435,8 @@
                     <div style="text-align:right; font-size:14px;" class="bold">TOTAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
                     <div class="line"></div>
                     <div class="center" style="font-size:11px;">
-                        ${doc.assinaturaBase64 ? 'Documento com Assinatura Digital Verificada no Sistema.' : 'Assinatura Pendente.'}
+                        ${doc.statusPagamento === 'PAGO' ? 'PAGAMENTO: RECEBIDO' : 'PAGAMENTO: PENDENTE'}<br>
+                        ${doc.assinaturaBase64 ? 'Documento com Assinatura Digital Verificada.' : ''}
                     </div>
                     
                     <div class="center" style="font-size:10px; margin-top: 15px; margin-bottom: 50px;">Obrigado pela preferência!</div>
@@ -2345,19 +2452,31 @@
 
        // --- CANCELAR E ESTORNAR ---
        window.cancelarVenda = async function(id) {
-           if (!confirm("ATENÇÃO: Deseja CANCELAR este documento?\nEle será apagado e os materiais retornarão automaticamente para o estoque.")) return;
+           if (!confirm("ATENÇÃO: Deseja CANCELAR este documento?\nEle será apagado permanentemente.")) return;
            try {
                const snap = await get(ref(db, 'caixa/' + id)); const vCanc = snap.val();
-               if (vCanc && vCanc.itens && vCanc.tipo !== 'DESPESA' && vCanc.tipo !== 'FECHAMENTO') {
-                   let itensGarantidos = Array.isArray(vCanc.itens) ? vCanc.itens : Object.values(vCanc.itens);
-                   for (let item of itensGarantidos) {
-                       if (item.ehEstoque && item.idProd && (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO')) {
-                           const snapP = await get(ref(db, 'produtos/' + item.idProd)); let pDb = snapP.val();
-                           if (pDb) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: (pDb.quantidade || 0) + item.qtdBaixa }); }
+               
+               if (vCanc && vCanc.tipo !== 'DESPESA' && vCanc.tipo !== 'FECHAMENTO') {
+                   // Devolve os itens para o Estoque
+                   if (vCanc.itens) {
+                       let itensGarantidos = Array.isArray(vCanc.itens) ? vCanc.itens : Object.values(vCanc.itens);
+                       for (let item of itensGarantidos) {
+                           if (item.ehEstoque && item.idProd && (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO')) {
+                               const snapP = await get(ref(db, 'produtos/' + item.idProd)); let pDb = snapP.val();
+                               if (pDb) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: (pDb.quantidade || 0) + item.qtdBaixa }); }
+                           }
                        }
                    }
+                   
+                   // Remove do Painel Financeiro SOMENTE SE estava como PAGO
+                   let status = vCanc.statusPagamento || 'PAGO';
+                   if (status === 'PAGO' && (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO')) {
+                       window.registrarMovimentoCaixa('entrada', -vCanc.total);
+                   }
                }
-               await remove(ref(db, 'caixa/' + id)); alert("Cancelado com sucesso!");
+               
+               await remove(ref(db, 'caixa/' + id)); 
+               alert("Documento cancelado com sucesso!");
            } catch(erro) { alert("Erro ao cancelar: " + erro); }
        }
 
@@ -2368,7 +2487,7 @@
        }
 
        window.enviarOSWhatsApp = function(id) {
-           const v = caixaGlobal.find(x => x.id === v.clienteId);
+           const v = caixaGlobal.find(x => x.id === id);
            const c = clientesGlobais.find(x => x.id === v.clienteId);
            let tel = ''; if (c && c.telefone) { tel = c.telefone.replace(/\D/g, ''); if (tel.length === 11 || tel.length === 10) { tel = '55' + tel; } }
            let venc = v.vencimento ? v.vencimento.split('-').reverse().join('/') : 'À vista';
@@ -2581,7 +2700,7 @@
             if(!m || isNaN(v) || v <= 0) return alert("Preencha o motivo e o valor corretamente.");
             
             window.registrarMovimentoCaixa('saida', v);
-            let doc = { tipo: 'DESPESA', dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(), clienteNome: m, total: v };
+            let doc = { tipo: 'DESPESA', dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(), clienteNome: m, total: v, statusPagamento: 'PAGO' };
             set(push(ref(db, 'caixa')), doc).then(() => {
                 document.getElementById('modalDespesa').style.display='none'; 
                 document.getElementById('motivoDespesa').value=''; 
@@ -2598,7 +2717,7 @@
             
             if(!confirm(`FECHAMENTO DE CAIXA\n\nCaixa Inicial: R$ ${cIni.toFixed(2)}\nTotal de Entradas: R$ ${ent.toFixed(2)}\nTotal de Saídas: R$ ${sai.toFixed(2)}\n\nSaldo Restante na Gaveta: R$ ${saldo.toFixed(2)}\n\nDeseja realizar o Fechamento? O Painel será ZERADO para o dia seguinte.`)) return;
             
-            let doc = { tipo: 'FECHAMENTO', dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(), clienteNome: 'Fechamento de Caixa', total: saldo };
+            let doc = { tipo: 'FECHAMENTO', dataStr: new Date().toLocaleString('pt-BR'), timestamp: Date.now(), clienteNome: 'Fechamento de Caixa', total: saldo, statusPagamento: 'PAGO' };
             set(push(ref(db, 'caixa')), doc).then(() => {
                 set(ref(db, 'caixaStatus'), { entradas: 0, saidas: 0, caixaInicial: 0 }); 
                 alert("Caixa fechado com sucesso! Saldo zerado.");
@@ -2624,7 +2743,8 @@
             
             // Inverte para ficar cronológico (do dia 1 ao dia 31)
             [...relatorio].reverse().forEach(v => {
-                let isEntrada = (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO');
+                let status = v.statusPagamento || 'PAGO';
+                let isEntrada = ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && status === 'PAGO');
                 let isSaida = (v.tipo === 'DESPESA');
                 
                 if(isEntrada) totEntradas += parseFloat(v.total) || 0;
@@ -2671,7 +2791,7 @@
                     <h3>${empresaGlobal.nome || 'Minha Empresa'}</h3>
                     
                     <div class="resumo">
-                        <div style="color: #27ae60;">Total de Entradas<span>R$ ${totEntradas.toFixed(2)}</span></div>
+                        <div style="color: #27ae60;">Entradas (Pagas)<span>R$ ${totEntradas.toFixed(2)}</span></div>
                         <div style="color: #e74c3c;">Total de Saídas<span>R$ ${totSaidas.toFixed(2)}</span></div>
                         <div style="color: ${corSaldo};">Balanço do Mês<span>R$ ${saldoMes.toFixed(2)}</span></div>
                     </div>
@@ -2692,6 +2812,7 @@
                     </table>
                     
                     <div style="text-align: center; margin-top: 40px; font-size: 11px; color: #7f8c8d;">
+                        Atenção: Os valores pendentes não aparecem neste relatório.<br>
                         Documento gerado automaticamente pelo sistema FH Control.
                     </div>
                     
@@ -2704,105 +2825,125 @@
             j.document.close();
         }
 
-// --- IMPORTAÇÃO VIA ARQUIVO JSON (VERSÃO NUVEM / GITHUB) ---
+       // --- IMPORTAÇÃO INTELIGENTE (COM CARGA INICIAL EMBUTIDA E CORRIGIDA) ---
 window.importarJSON = async function() {
     if(window.usuarioLogado && window.usuarioLogado.role !== 'admin') {
         return alert("Apenas o administrador pode importar produtos.");
     }
 
     const campoUpload = document.getElementById('importarXls');
-    
-    if (!campoUpload || !campoUpload.files || campoUpload.files.length === 0) {
-        return alert("Por favor, clique em 'Escolher ficheiro' e selecione o arquivo primeiro!");
-    }
-    
-    const arquivoFisico = campoUpload.files;
-    
-    // REMOVI A TRAVA DE SEGURANÇA LOCAL AQUI! O GitHub Pages lê nativamente.
 
-    const leitorArquivo = new FileReader();
-    
-    leitorArquivo.onload = async function(e) {
-        try {
-            let textoLimpo = e.target.result;
-            if (textoLimpo) textoLimpo = textoLimpo.replace(/^\uFEFF/, ''); 
+    const injetarNoBanco = async (lista) => {
+        const acharValor = (linha, nomesPossiveis) => {
+            if (!linha) return "";
+            let chaves = Object.keys(linha);
+            let chaveEncontrada = chaves.find(k => {
+                if (!k) return false;
+                return nomesPossiveis.includes(k.toString().toLowerCase().trim());
+            });
+            return chaveEncontrada ? linha[chaveEncontrada] : "";
+        };
+
+        const parseDinheiro = (val) => {
+            if (val === undefined || val === null || val === '') return 0;
+            if (typeof val === 'number') return val;
+            let limpo = val.toString().replace(/R\$/g, '').replace(/\./g, '').replace(',', '.').trim();
+            return Number.parseFloat(limpo) || 0;
+        };
+
+        let importados = 0; let ignorados = 0;
+
+        for (let i = 0; i < lista.length; i++) {
+            let linha = lista[i];
+            let pNome = acharValor(linha, ['nome', 'produto', 'descrição', 'descricao', 'item']);
+            if (!pNome || pNome.toString().trim() === "") { ignorados++; continue; }
+
+            let pCusto = parseDinheiro(acharValor(linha, ['valor de custo', 'custo', 'preco de custo']));
+            let pVenda = parseDinheiro(acharValor(linha, ['valor de venda', 'venda', 'preco de venda']));
+            let pQtd = parseDinheiro(acharValor(linha, ['estoque', 'quantidade', 'qtd']));
+            let pNcm = acharValor(linha, ['ncm']);
+            let pCodigo = acharValor(linha, ['código de barra', 'código de barras', 'código', 'codigo']);
+
+            let pMargem = 0;
+            if (pCusto > 0) pMargem = ((pVenda - pCusto) / pCusto) * 100;
             
-            const jsonParseado = JSON.parse(textoLimpo);
+            // CORREÇÃO DO ERRO AQUI! Usando o "nome completo" das funções matemáticas
+            if (!Number.isFinite(pMargem) || Number.isNaN(pMargem)) pMargem = 0;
 
-            if(!Array.isArray(jsonParseado) || jsonParseado.length === 0) {
-                campoUpload.value = '';
-                return alert("O arquivo está vazio ou não possui uma lista válida.");
-            }
-
-            const acharValor = (linha, nomesPossiveis) => {
-                if (!linha) return "";
-                let chaves = Object.keys(linha);
-                let chaveEncontrada = chaves.find(k => {
-                    if (!k) return false;
-                    return nomesPossiveis.includes(k.toString().toLowerCase().trim());
-                });
-                return chaveEncontrada ? linha[chaveEncontrada] : "";
+            const novoProd = {
+                nome: pNome.toString().trim(),
+                codigo: (pCodigo || '').toString().trim(),
+                ncm: (pNcm || '').toString().trim(),
+                categoria: 'Geral',
+                custo: pCusto,
+                margem: Number.parseFloat(pMargem.toFixed(2)),
+                venda: pVenda,
+                quantidade: Number.parseInt(pQtd) || 0,
+                foto: ""
             };
 
-            const parseDinheiro = (val) => {
-                if (val === undefined || val === null || val === '') return 0;
-                if (typeof val === 'number') return val;
-                let limpo = val.toString().replace(/R\$/g, '').replace(/\./g, '').replace(',', '.').trim();
-                return parseFloat(limpo) || 0;
-            };
+            await set(push(ref(db, 'produtos')), novoProd);
+            importados++;
+        }
 
-            let importados = 0;
-            let ignorados = 0;
-
-            for (let i = 0; i < jsonParseado.length; i++) {
-                let linha = jsonParseado[i];
-                let pNome = acharValor(linha, ['nome', 'produto', 'descrição', 'descricao', 'item']);
-                
-                if (!pNome || pNome.toString().trim() === "") { ignorados++; continue; }
-
-                let pCusto = parseDinheiro(acharValor(linha, ['valor de custo', 'custo', 'preco de custo']));
-                let pVenda = parseDinheiro(acharValor(linha, ['valor de venda', 'venda', 'preco de venda']));
-                let pQtd = parseDinheiro(acharValor(linha, ['estoque', 'quantidade', 'qtd']));
-                let pNcm = acharValor(linha, ['ncm']);
-                let pCodigo = acharValor(linha, ['código de barra', 'código de barras', 'codigo']);
-
-                let pMargem = 0;
-                if (pCusto > 0) pMargem = ((pVenda - pCusto) / pCusto) * 100;
-                if (!isFinite(pMargem) || isNaN(pMargem)) pMargem = 0;
-
-                const novoProd = {
-                    nome: pNome.toString().trim(),
-                    codigo: (pCodigo || '').toString().trim(),
-                    ncm: (pNcm || '').toString().trim(),
-                    categoria: 'Geral',
-                    custo: pCusto,
-                    margem: parseFloat(pMargem.toFixed(2)),
-                    venda: pVenda,
-                    quantidade: parseInt(pQtd) || 0,
-                    foto: ""
-                };
-
-                await set(push(ref(db, 'produtos')), novoProd);
-                importados++;
-            }
-
-            if (importados === 0) {
-                let colunasLidas = Object.keys(jsonParseado || {}).join(" | ");
-                alert(`⚠️ NADA FOI IMPORTADO.\nAs colunas que o sistema enxergou foram:\n[ ${colunasLidas} ]`);
-            } else {
-                alert(`✅ SUCESSO!\n✔️ ${importados} produtos importados para o estoque.\n❌ ${ignorados} linhas ignoradas.`);
-                if(window.filtrarProdutos) window.filtrarProdutos(); 
-            }
-            
-            campoUpload.value = ''; 
-            
-        } catch(erro) {
-            alert(`❌ ERRO AO LER O ARQUIVO:\n${erro.message}`);
-            campoUpload.value = '';
+        if (importados === 0) {
+            alert(`⚠️ NADA FOI IMPORTADO. Verifique as colunas.`);
+        } else {
+            alert(`✅ SUCESSO ABSOLUTO!\n\n✔️ ${importados} produtos salvos no estoque.\n❌ ${ignorados} linhas ignoradas.`);
+            if(window.filtrarProdutos) window.filtrarProdutos(); 
         }
     };
-    
-    leitorArquivo.readAsText(arquivoFisico);
+
+    if (!campoUpload || !campoUpload.files || campoUpload.files.length === 0) {
+        if(confirm("Nenhum arquivo foi selecionado.\n\nDeseja forçar a importação da sua Carga Inicial (30 produtos)?")) {
+            const cargaEmergencia = [
+              { "Código": 2070600000000, "Nome": "ABRACADEIRA BR 1/2", "Código de barra": "", "Valor de custo": "0,63", "Valor de venda": "1,26", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 13:35:07" },
+              { "Código": 2029960000000, "Nome": "ABRACADEIRA BR 3/4", "Código de barra": "", "Valor de custo": "0,66", "Valor de venda": "1,32", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:14:19" },
+              { "Código": 2003470000000, "Nome": "ABRACADEIRA PR 3/4", "Código de barra": "", "Valor de custo": "0,69", "Valor de venda": "1,38", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:16:56" },
+              { "Código": 2091180000000, "Nome": "ABRACADEIRA METAL", "Código de barra": "", "Valor de custo": "1,00", "Valor de venda": "1,50", "Estoque": "100,00", "NCM": "", "Cadastrado em": "01/04/2026 10:56:17" },
+              { "Código": 2038940000000, "Nome": "ABRACADEIRA NYLON 200X3.5MM BLISTER C/100 BRANCA VILA", "Código de barra": 7898580000000, "Valor de custo": "5,87", "Valor de venda": "8,81", "Estoque": "5,00", "NCM": "", "Cadastrado em": "13/03/2026 16:03:20" },
+              { "Código": 22076, "Nome": "ABRACADEIRA NYLON 250X3.6MM BLISTER C/100 BRANCA VILA", "Código de barra": 7898580000000, "Valor de custo": "9,13", "Valor de venda": "13,70", "Estoque": "4,00", "NCM": "", "Cadastrado em": "13/03/2026 16:17:07" },
+              { "Código": 2003560000000, "Nome": "ABRACADEIRA NYLON 3,6mm x 150mm *GADAN", "Código de barra": 7891230000000, "Valor de custo": "0,15", "Valor de venda": "0,30", "Estoque": "300,00", "NCM": "", "Cadastrado em": "27/03/2026 09:07:41" },
+              { "Código": 5506, "Nome": "ABRAÇADEIRA NYLON 3,6X200 BOMVINCK preta", "Código de barra": 7908780000000, "Valor de custo": "12,00", "Valor de venda": "0,18", "Estoque": "200,00", "NCM": "", "Cadastrado em": "12/03/2026 14:51:42" },
+              { "Código": 22078, "Nome": "ABRACADEIRA NYLON 300X3.6MM BLISTER C/100 BRANCA VILA", "Código de barra": 7898580000000, "Valor de custo": "11,00", "Valor de venda": "22,00", "Estoque": "5,00", "NCM": "", "Cadastrado em": "13/03/2026 16:21:03" },
+              { "Código": 2054520000000, "Nome": "ABRACADEIRA PR 1/2", "Código de barra": "", "Valor de custo": "0,67", "Valor de venda": "1,34", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:15:44" },
+              { "Código": 2033000000000, "Nome": "ABRACADEIRAS 800MM X 9MM", "Código de barra": 7890430000000, "Valor de custo": "4,00", "Valor de venda": "5,20", "Estoque": "12,00", "NCM": "", "Cadastrado em": "30/03/2026 10:55:02" },
+              { "Código": 53803, "Nome": "ACABAMENTO REDONDO P/SPLIT BRANCO 55MM PVC - ABR60", "Código de barra": 110210047, "Valor de custo": "3,34", "Valor de venda": "10,00", "Estoque": "18,00", "NCM": 39263000, "Cadastrado em": "10/03/2026 11:54:30" },
+              { "Código": 2007340000000, "Nome": "ADAPTADOR BR 3/4", "Código de barra": "", "Valor de custo": "0,85", "Valor de venda": "1,70", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:18:37" },
+              { "Código": 2065220000000, "Nome": "ADAPTADOR BR 1/2", "Código de barra": "", "Valor de custo": "0,82", "Valor de venda": "1,64", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:17:49" },
+              { "Código": 2073760000000, "Nome": "ADAPTADOR CAIXA PVC 3/4", "Código de barra": 7895310000000, "Valor de custo": "1,50", "Valor de venda": "3,00", "Estoque": "30,00", "NCM": "", "Cadastrado em": "27/03/2026 08:51:48" },
+              { "Código": 2037920000000, "Nome": "ADAPTADOR EXTENSOR RJ45 USB 50 METROS (LIGA O MOUSE NO DVR)", "Código de barra": 857161000000, "Valor de custo": "0,00", "Valor de venda": "25,00", "Estoque": "5,00", "NCM": "", "Cadastrado em": "11/03/2026 16:35:44" },
+              { "Código": 2085090000000, "Nome": "ADAPTADOR PR 1/2", "Código de barra": "", "Valor de custo": "0,90", "Valor de venda": "1,80", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:22:30" },
+              { "Código": 2081180000000, "Nome": "ADAPTADOR PR 3/4", "Código de barra": "", "Valor de custo": "0,91", "Valor de venda": "0,00", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:23:47" },
+              { "Código": 2076370000000, "Nome": "ADAPTADOR TOMADA 10/20A BOB ESPOJA", "Código de barra": "", "Valor de custo": "2,01", "Valor de venda": "6,50", "Estoque": "70,00", "NCM": "", "Cadastrado em": "21/03/2026 08:52:31" },
+              { "Código": 19790625, "Nome": "ADESIVO INSTANTANEO 10G 2 EM 1 BICO E PINCEL *ALMASUPER", "Código de barra": 7898410000000, "Valor de custo": "5,30", "Valor de venda": "7,95", "Estoque": "4,00", "NCM": 35061010, "Cadastrado em": "09/03/2026 17:32:04" },
+              { "Código": 13281225, "Nome": "ADESIVO INSTANTANEO 20G ULTRARRAPIDO AEP401 *ALMASUPER", "Código de barra": 7898410000000, "Valor de custo": "4,33", "Valor de venda": "6,71", "Estoque": "1,00", "NCM": 35061010, "Cadastrado em": "09/03/2026 17:34:53" },
+              { "Código": 1652516017, "Nome": "ADESIVO PLÁSTICO PVC 17G *KRONA", "Código de barra": 7897800000000, "Valor de custo": "1,96", "Valor de venda": "4,00", "Estoque": "43,00", "NCM": 35061090, "Cadastrado em": "09/03/2026 17:26:54" },
+              { "Código": 1652517075, "Nome": "ADESIVO PLÁSTICO PVC 75G *KRONA", "Código de barra": 7897800000000, "Valor de custo": "5,07", "Valor de venda": "7,61", "Estoque": "3,00", "NCM": 35061090, "Cadastrado em": "09/03/2026 17:28:55" },
+              { "Código": 2001820000000, "Nome": "ALICATE 8 CV IRWIN", "Código de barra": 5706920000000, "Valor de custo": "58,20", "Valor de venda": "81,48", "Estoque": "1,00", "NCM": "", "Cadastrado em": "06/04/2026 14:26:33" },
+              { "Código": 28588, "Nome": "ALICATE BOMBA DAGUA 10 ISOLADO BLISTER VILA -", "Código de barra": 7908500000000, "Valor de custo": "37,62", "Valor de venda": "58,31", "Estoque": "3,00", "NCM": "", "Cadastrado em": "18/03/2026 11:00:41" },
+              { "Código": 20918, "Nome": "ALICATE CRIMPAR RJ45 *ATOPY", "Código de barra": 7898720000000, "Valor de custo": "33,52", "Valor de venda": "61,01", "Estoque": "1,00", "NCM": "", "Cadastrado em": "14/03/2026 11:31:00" },
+              { "Código": 12126, "Nome": "ALICATE DE CORTE *RAYCO", "Código de barra": 7898340000000, "Valor de custo": "20,60", "Valor de venda": "35,00", "Estoque": "2,00", "NCM": "", "Cadastrado em": "16/03/2026 09:36:24" },
+              { "Código": 2097720000000, "Nome": "ALICATE DE CORTE DIAGNOL 6 IRWIN", "Código de barra": 42526906602, "Valor de custo": "41,09", "Valor de venda": "57,53", "Estoque": "1,00", "NCM": "", "Cadastrado em": "06/04/2026 13:53:32" },
+              { "Código": "LE001", "Nome": "ALICATE DESENCAPADOR/CRIMPADOR *L-LENA", "Código de barra": 7887160000000, "Valor de custo": "25,99", "Valor de venda": "48,50", "Estoque": "3,00", "NCM": "", "Cadastrado em": "14/03/2026 11:26:26" },
+              { "Código": 1051, "Nome": "ALICATE MINI BICO 5 *PROFIELD", "Código de barra": 7890000000000, "Valor de custo": "3,22", "Valor de venda": "6,50", "Estoque": "2,00", "NCM": "", "Cadastrado em": "16/03/2026 10:00:45" }
+            ];
+            await injetarNoBanco(cargaEmergencia);
+        }
+        return;
+    }
+
+    const arquivoFisico = campoUpload.files;
+    try {
+        let textoLimpo = await arquivoFisico.text();
+        if (textoLimpo) textoLimpo = textoLimpo.replace(/^\uFEFF/, ''); 
+        const jsonParseado = JSON.parse(textoLimpo);
+        await injetarNoBanco(jsonParseado);
+        campoUpload.value = ''; 
+    } catch(erro) {
+        alert(`❌ ERRO DE LEITURA.\nDICA: Feche este aviso, certifique-se de NÃO escolher arquivo e clique no botão 'IMPORTAR' de novo para puxar a Carga Inicial!`);
+        campoUpload.value = '';
+    }
 }
 
    } // Fim de bloqueio assinatura remota
