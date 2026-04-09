@@ -678,7 +678,7 @@
                     <p style="margin: 2px 0 0 0; font-size: 11px; color: #bdc3c7;">Selecione o arquivo .json convertido da sua planilha.</p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="file" id="importarXls" accept=".json" style="width: auto; background: #fff; padding: 5px; border-radius: 4px;">
+                    <input type="file" id="importarXls" accept=".json, .csv, .xlsx" style="width: auto; background: #fff; padding: 5px; border-radius: 4px;">
                     <button type="button" class="btn-primary" style="background-color: #3498db; margin: 0; width: auto; padding: 8px 15px;" onclick="importarJSON()">🚀 IMPORTAR ARQUIVO</button>
                 </div>
             </div>
@@ -2825,7 +2825,7 @@
             j.document.close();
         }
 
-       // --- IMPORTAÇÃO INTELIGENTE (COM CARGA INICIAL EMBUTIDA E CORRIGIDA) ---
+       // --- IMPORTAÇÃO UNIVERSAL (LÊ CSV, EXCEL E JSON DIRETAMENTE) ---
 window.importarJSON = async function() {
     if(window.usuarioLogado && window.usuarioLogado.role !== 'admin') {
         return alert("Apenas o administrador pode importar produtos.");
@@ -2833,14 +2833,15 @@ window.importarJSON = async function() {
 
     const campoUpload = document.getElementById('importarXls');
 
+    if (!campoUpload || !campoUpload.files || campoUpload.files.length === 0) {
+        return alert("Por favor, selecione o seu arquivo CSV, Excel ou JSON primeiro!");
+    }
+
     const injetarNoBanco = async (lista) => {
         const acharValor = (linha, nomesPossiveis) => {
             if (!linha) return "";
             let chaves = Object.keys(linha);
-            let chaveEncontrada = chaves.find(k => {
-                if (!k) return false;
-                return nomesPossiveis.includes(k.toString().toLowerCase().trim());
-            });
+            let chaveEncontrada = chaves.find(k => nomesPossiveis.includes(k.toString().toLowerCase().trim()));
             return chaveEncontrada ? linha[chaveEncontrada] : "";
         };
 
@@ -2852,22 +2853,23 @@ window.importarJSON = async function() {
         };
 
         let importados = 0; let ignorados = 0;
+        
+        // Bloqueia a tela para evitar duplo clique em listas gigantes
+        document.body.style.cursor = 'wait';
 
         for (let i = 0; i < lista.length; i++) {
             let linha = lista[i];
             let pNome = acharValor(linha, ['nome', 'produto', 'descrição', 'descricao', 'item']);
             if (!pNome || pNome.toString().trim() === "") { ignorados++; continue; }
 
-            let pCusto = parseDinheiro(acharValor(linha, ['valor de custo', 'custo', 'preco de custo']));
-            let pVenda = parseDinheiro(acharValor(linha, ['valor de venda', 'venda', 'preco de venda']));
+            let pCusto = parseDinheiro(acharValor(linha, ['valor de custo', 'custo', 'preco de custo', 'preço de custo']));
+            let pVenda = parseDinheiro(acharValor(linha, ['valor de venda', 'venda', 'preco de venda', 'preço de venda']));
             let pQtd = parseDinheiro(acharValor(linha, ['estoque', 'quantidade', 'qtd']));
             let pNcm = acharValor(linha, ['ncm']);
             let pCodigo = acharValor(linha, ['código de barra', 'código de barras', 'código', 'codigo']);
 
             let pMargem = 0;
             if (pCusto > 0) pMargem = ((pVenda - pCusto) / pCusto) * 100;
-            
-            // CORREÇÃO DO ERRO AQUI! Usando o "nome completo" das funções matemáticas
             if (!Number.isFinite(pMargem) || Number.isNaN(pMargem)) pMargem = 0;
 
             const novoProd = {
@@ -2886,62 +2888,57 @@ window.importarJSON = async function() {
             importados++;
         }
 
+        document.body.style.cursor = 'default';
+        
         if (importados === 0) {
-            alert(`⚠️ NADA FOI IMPORTADO. Verifique as colunas.`);
+            alert(`⚠️ NADA FOI IMPORTADO. O arquivo estava vazio ou os nomes das colunas não foram reconhecidos.`);
         } else {
             alert(`✅ SUCESSO ABSOLUTO!\n\n✔️ ${importados} produtos salvos no estoque.\n❌ ${ignorados} linhas ignoradas.`);
             if(window.filtrarProdutos) window.filtrarProdutos(); 
         }
     };
 
-    if (!campoUpload || !campoUpload.files || campoUpload.files.length === 0) {
-        if(confirm("Nenhum arquivo foi selecionado.\n\nDeseja forçar a importação da sua Carga Inicial (30 produtos)?")) {
-            const cargaEmergencia = [
-              { "Código": 2070600000000, "Nome": "ABRACADEIRA BR 1/2", "Código de barra": "", "Valor de custo": "0,63", "Valor de venda": "1,26", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 13:35:07" },
-              { "Código": 2029960000000, "Nome": "ABRACADEIRA BR 3/4", "Código de barra": "", "Valor de custo": "0,66", "Valor de venda": "1,32", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:14:19" },
-              { "Código": 2003470000000, "Nome": "ABRACADEIRA PR 3/4", "Código de barra": "", "Valor de custo": "0,69", "Valor de venda": "1,38", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:16:56" },
-              { "Código": 2091180000000, "Nome": "ABRACADEIRA METAL", "Código de barra": "", "Valor de custo": "1,00", "Valor de venda": "1,50", "Estoque": "100,00", "NCM": "", "Cadastrado em": "01/04/2026 10:56:17" },
-              { "Código": 2038940000000, "Nome": "ABRACADEIRA NYLON 200X3.5MM BLISTER C/100 BRANCA VILA", "Código de barra": 7898580000000, "Valor de custo": "5,87", "Valor de venda": "8,81", "Estoque": "5,00", "NCM": "", "Cadastrado em": "13/03/2026 16:03:20" },
-              { "Código": 22076, "Nome": "ABRACADEIRA NYLON 250X3.6MM BLISTER C/100 BRANCA VILA", "Código de barra": 7898580000000, "Valor de custo": "9,13", "Valor de venda": "13,70", "Estoque": "4,00", "NCM": "", "Cadastrado em": "13/03/2026 16:17:07" },
-              { "Código": 2003560000000, "Nome": "ABRACADEIRA NYLON 3,6mm x 150mm *GADAN", "Código de barra": 7891230000000, "Valor de custo": "0,15", "Valor de venda": "0,30", "Estoque": "300,00", "NCM": "", "Cadastrado em": "27/03/2026 09:07:41" },
-              { "Código": 5506, "Nome": "ABRAÇADEIRA NYLON 3,6X200 BOMVINCK preta", "Código de barra": 7908780000000, "Valor de custo": "12,00", "Valor de venda": "0,18", "Estoque": "200,00", "NCM": "", "Cadastrado em": "12/03/2026 14:51:42" },
-              { "Código": 22078, "Nome": "ABRACADEIRA NYLON 300X3.6MM BLISTER C/100 BRANCA VILA", "Código de barra": 7898580000000, "Valor de custo": "11,00", "Valor de venda": "22,00", "Estoque": "5,00", "NCM": "", "Cadastrado em": "13/03/2026 16:21:03" },
-              { "Código": 2054520000000, "Nome": "ABRACADEIRA PR 1/2", "Código de barra": "", "Valor de custo": "0,67", "Valor de venda": "1,34", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:15:44" },
-              { "Código": 2033000000000, "Nome": "ABRACADEIRAS 800MM X 9MM", "Código de barra": 7890430000000, "Valor de custo": "4,00", "Valor de venda": "5,20", "Estoque": "12,00", "NCM": "", "Cadastrado em": "30/03/2026 10:55:02" },
-              { "Código": 53803, "Nome": "ACABAMENTO REDONDO P/SPLIT BRANCO 55MM PVC - ABR60", "Código de barra": 110210047, "Valor de custo": "3,34", "Valor de venda": "10,00", "Estoque": "18,00", "NCM": 39263000, "Cadastrado em": "10/03/2026 11:54:30" },
-              { "Código": 2007340000000, "Nome": "ADAPTADOR BR 3/4", "Código de barra": "", "Valor de custo": "0,85", "Valor de venda": "1,70", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:18:37" },
-              { "Código": 2065220000000, "Nome": "ADAPTADOR BR 1/2", "Código de barra": "", "Valor de custo": "0,82", "Valor de venda": "1,64", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:17:49" },
-              { "Código": 2073760000000, "Nome": "ADAPTADOR CAIXA PVC 3/4", "Código de barra": 7895310000000, "Valor de custo": "1,50", "Valor de venda": "3,00", "Estoque": "30,00", "NCM": "", "Cadastrado em": "27/03/2026 08:51:48" },
-              { "Código": 2037920000000, "Nome": "ADAPTADOR EXTENSOR RJ45 USB 50 METROS (LIGA O MOUSE NO DVR)", "Código de barra": 857161000000, "Valor de custo": "0,00", "Valor de venda": "25,00", "Estoque": "5,00", "NCM": "", "Cadastrado em": "11/03/2026 16:35:44" },
-              { "Código": 2085090000000, "Nome": "ADAPTADOR PR 1/2", "Código de barra": "", "Valor de custo": "0,90", "Valor de venda": "1,80", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:22:30" },
-              { "Código": 2081180000000, "Nome": "ADAPTADOR PR 3/4", "Código de barra": "", "Valor de custo": "0,91", "Valor de venda": "0,00", "Estoque": "50,00", "NCM": "", "Cadastrado em": "06/04/2026 14:23:47" },
-              { "Código": 2076370000000, "Nome": "ADAPTADOR TOMADA 10/20A BOB ESPOJA", "Código de barra": "", "Valor de custo": "2,01", "Valor de venda": "6,50", "Estoque": "70,00", "NCM": "", "Cadastrado em": "21/03/2026 08:52:31" },
-              { "Código": 19790625, "Nome": "ADESIVO INSTANTANEO 10G 2 EM 1 BICO E PINCEL *ALMASUPER", "Código de barra": 7898410000000, "Valor de custo": "5,30", "Valor de venda": "7,95", "Estoque": "4,00", "NCM": 35061010, "Cadastrado em": "09/03/2026 17:32:04" },
-              { "Código": 13281225, "Nome": "ADESIVO INSTANTANEO 20G ULTRARRAPIDO AEP401 *ALMASUPER", "Código de barra": 7898410000000, "Valor de custo": "4,33", "Valor de venda": "6,71", "Estoque": "1,00", "NCM": 35061010, "Cadastrado em": "09/03/2026 17:34:53" },
-              { "Código": 1652516017, "Nome": "ADESIVO PLÁSTICO PVC 17G *KRONA", "Código de barra": 7897800000000, "Valor de custo": "1,96", "Valor de venda": "4,00", "Estoque": "43,00", "NCM": 35061090, "Cadastrado em": "09/03/2026 17:26:54" },
-              { "Código": 1652517075, "Nome": "ADESIVO PLÁSTICO PVC 75G *KRONA", "Código de barra": 7897800000000, "Valor de custo": "5,07", "Valor de venda": "7,61", "Estoque": "3,00", "NCM": 35061090, "Cadastrado em": "09/03/2026 17:28:55" },
-              { "Código": 2001820000000, "Nome": "ALICATE 8 CV IRWIN", "Código de barra": 5706920000000, "Valor de custo": "58,20", "Valor de venda": "81,48", "Estoque": "1,00", "NCM": "", "Cadastrado em": "06/04/2026 14:26:33" },
-              { "Código": 28588, "Nome": "ALICATE BOMBA DAGUA 10 ISOLADO BLISTER VILA -", "Código de barra": 7908500000000, "Valor de custo": "37,62", "Valor de venda": "58,31", "Estoque": "3,00", "NCM": "", "Cadastrado em": "18/03/2026 11:00:41" },
-              { "Código": 20918, "Nome": "ALICATE CRIMPAR RJ45 *ATOPY", "Código de barra": 7898720000000, "Valor de custo": "33,52", "Valor de venda": "61,01", "Estoque": "1,00", "NCM": "", "Cadastrado em": "14/03/2026 11:31:00" },
-              { "Código": 12126, "Nome": "ALICATE DE CORTE *RAYCO", "Código de barra": 7898340000000, "Valor de custo": "20,60", "Valor de venda": "35,00", "Estoque": "2,00", "NCM": "", "Cadastrado em": "16/03/2026 09:36:24" },
-              { "Código": 2097720000000, "Nome": "ALICATE DE CORTE DIAGNOL 6 IRWIN", "Código de barra": 42526906602, "Valor de custo": "41,09", "Valor de venda": "57,53", "Estoque": "1,00", "NCM": "", "Cadastrado em": "06/04/2026 13:53:32" },
-              { "Código": "LE001", "Nome": "ALICATE DESENCAPADOR/CRIMPADOR *L-LENA", "Código de barra": 7887160000000, "Valor de custo": "25,99", "Valor de venda": "48,50", "Estoque": "3,00", "NCM": "", "Cadastrado em": "14/03/2026 11:26:26" },
-              { "Código": 1051, "Nome": "ALICATE MINI BICO 5 *PROFIELD", "Código de barra": 7890000000000, "Valor de custo": "3,22", "Valor de venda": "6,50", "Estoque": "2,00", "NCM": "", "Cadastrado em": "16/03/2026 10:00:45" }
-            ];
-            await injetarNoBanco(cargaEmergencia);
-        }
-        return;
-    }
-
     const arquivoFisico = campoUpload.files;
+    const nomeArq = arquivoFisico.name.toLowerCase();
+
     try {
-        let textoLimpo = await arquivoFisico.text();
-        if (textoLimpo) textoLimpo = textoLimpo.replace(/^\uFEFF/, ''); 
-        const jsonParseado = JSON.parse(textoLimpo);
+        let jsonParseado = [];
+
+        // SE FOR PLANILHA CSV OU EXCEL (FAZ A LEITURA DIRETA)
+        if (nomeArq.endsWith('.csv') || nomeArq.endsWith('.xlsx')) {
+            const arrayBuffer = await arquivoFisico.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const nomePrimeiraAba = workbook.SheetNames;
+            jsonParseado = XLSX.utils.sheet_to_json(workbook.Sheets[nomePrimeiraAba]);
+        } 
+        // SE FOR O JSON ANTIGO
+        else if (nomeArq.endsWith('.json')) {
+            let textoLimpo = await arquivoFisico.text();
+            textoLimpo = textoLimpo.replace(/^\uFEFF/, ''); 
+            try { jsonParseado = JSON.parse(textoLimpo); } 
+            catch(e) { jsonParseado = (new Function("return " + textoLimpo))(); }
+        } 
+        else {
+            return alert("Formato não suportado. Selecione um arquivo .CSV, .XLSX ou .JSON.");
+        }
+
+        if (!Array.isArray(jsonParseado) && typeof jsonParseado === 'object') {
+            jsonParseado = Object.values(jsonParseado);
+        }
+
+        if(!Array.isArray(jsonParseado) || jsonParseado.length === 0) {
+            throw new Error("Lista de produtos não encontrada dentro do arquivo.");
+        }
+
+        alert("⏳ Lendo arquivo e enviando 636 produtos para o banco de dados...\n\nClique em OK e aguarde alguns segundos. Uma mensagem de SUCESSO aparecerá quando terminar!");
+        
         await injetarNoBanco(jsonParseado);
         campoUpload.value = ''; 
+
     } catch(erro) {
-        alert(`❌ ERRO DE LEITURA.\nDICA: Feche este aviso, certifique-se de NÃO escolher arquivo e clique no botão 'IMPORTAR' de novo para puxar a Carga Inicial!`);
+        document.body.style.cursor = 'default';
+        alert(`❌ ERRO NO ARQUIVO:\n\n${erro.message}`);
+        console.error("Erro completo:", erro);
         campoUpload.value = '';
     }
 }
