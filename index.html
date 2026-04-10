@@ -693,9 +693,20 @@
             </div>
             <p style="font-size: 11px; color: #e74c3c; margin-top: 0;">Atenção: Qtd ≤ 3 piscará vermelho.</p>
             <div class="table-responsive">
-                <table>
-                    <thead><tr><th>Foto</th><th>Cód / NCM</th><th>Nome</th><th>Categoria</th><th>Qtd</th><th>Custo</th><th>Venda</th><th>Ações</th></tr></thead>
-                    <tbody id="tabelaEstoque"></tbody>
+            <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+         <thead>
+                <tr>
+                <th style="width: 45px; text-align: left; padding: 5px;">Foto</th>
+                <th style="width: 90px; text-align: left; padding: 5px;">Código</th>
+                <th style="text-align: left; padding: 5px;">Nome</th>
+                <th style="width: 90px; text-align: left; padding: 5px;">Categoria</th>
+                <th style="width: 50px; text-align: center; padding: 5px;">Qtd</th>
+                <th style="width: 90px; text-align: left; padding: 5px;">Custo</th>
+                <th style="width: 90px; text-align: left; padding: 5px;">Venda</th>
+                <th style="width: 100px; text-align: center; padding: 5px;">Ações</th>
+                </tr>
+                </thead>
+                <tbody id="tabelaEstoque"></tbody>
                 </table>
             </div>
         </div>
@@ -1410,11 +1421,18 @@
                // COLUNA CÓDIGO E NCM
                let ncmTxt = p.ncm ? `NCM: ${p.ncm}` : 'NCM: -';
                
-               tr.innerHTML = `<td>${img}</td><td style="font-weight:bold; color:#ffffff;">${p.codigo || '-'}<br><span style="font-size:9px;color:#bdc3c7;">${ncmTxt}</span></td><td style="font-weight:bold;">${p.nome}</td><td><span style="background-color:#ffffff;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td><td style="font-weight:bold;font-size:14px;">${p.quantidade || 0}</td><td style="font-weight:bold;">R$ ${(parseFloat(String(p.custo).replace(',', '.')) || 0).toFixed(2)}</td><td style="color:#2ecc71;font-weight:bold;">R$ ${parseFloat(p.venda).toFixed(2)}</td>
-               <td class="acoes-flex">
-                   <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️ Ed</button>
-                   <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
-               </td>`;
+               tr.innerHTML = `
+    <td style="padding: 5px;">${img}</td>
+    <td style="font-weight:bold; color:#f1c40f; font-size:11px; overflow:hidden; text-overflow:ellipsis; padding: 5px;">${p.codigo || '-'}</td>
+    <td style="font-weight:bold; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding: 5px;" title="${p.nome}">${p.nome}</td>
+    <td style="padding: 5px;"><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td>
+    <td style="font-weight:bold; font-size:14px; text-align:center; padding: 5px;">${p.quantidade || 0}</td>
+    <td style="font-weight:bold; padding: 5px;">R$ ${(parseFloat(String(p.custo).replace(',', '.')) || 0).toFixed(2)}</td>
+    <td style="color:#2ecc71; font-weight:bold; padding: 5px;">R$ ${(parseFloat(String(p.venda).replace(',', '.')) || 0).toFixed(2)}</td>
+    <td class="acoes-flex" style="text-align: center; justify-content: center; padding: 5px;">
+        <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️</button>
+        <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
+    </td>`;
                tab.appendChild(tr);
            });
        }
@@ -3503,6 +3521,7 @@ XTEN48422	VARETA DE SOLDA FOSCOPER PRATEADO		2,80	4,20	30,00		10/03/2026 09:29:4
                 let col = linhas[i].split('\t');
                 if (col.length < 5) continue; 
 
+                // Agora o sistema sabe exatamente qual coluna é qual!
                 let pCusto = parseDinheiro(col);
                 let pVenda = parseDinheiro(col);
                 let pMargem = pCusto > 0 ? ((pVenda - pCusto) / pCusto) * 100 : 0;
