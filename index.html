@@ -1475,66 +1475,16 @@
        }
        window.cancelarEdicaoProd = function() { editandoProdId = null; document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; document.getElementById('tituloProduto').innerText = "Cadastro de Produto"; document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; document.getElementById('btnCancelarProd').style.display = "none"; }
        window.excluirProd = function(id) { if(confirm("Excluir produto do estoque?")) remove(ref(db, 'produtos/' + id)); }
+
+// =========================================================
+// FUNÇÃO 1: EXCLUIR TODOS OS PRODUTOS (ZERAR ESTOQUE)
+// =========================================================
 window.excluirTodosProdutos = async function() {
     let confirmacao = prompt("⚠️ ATENÇÃO EXTREMA: Isso apagará TODOS os produtos do seu estoque!\n\nPara confirmar e começar do zero, digite a palavra: ZERAR");
-        if (confirmacao === "ZERAR") {
-        try {
-            document.body.style.cursor = 'wait';
-window.lerArquivoTXT = async function(event) {
-    let arquivo = event.target.files;
-    if (!arquivo) return;
-
-    // Confirmação por segurança
-    let confirmacao = confirm("Deseja iniciar a importação deste arquivo TXT para o banco de dados?");
-    if (!confirmacao) {
-        event.target.value = ''; // Limpa a seleção
-        return;
-    }
-
-    let leitor = new FileReader();
-    leitor.onload = async function(e) {
-        let texto = e.target.result;
-        
-        try {
-            document.body.style.cursor = 'wait';
-            
-            // Pega o texto do TXT e converte em um formato JSON que o sistema entende
-            let jsonFormatado = "[" + texto.trim().replace(/,$/, "") + "]";
-            let produtos = JSON.parse(jsonFormatado);
-
-            let importados = 0;
-            let databaseVar = typeof db !== 'undefined' ? db : (window.db || null);
-
-            // Loop para enviar cada produto lido diretamente para o Firebase
-            for (let prod of produtos) {
-                if (databaseVar && typeof set !== 'undefined' && typeof push !== 'undefined' && typeof ref !== 'undefined') {
-                    await set(push(ref(databaseVar, 'produtos')), prod);
-                } else if (window.firebase && window.firebase.database) {
-                    await window.firebase.database().ref('produtos').push(prod);
-                } else {
-                    throw new Error("Conexão com o Firebase não encontrada!");
-                }
-                importados++;
-            }
-
-            document.body.style.cursor = 'default';
-            alert(`✅ IMPORTAÇÃO CONCLUÍDA!\n\nForam inseridos exatamente ${importados} produtos no sistema de forma automática.`);
-            
-            event.target.value = ''; // Limpa o input para poder importar de novo futuramente se quiser
-            
-            // Atualiza a tabela
-            if(window.filtrarProdutos) window.filtrarProdutos();
-
-        } catch (erro) {
-            document.body.style.cursor = 'default';
-            alert("❌ Erro ao processar o arquivo TXT: " + erro.message);
-            console.error(erro);
-        }
-    };
     
-    // Inicia a leitura do arquivo selecionado
-    leitor.readAsText(arquivo);
-};
+    if (confirmacao === "ZERAR") {
+        try {
+            document.body.style.cursor = 'wait';
             
             // Remove o nó 'produtos' inteiro do Firebase
             if (typeof remove !== 'undefined' && typeof ref !== 'undefined' && typeof db !== 'undefined') {
@@ -1548,7 +1498,6 @@ window.lerArquivoTXT = async function(event) {
             document.body.style.cursor = 'default';
             alert("✅ SUCESSO! O seu estoque do FH Control foi completamente zerado.\nVocê já pode tentar fazer a importação novamente.");
             
-            // Atualiza a tabela na tela para sumir com os produtos
             if(window.filtrarProdutos) window.filtrarProdutos(); 
             
         } catch (erro) {
@@ -1560,6 +1509,109 @@ window.lerArquivoTXT = async function(event) {
     }
 };
 
+// =========================================================
+// FUNÇÃO: IMPORTAR ARQUIVO TXT / EXCEL
+// =========================================================
+window.lerArquivoTXT = async function(event) {
+    let arquivo = event.target.files;
+    if (!arquivo) return;
+
+    // A pergunta que aparece na tela
+    let confirmacao = confirm("Deseja iniciar a importação deste arquivo TXT para o banco de dados?");
+    if (!confirmacao) {
+        event.target.value = ''; 
+        return;
+    }
+
+    let leitor = new FileReader();
+    
+    // O que o sistema faz assim que consegue ler o arquivo
+    leitor.onload = async function(e) {
+        let texto = e.target.result;
+        
+        try {
+            document.body.style.cursor = 'wait';
+            
+            // Quebra o texto linha por linha
+            let linhas = texto.split(/\r?\n/);
+            let produtos = [];
+
+            for (let linha of linhas) {
+                // Tenta dividir por Tab (Padrão de cópia do Excel)
+                let col = linha.split('\t');
+                
+                // Se não achar o Tab, tenta dividir por ponto-e-vírgula (caso você tenha salvo em CSV)
+                if (col.length < 4) {
+                    col = linha.split(';');
+                }
+                
+                // Pula linhas vazias
+                if (col.length < 4) continue;
+
+                // Função automática para consertar os códigos "E+" da planilha
+                const corrigirNum = (valor) => {
+                    if (!valor) return "";
+                    valor = String(valor).trim();
+                    if (valor.toUpperCase().includes('E+')) {
+                        return parseFloat(valor.replace(',', '.')).toString();
+                    }
+                    return valor;
+                };
+
+                // Monta o produto limpo direto da planilha
+                let novoProd = {
+                    "Código": corrigirNum(col),
+                    "Nome": col ? col.trim() : "",
+                    "Código de barra": corrigirNum(col),
+                    "Valor de custo": col ? col.trim() : "",
+                    "Valor de venda": col ? col.trim() : "",
+                    "Estoque": col ? col.trim() : "",
+                    "NCM": col ? col.trim() : "",
+                    "Cadastrado em": col ? col.trim() : ""
+                };
+
+                produtos.push(novoProd);
+            }
+
+            if (produtos.length === 0) {
+                throw new Error("O arquivo parece vazio ou formatado incorretamente. Lembre-se de copiar os dados no Excel, colar no Bloco de Notas e salvar como TXT.");
+            }
+
+            let importados = 0;
+            let databaseVar = typeof db !== 'undefined' ? db : (window.db || null);
+
+            if (!databaseVar) throw new Error("A variável 'db' do banco de dados não foi encontrada!");
+
+            // Loop que envia tudo para o Firebase
+            for (let prod of produtos) {
+                if (typeof set !== 'undefined' && typeof push !== 'undefined' && typeof ref !== 'undefined') {
+                    await set(push(ref(databaseVar, 'produtos')), prod);
+                } else if (window.firebase && window.firebase.database) {
+                    await window.firebase.database().ref('produtos').push(prod);
+                } else {
+                    throw new Error("Comandos do Firebase não encontrados.");
+                }
+                importados++;
+            }
+
+            document.body.style.cursor = 'default';
+            alert(`✅ SUCESSO ABSOLUTO!\n\nForam lidos e importados exatamente ${importados} produtos.\nTodos os códigos "E+" foram consertados e formatados!`);
+            
+            event.target.value = ''; 
+            if(window.filtrarProdutos) window.filtrarProdutos();
+
+        } catch (erro) {
+            document.body.style.cursor = 'default';
+            alert("❌ ERRO NA IMPORTAÇÃO:\n\n" + erro.message);
+            console.error("Erro completo:", erro);
+        }
+    };
+    
+    // 🔥 ESTA É A LINHA QUE FALTAVA PARA ELE FUNCIONAR 🔥
+    // Sem ela, ele perguntava "Deseja importar?" e parava!
+    leitor.readAsText(arquivo);
+};
+       
        // --- FUNÇÕES COMPARTILHADAS GLOBAIS ---
        window.gerarProximoNumeroDoc = function(inputId, valorInicial, tipoDoc) {
            let maxNum = valorInicial; 
