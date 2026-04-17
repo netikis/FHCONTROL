@@ -676,10 +676,11 @@
           <div class="toolbar"> 
     <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar Nome, Código ou Categoria..." onkeyup="filtrarProdutos()"> 
     <button type="button" class="btn-danger" style="margin-left: 10px; padding: 8px 15px;" onclick="excluirTodosProdutos()">🗑️ ZERAR TODO O ESTOQUE</button>
-    <input type="file" id="campoUploadTXT" accept=".txt" style="display: none" onchange="lerArquivoTXT(this)">
+    <input type="file" id="campoUploadTXT" accept=".txt" style="display: none" onchange="window.lerArquivoTXT(event)">
     <button type="button" class="btn-success" style="margin-left: 10px; padding: 8px 15px;" onclick="document.getElementById('campoUploadTXT').click()">
- 📥 IMPORTAR ARQUIVO TXT
-    </button>
+    📥 IMPORTAR ARQUIVO TXT
+  </button>
+    
 
 
                 <div class="pagination">
