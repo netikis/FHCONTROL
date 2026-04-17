@@ -701,17 +701,16 @@
             <div class="table-responsive">
             <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
          <thead>
-                <tr>
-                <th style="width: 45px; text-align: left; padding: 5px;">Foto</th>
-                <th style="width: 90px; text-align: left; padding: 5px;">Código</th>
-                <th style="text-align: left; padding: 5px;">Nome</th>
-                <th style="width: 90px; text-align: left; padding: 5px;">Categoria</th>
-                <th style="width: 50px; text-align: center; padding: 5px;">Qtd</th>
-                <th style="width: 90px; text-align: left; padding: 5px;">Custo</th>
-                <th style="width: 90px; text-align: left; padding: 5px;">Venda</th>
-                <th style="width: 100px; text-align: center; padding: 5px;">Ações</th>
-                </tr>
-                </thead>
+        <tr>
+        <th style="width: 90px; text-align: left; padding: 5px;">Código</th>
+        <th style="text-align: left; padding: 5px;">Nome</th>
+        <th style="width: 90px; text-align: left; padding: 5px;">Categoria</th>
+        <th style="width: 50px; text-align: center; padding: 5px;">Qtd</th>
+        <th style="width: 90px; text-align: left; padding: 5px;">Custo</th>
+        <th style="width: 90px; text-align: left; padding: 5px;">Venda</th>
+        <th style="width: 90px; text-align: left; padding: 5px;">NCM</th> <th style="width: 100px; text-align: center; padding: 5px;">Ações</th>
+        <th style="width: 55px; text-align: center; padding: 5px;">Foto</th> </tr>
+   </thead>
                 <tbody id="tabelaEstoque"></tbody>
                 </table>
             </div>
@@ -1425,24 +1424,26 @@
                const tr = document.createElement('tr'); tr.className = alert;
                
                // COLUNA CÓDIGO E NCM
-               let ncmTxt = p.ncm ? `NCM: ${p.ncm}` : 'NCM: -';
+               let ncmTxt = p.ncm || '-'; // Simplificado para puxar direto o NCM
                
+               // A ORDEM AQUI FOI AJUSTADA PARA BATER COM O CABEÇALHO NOVO
                tr.innerHTML = `
-    <td style="padding: 5px;">${img}</td>
     <td style="font-weight:bold; color:#f1c40f; font-size:11px; overflow:hidden; text-overflow:ellipsis; padding: 5px;">${p.codigo || '-'}</td>
     <td style="font-weight:bold; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding: 5px;" title="${p.nome}">${p.nome}</td>
     <td style="padding: 5px;"><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td>
     <td style="font-weight:bold; font-size:14px; text-align:center; padding: 5px;">${p.quantidade || 0}</td>
     <td style="font-weight:bold; padding: 5px;">R$ ${(parseFloat(String(p.custo).replace(',', '.')) || 0).toFixed(2)}</td>
     <td style="color:#2ecc71; font-weight:bold; padding: 5px;">R$ ${(parseFloat(String(p.venda).replace(',', '.')) || 0).toFixed(2)}</td>
+    <td style="font-weight:bold; padding: 5px;">${ncmTxt}</td>
     <td class="acoes-flex" style="text-align: center; justify-content: center; padding: 5px;">
         <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️</button>
         <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
-    </td>`;
+    </td>
+    <td style="text-align: center; padding: 5px;">${img}</td>`;
                tab.appendChild(tr);
            });
        }
-
+              
        document.getElementById('formProduto').addEventListener('submit', e => {
            e.preventDefault(); 
            const d = { 
@@ -1559,15 +1560,17 @@ window.lerArquivoTXT = async function(event) {
                 };
 
                 // Monta o produto limpo direto da planilha
-                let novoProd = {
-                    "Código": corrigirNum(col),
-                    "Nome": col ? col.trim() : "",
-                    "Código de barra": corrigirNum(col),
-                    "Valor de custo": col ? col.trim() : "",
-                    "Valor de venda": col ? col.trim() : "",
-                    "Estoque": col ? col.trim() : "",
-                    "NCM": col ? col.trim() : "",
-                    "Cadastrado em": col ? col.trim() : ""
+                
+                    let novoProd = {
+                    // Pega o código de qualquer uma das colunas informadas nos seus arquivos
+                    codigo_barras: linha['Código de barra'] || linha['Código de barras'] || linha['Código'] || '',
+                    nome: linha['Nome'] || linha['NOME DO PRODUTO'] || '',
+                    custo: linha['Valor de custo'] || linha['CUSTO'] || '0,00',
+                    venda: linha['Valor de venda'] || '0,00',
+                    estoque: linha['Estoque'] || '0',
+                    ncm: linha['NCM'] || '', // Adicionado o NCM
+                    categoria: linha['CATEGORIA'] || 'Geral',
+                    foto: linha['FOTO'] || '' // A foto sendo puxada do TXT, se houver
                 };
 
                 produtos.push(novoProd);
