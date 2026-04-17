@@ -672,24 +672,15 @@
         <div class="container">
             <h2>Produtos no Estoque</h2>
             
-            <div style="background-color: #1a252f; padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px dashed #3498db; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <h3 style="margin: 0; color: #3498db; font-size: 14px;">📥 Importar do JSON</h3>
-                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #bdc3c7;">Selecione o arquivo .json convertido da sua planilha.</p>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="file" id="importarXls" accept=".json, .csv, .xlsx" style="width: auto; background: #fff; padding: 5px; border-radius: 4px;">
-                    <button type="button" class="btn-primary" style="background-color: #3498db; margin: 0; width: auto; padding: 8px 15px;" onclick="importarJSON()">🚀 IMPORTAR ARQUIVO</button>
-                </div>
-            </div>
-            
-           <div class="toolbar"> 
-        <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar Nome, Código ou Categoria..." onkeyup="filtrarProdutos()"> 
-        <button type="button" class="btn-danger" style="margin-left: 10px; padding: 8px 15px;" onclick="excluirTodosProdutos()">🗑️ ZERAR TODO O ESTOQUE</button>
-       <input type="file" id="arquivoTXT" accept=".txt" style="display: none" onchange="lerArquivoTXT(event)">
-       <button type="button" class="btn-success" style="margin-left: 10px; padding: 8px 15px;" onclick="document.getElementById('arquivoTXT').click()">
-    📥 IMPORTAR ARQUIVO TXT
-</button>
+                      
+          <div class="toolbar"> 
+    <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar Nome, Código ou Categoria..." onkeyup="filtrarProdutos()"> 
+    <button type="button" class="btn-danger" style="margin-left: 10px; padding: 8px 15px;" onclick="excluirTodosProdutos()">🗑️ ZERAR TODO O ESTOQUE</button>
+    <input type="file" id="campoUploadTXT" accept=".txt" style="display: none" onchange="lerArquivoTXT(this)">
+    <button type="button" class="btn-success" style="margin-left: 10px; padding: 8px 15px;" onclick="document.getElementById('campoUploadTXT').click()">
+ 📥 IMPORTAR ARQUIVO TXT
+    </button>
+
 
                 <div class="pagination">
                     <button onclick="mudarPaginaProd(-1)">◀ Ant</button>
@@ -1480,64 +1471,28 @@
 // =========================================================
 // FUNÇÃO 1: EXCLUIR TODOS OS PRODUTOS (ZERAR ESTOQUE)
 // =========================================================
-window.excluirTodosProdutos = async function() {
-    let confirmacao = prompt("⚠️ ATENÇÃO EXTREMA: Isso apagará TODOS os produtos do seu estoque!\n\nPara confirmar e começar do zero, digite a palavra: ZERAR");
-    
-    if (confirmacao === "ZERAR") {
-        try {
-            document.body.style.cursor = 'wait';
-            
-            // Remove o nó 'produtos' inteiro do Firebase
-            if (typeof remove !== 'undefined' && typeof ref !== 'undefined' && typeof db !== 'undefined') {
-                await remove(ref(db, 'produtos'));
-            } else if (window.firebase && window.firebase.database) {
-                await window.firebase.database().ref('produtos').remove();
-            } else {
-                throw new Error("Comandos do Firebase não encontrados.");
-            }
-            
-            document.body.style.cursor = 'default';
-            alert("✅ SUCESSO! O seu estoque do FH Control foi completamente zerado.\nVocê já pode tentar fazer a importação novamente.");
-            
-            if(window.filtrarProdutos) window.filtrarProdutos(); 
-            
-        } catch (erro) {
-            document.body.style.cursor = 'default';
-            alert("❌ Erro ao tentar limpar o estoque: " + erro.message);
-        }
-    } else if (confirmacao !== null) {
-        alert("❌ Palavra incorreta. O estoque NÃO foi apagado.");
-    }
-};
-
-// =========================================================
-// FUNÇÃO: IMPORTAR ARQUIVO TXT / EXCEL
-// =========================================================
 window.lerArquivoTXT = async function(event) {
-    // 1. MIRA LASER: Procura o arquivo na caixinha
-    let campoUpload = document.getElementById('campoUpload') || document.querySelector('input[type="file"]');
-    
-    // CORREÇÃO AQUI: Adicionado o para pegar o arquivo correto e evitar o erro do Blob
-    let arquivo = (campoUpload && campoUpload.files.length > 0) ? campoUpload.files : null;
+    alert("🟢 PASSO 1: O botão funcionou e chamou a função!");
 
+    let arquivo = event.target.files;
     if (!arquivo) {
-        alert("⚠️ NENHUM ARQUIVO ENCONTRADO!\n\nSelecione o arquivo .txt ANTES de clicar em Importar.");
+        alert("🔴 ERRO: O arquivo não foi selecionado direito.");
         return;
     }
 
-    let confirmacao = confirm(`Deseja importar os dados do arquivo "${arquivo.name}" para o banco de dados?`);
-    if (!confirmacao) {
-        if (campoUpload) campoUpload.value = ''; 
-        return;
-    }
+    alert("🟢 PASSO 2: O sistema enxergou o arquivo: " + arquivo.name);
 
     let leitor = new FileReader();
-    document.body.style.cursor = 'wait';
-
+    
     leitor.onload = async function(e) {
+        alert("🟢 PASSO 3: O sistema conseguiu ler o texto dentro do arquivo!");
+        
         try {
             let texto = e.target.result;
             let linhas = texto.split(/\r?\n/);
+            
+            alert("🟢 PASSO 4: O arquivo tem " + linhas.length + " linhas. O sistema vai começar a enviar para a Nuvem (Firebase) agora! (Isso pode demorar uns segundos dependendo da internet)");
+            
             let importados = 0;
 
             for (let i = 1; i < linhas.length; i++) {
@@ -1548,7 +1503,6 @@ window.lerArquivoTXT = async function(event) {
                 if (col.length < 3) continue;
 
                 const limpar = (v) => v ? v.trim().replace(/^"|"$/g, '') : '';
-
                 let codPronto = limpar(col) || limpar(col);
 
                 let novoProd = {
@@ -1564,7 +1518,7 @@ window.lerArquivoTXT = async function(event) {
                     foto: '' 
                 };
 
-                // Envio para o Firebase
+                // Enviando para o Firebase
                 if (typeof push !== 'undefined' && typeof ref !== 'undefined') {
                     let databaseVar = typeof db !== 'undefined' ? db : (window.db || null);
                     await set(push(ref(databaseVar, 'produtos')), novoProd);
@@ -1576,17 +1530,17 @@ window.lerArquivoTXT = async function(event) {
             }
 
             document.body.style.cursor = 'default';
-            alert(`✅ SUCESSO ABSOLUTO!\n\nForam importados ${importados} produtos do seu arquivo TXT.`);
+            alert(`✅ PASSO 5 (FINAL): SUCESSO ABSOLUTO!\n\nForam salvos ${importados} produtos no sistema!`);
             
             if(window.filtrarProdutos) window.filtrarProdutos();
             if(window.renderizarTabelaEstoque) window.renderizarTabelaEstoque();
-            if (campoUpload) campoUpload.value = '';
 
         } catch(err) {
             document.body.style.cursor = 'default';
-            alert(`❌ ERRO NA LEITURA DO TXT: ${err.message}`);
-            if (campoUpload) campoUpload.value = '';
+            alert(`🔴 ERRO NO PASSO 4 (Erro ao salvar no banco): ${err.message}`);
         }
+        
+        event.target.value = '';
     };
 
     leitor.readAsText(arquivo, 'ISO-8859-1');
