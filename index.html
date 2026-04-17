@@ -1514,9 +1514,11 @@ window.excluirTodosProdutos = async function() {
 // FUNÇÃO: IMPORTAR ARQUIVO TXT / EXCEL
 // =========================================================
 window.lerArquivoTXT = async function(event) {
-    // 1. Localiza o arquivo na caixinha de upload
+    // 1. MIRA LASER: Procura o arquivo na caixinha
     let campoUpload = document.getElementById('campoUpload') || document.querySelector('input[type="file"]');
-    let arquivo = campoUpload ? campoUpload.files : null;
+    
+    // CORREÇÃO AQUI: Adicionado o para pegar o arquivo correto e evitar o erro do Blob
+    let arquivo = (campoUpload && campoUpload.files.length > 0) ? campoUpload.files : null;
 
     if (!arquivo) {
         alert("⚠️ NENHUM ARQUIVO ENCONTRADO!\n\nSelecione o arquivo .txt ANTES de clicar em Importar.");
@@ -1535,25 +1537,18 @@ window.lerArquivoTXT = async function(event) {
     leitor.onload = async function(e) {
         try {
             let texto = e.target.result;
-            let linhas = texto.split(/\r?\n/); // Quebra o texto por linhas
+            let linhas = texto.split(/\r?\n/);
             let importados = 0;
 
-            // Começamos no i = 1 para pular a linha de cabeçalho (títulos)
             for (let i = 1; i < linhas.length; i++) {
                 let linha = linhas[i].trim();
-                if (!linha) continue; // Pula linhas vazias
+                if (!linha) continue;
 
-                // Separa por TABULAÇÃO (\t). Se o seu TXT usar ponto-e-vírgula, mude para ';'
                 let col = linha.split('\t'); 
-                
-                // Se a linha tiver menos de 3 colunas, provavelmente está incompleta, então pula
                 if (col.length < 3) continue;
 
-                // Função para limpar espaços e aspas
                 const limpar = (v) => v ? v.trim().replace(/^"|"$/g, '') : '';
 
-                // Mapeamento baseado na estrutura padrão que você usa:
-                // col = Cod, col = Nome, col = CodBarras, col = Custo, col = Venda, col = Estoque, col = NCM
                 let codPronto = limpar(col) || limpar(col);
 
                 let novoProd = {
@@ -1590,13 +1585,12 @@ window.lerArquivoTXT = async function(event) {
         } catch(err) {
             document.body.style.cursor = 'default';
             alert(`❌ ERRO NA LEITURA DO TXT: ${err.message}`);
+            if (campoUpload) campoUpload.value = '';
         }
     };
 
-    // Lê como texto. O 'ISO-8859-1' garante que acentos (ç, á, ó) não fiquem estranhos
     leitor.readAsText(arquivo, 'ISO-8859-1');
 };
-      
        // --- FUNÇÕES COMPARTILHADAS GLOBAIS ---
        window.gerarProximoNumeroDoc = function(inputId, valorInicial, tipoDoc) {
            let maxNum = valorInicial; 
