@@ -8,7 +8,7 @@
    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
    <style>
-       /* =========================================
+        /* =========================================
           ESTILOS GERAIS E PALETA DE CORES
           ========================================= */
        body { 
@@ -1514,107 +1514,89 @@ window.excluirTodosProdutos = async function() {
 // FUNÇÃO: IMPORTAR ARQUIVO TXT / EXCEL
 // =========================================================
 window.lerArquivoTXT = async function(event) {
-    let arquivo = event.target.files;
-    if (!arquivo) return;
+    // 1. Localiza o arquivo na caixinha de upload
+    let campoUpload = document.getElementById('campoUpload') || document.querySelector('input[type="file"]');
+    let arquivo = campoUpload ? campoUpload.files : null;
 
-    // A pergunta que aparece na tela
-    let confirmacao = confirm("Deseja iniciar a importação deste arquivo TXT para o banco de dados?");
+    if (!arquivo) {
+        alert("⚠️ NENHUM ARQUIVO ENCONTRADO!\n\nSelecione o arquivo .txt ANTES de clicar em Importar.");
+        return;
+    }
+
+    let confirmacao = confirm(`Deseja importar os dados do arquivo "${arquivo.name}" para o banco de dados?`);
     if (!confirmacao) {
-        event.target.value = ''; 
+        if (campoUpload) campoUpload.value = ''; 
         return;
     }
 
     let leitor = new FileReader();
-    
-    // O que o sistema faz assim que consegue ler o arquivo
+    document.body.style.cursor = 'wait';
+
     leitor.onload = async function(e) {
-        let texto = e.target.result;
-        
         try {
-            document.body.style.cursor = 'wait';
-            
-            // Quebra o texto linha por linha
-            let linhas = texto.split(/\r?\n/);
-            let produtos = [];
-
-            for (let linha of linhas) {
-                // Tenta dividir por Tab (Padrão de cópia do Excel)
-                let col = linha.split('\t');
-                
-                // Se não achar o Tab, tenta dividir por ponto-e-vírgula (caso você tenha salvo em CSV)
-                if (col.length < 4) {
-                    col = linha.split(';');
-                }
-                
-                // Pula linhas vazias
-                if (col.length < 4) continue;
-
-                // Função automática para consertar os códigos "E+" da planilha
-                const corrigirNum = (valor) => {
-                    if (!valor) return "";
-                    valor = String(valor).trim();
-                    if (valor.toUpperCase().includes('E+')) {
-                        return parseFloat(valor.replace(',', '.')).toString();
-                    }
-                    return valor;
-                };
-
-                // Monta o produto limpo direto da planilha
-                
-                    let novoProd = {
-                    // Pega o código de qualquer uma das colunas informadas nos seus arquivos
-                    codigo_barras: linha['Código de barra'] || linha['Código de barras'] || linha['Código'] || '',
-                    nome: linha['Nome'] || linha['NOME DO PRODUTO'] || '',
-                    custo: linha['Valor de custo'] || linha['CUSTO'] || '0,00',
-                    venda: linha['Valor de venda'] || '0,00',
-                    estoque: linha['Estoque'] || '0',
-                    ncm: linha['NCM'] || '', // Adicionado o NCM
-                    categoria: linha['CATEGORIA'] || 'Geral',
-                    foto: linha['FOTO'] || '' // A foto sendo puxada do TXT, se houver
-                };
-
-                produtos.push(novoProd);
-            }
-
-            if (produtos.length === 0) {
-                throw new Error("O arquivo parece vazio ou formatado incorretamente. Lembre-se de copiar os dados no Excel, colar no Bloco de Notas e salvar como TXT.");
-            }
-
+            let texto = e.target.result;
+            let linhas = texto.split(/\r?\n/); // Quebra o texto por linhas
             let importados = 0;
-            let databaseVar = typeof db !== 'undefined' ? db : (window.db || null);
 
-            if (!databaseVar) throw new Error("A variável 'db' do banco de dados não foi encontrada!");
+            // Começamos no i = 1 para pular a linha de cabeçalho (títulos)
+            for (let i = 1; i < linhas.length; i++) {
+                let linha = linhas[i].trim();
+                if (!linha) continue; // Pula linhas vazias
 
-            // Loop que envia tudo para o Firebase
-            for (let prod of produtos) {
-                if (typeof set !== 'undefined' && typeof push !== 'undefined' && typeof ref !== 'undefined') {
-                    await set(push(ref(databaseVar, 'produtos')), prod);
+                // Separa por TABULAÇÃO (\t). Se o seu TXT usar ponto-e-vírgula, mude para ';'
+                let col = linha.split('\t'); 
+                
+                // Se a linha tiver menos de 3 colunas, provavelmente está incompleta, então pula
+                if (col.length < 3) continue;
+
+                // Função para limpar espaços e aspas
+                const limpar = (v) => v ? v.trim().replace(/^"|"$/g, '') : '';
+
+                // Mapeamento baseado na estrutura padrão que você usa:
+                // col = Cod, col = Nome, col = CodBarras, col = Custo, col = Venda, col = Estoque, col = NCM
+                let codPronto = limpar(col) || limpar(col);
+
+                let novoProd = {
+                    codigo: codPronto,
+                    codigo_barras: codPronto,
+                    nome: limpar(col),
+                    categoria: 'Geral',
+                    custo: limpar(col) || '0,00',
+                    venda: limpar(col) || '0,00',
+                    quantidade: limpar(col) || '0',
+                    estoque: limpar(col) || '0', 
+                    ncm: limpar(col) || '',
+                    foto: '' 
+                };
+
+                // Envio para o Firebase
+                if (typeof push !== 'undefined' && typeof ref !== 'undefined') {
+                    let databaseVar = typeof db !== 'undefined' ? db : (window.db || null);
+                    await set(push(ref(databaseVar, 'produtos')), novoProd);
                 } else if (window.firebase && window.firebase.database) {
-                    await window.firebase.database().ref('produtos').push(prod);
-                } else {
-                    throw new Error("Comandos do Firebase não encontrados.");
+                    await window.firebase.database().ref('produtos').push(novoProd);
                 }
+                
                 importados++;
             }
 
             document.body.style.cursor = 'default';
-            alert(`✅ SUCESSO ABSOLUTO!\n\nForam lidos e importados exatamente ${importados} produtos.\nTodos os códigos "E+" foram consertados e formatados!`);
+            alert(`✅ SUCESSO ABSOLUTO!\n\nForam importados ${importados} produtos do seu arquivo TXT.`);
             
-            event.target.value = ''; 
             if(window.filtrarProdutos) window.filtrarProdutos();
+            if(window.renderizarTabelaEstoque) window.renderizarTabelaEstoque();
+            if (campoUpload) campoUpload.value = '';
 
-        } catch (erro) {
+        } catch(err) {
             document.body.style.cursor = 'default';
-            alert("❌ ERRO NA IMPORTAÇÃO:\n\n" + erro.message);
-            console.error("Erro completo:", erro);
+            alert(`❌ ERRO NA LEITURA DO TXT: ${err.message}`);
         }
     };
-    
-    // 🔥 ESTA É A LINHA QUE FALTAVA PARA ELE FUNCIONAR 🔥
-    // Sem ela, ele perguntava "Deseja importar?" e parava!
-    leitor.readAsText(arquivo);
+
+    // Lê como texto. O 'ISO-8859-1' garante que acentos (ç, á, ó) não fiquem estranhos
+    leitor.readAsText(arquivo, 'ISO-8859-1');
 };
-       
+      
        // --- FUNÇÕES COMPARTILHADAS GLOBAIS ---
        window.gerarProximoNumeroDoc = function(inputId, valorInicial, tipoDoc) {
            let maxNum = valorInicial; 
