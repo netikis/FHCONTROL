@@ -673,252 +673,334 @@
             <h2>Produtos no Estoque</h2>
             
                       
-          <div class="toolbar"> 
-    <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar Nome, Código ou Categoria..." onkeyup="filtrarProdutos()"> 
-    <button type="button" class="btn-danger" style="margin-left: 10px; padding: 8px 15px;" onclick="excluirTodosProdutos()">🗑️ ZERAR TODO O ESTOQUE</button>
-    <input type="file" id="campoUploadTXT" accept=".txt" style="display: none" onchange="window.lerArquivoTXT(event)">
-    <button type="button" class="btn-success" style="margin-left: 10px; padding: 8px 15px;" onclick="document.getElementById('campoUploadTXT').click()">
-    📥 IMPORTAR ARQUIVO TXT
-  </button>
+         <div class="toolbar"> 
+    <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar Nome..." onkeyup="filtrarProdutos()"> 
     
+    <button type="button" class="btn-danger" onclick="excluirTodosProdutos()">🗑️ ZERAR ESTOQUE</button>
+    
+    <input type="file" id="campoUploadTXT_Novo" accept=".txt" style="display: none" onchange="iniciarImportacao(this)">
+    <button type="button" class="btn-success" onclick="document.getElementById('campoUploadTXT_Novo').click()">
+        📥 IMPORTAR ARQUIVO TXT
+    </button>
+</div>
 
+<div class="pagination">
+    <button onclick="mudarPaginaProd(-1)">◀ Ant</button>
+    <span id="infoPaginaProd">Pág 1</span>
+    <button onclick="mudarPaginaProd(1)">Próx ▶</button>
+</div>
 
-                <div class="pagination">
-                    <button onclick="mudarPaginaProd(-1)">◀ Ant</button>
-                    <span id="infoPaginaProd">Pág 1</span>
-                    <button onclick="mudarPaginaProd(1)">Próx ▶</button>
-                </div>
+<p style="font-size: 11px; color: #e74c3c; margin-top: 0;">Atenção: Qtd ≤ 3 piscará vermelho.</p>
+
+<div class="table-responsive">
+    <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="width: 90px; text-align: left; padding: 5px;">Código</th>
+                <th style="text-align: left; padding: 5px;">Nome</th>
+                <th style="width: 90px; text-align: left; padding: 5px;">Categoria</th>
+                <th style="width: 50px; text-align: center; padding: 5px;">Qtd</th>
+                <th style="width: 90px; text-align: left; padding: 5px;">Custo</th>
+                <th style="width: 90px; text-align: left; padding: 5px;">Venda</th>
+                <th style="width: 90px; text-align: left; padding: 5px;">NCM</th> 
+                <th style="width: 100px; text-align: center; padding: 5px;">Ações</th>
+                <th style="width: 55px; text-align: center; padding: 5px;">Foto</th> 
+            </tr>
+        </thead>
+        <tbody id="tabelaEstoque"></tbody>
+    </table>
+</div>
+
+    </div>
+</div>
+
+<div id="tabVendas" class="tab-content">
+    <div class="container">
+        <h2>Novo Orçamento / Venda Direta</h2>
+        
+        <div class="row form-group" style="background-color: #1a252f; padding: 12px; border-radius: 6px; border: 1px solid #7f8c8d;">
+            <div class="col">
+                <label style="color: #ffffff;">Tipo de Documento</label>
+                <select id="vendaTipoDoc" style="font-weight: bold; background-color: #2c3e50; color: #ffffff; border: 1px solid #ffffff;">
+                    <option value="VENDA">🛒 Venda Direta (Baixa Estoque)</option>
+                    <option value="ORCAMENTO">📄 Apenas Orçamento (Simulação)</option>
+                </select>
             </div>
-            <p style="font-size: 11px; color: #e74c3c; margin-top: 0;">Atenção: Qtd ≤ 3 piscará vermelho.</p>
-            <div class="table-responsive">
-            <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
-         <thead>
-        <tr>
-        <th style="width: 90px; text-align: left; padding: 5px;">Código</th>
-        <th style="text-align: left; padding: 5px;">Nome</th>
-        <th style="width: 90px; text-align: left; padding: 5px;">Categoria</th>
-        <th style="width: 50px; text-align: center; padding: 5px;">Qtd</th>
-        <th style="width: 90px; text-align: left; padding: 5px;">Custo</th>
-        <th style="width: 90px; text-align: left; padding: 5px;">Venda</th>
-        <th style="width: 90px; text-align: left; padding: 5px;">NCM</th> <th style="width: 100px; text-align: center; padding: 5px;">Ações</th>
-        <th style="width: 55px; text-align: center; padding: 5px;">Foto</th> </tr>
-   </thead>
-                <tbody id="tabelaEstoque"></tbody>
-                </table>
+            <div class="col"><label style="color: #ffffff;">Nº da Venda</label><input type="number" id="vendaOS" style="font-weight: bold; color: #e74c3c;"></div>
+            
+            <div class="col">
+                <label style="color: #ffffff;">Status Pgto</label>
+                <select id="vendaStatusPag" style="font-weight: bold; background-color: #2c3e50; color: #f1c40f; border: 1px solid #ffffff;">
+                    <option value="PAGO" selected>✅ PAGO (Soma no Caixa)</option>
+                    <option value="PENDENTE">⏳ PENDENTE (Não Soma)</option>
+                </select>
             </div>
+            
+            <div class="col" style="flex: 1.5;"><label style="color: #ffffff;">Data Vencimento</label><input type="date" id="vendaVencimento" style="font-weight: bold;"></div>
         </div>
 
-   </div>
-
-
-   <div id="tabVendas" class="tab-content">
-       
-        <div class="container">
-            <h2>Novo Orçamento / Venda Direta</h2>
-            
-            <div class="row form-group" style="background-color: #1a252f; padding: 12px; border-radius: 6px; border: 1px solid #7f8c8d;">
-                <div class="col">
-                    <label style="color: #ffffff;">Tipo de Documento</label>
-                    <select id="vendaTipoDoc" style="font-weight: bold; background-color: #2c3e50; color: #ffffff; border: 1px solid #ffffff;">
-                        <option value="VENDA">🛒 Venda Direta (Baixa Estoque)</option>
-                        <option value="ORCAMENTO">📄 Apenas Orçamento (Simulação)</option>
-                    </select>
-                </div>
-                <div class="col"><label style="color: #ffffff;">Nº da Venda</label><input type="number" id="vendaOS" style="font-weight: bold; color: #e74c3c;"></div>
-                
-                <div class="col">
-                    <label style="color: #ffffff;">Status Pgto</label>
-                    <select id="vendaStatusPag" style="font-weight: bold; background-color: #2c3e50; color: #f1c40f; border: 1px solid #ffffff;">
-                        <option value="PAGO" selected>✅ PAGO (Soma no Caixa)</option>
-                        <option value="PENDENTE">⏳ PENDENTE (Não Soma)</option>
-                    </select>
-                </div>
-                
-                <div class="col" style="flex: 1.5;"><label style="color: #ffffff;">Data Vencimento</label><input type="date" id="vendaVencimento" style="font-weight: bold;"></div>
+        <div class="row form-group">
+            <div class="col" style="flex: 2;">
+                <label>1. Buscar Cliente (Ou digite nome avulso)</label>
+                <input type="text" id="vendaClienteBusca" list="listaClientesNomesVenda" placeholder="Cliente registrado ou avulso...">
+                <datalist id="listaClientesNomesVenda"></datalist>
             </div>
-
+        </div>
+        
+        <div class="bloco-lancamento" style="border-color: #ffffff;">
             <div class="row form-group">
                 <div class="col" style="flex: 2;">
-                    <label>1. Buscar Cliente (Ou digite nome avulso)</label>
-                    <input type="text" id="vendaClienteBusca" list="listaClientesNomesVenda" placeholder="Cliente registrado ou avulso...">
-                    <datalist id="listaClientesNomesVenda"></datalist>
+                    <label>2. Buscar do Estoque (Nome ou Bipe)</label>
+                    <input type="text" id="vendaProdutoEstoqueBusca" list="listaProdutosEstoqueVenda" onchange="preencherCamposVendaEstoque()" placeholder="Bipe o código ou digite o nome...">
+                    <datalist id="listaProdutosEstoqueVenda"></datalist>
                 </div>
             </div>
-            
-            <div class="bloco-lancamento" style="border-color: #ffffff;">
-                <div class="row form-group">
-                    <div class="col" style="flex: 2;">
-                        <label>2. Buscar do Estoque (Nome ou Bipe)</label>
-                        <input type="text" id="vendaProdutoEstoqueBusca" list="listaProdutosEstoqueVenda" onchange="preencherCamposVendaEstoque()" placeholder="Bipe o código ou digite o nome...">
-                        <datalist id="listaProdutosEstoqueVenda"></datalist>
-                    </div>
-                </div>
-                <div class="row form-group" style="align-items: flex-end;">
-                    <div class="col" style="flex: 0.5;"><label>Qtd.</label><input type="number" id="vendaProdutoQtd" value="1" min="1" oninput="recalcularPrecoVendaManual()"></div>
-                    <div class="col"><label>Custo (R$)</label><input type="number" id="vendaProdutoCusto" readonly style="background-color: #dcdde1;"></div>
-                    <div class="col"><label>Margem (%)</label><input type="number" id="vendaProdutoMargem" oninput="recalcularPrecoVendaManual()"></div>
-                    <div class="col"><label style="color: #2ecc71;">Venda (R$)</label><input type="number" id="vendaProdutoPrecoFinal" step="0.01"></div>
-                    <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; height: 35px; background-color: #27ae60; color: white;" onclick="addAoCarrinhoVenda_Estoque()">➕ ADD</button></div>
-                </div>
-            </div>
-
-            <div class="row form-group" style="align-items: flex-end; border-top: 1px solid #7f8c8d; padding-top: 12px;">
-                <div class="col" style="flex: 2;"><label>3. Adicionar Item Avulso</label><input type="text" id="vendaAvulsoNome" placeholder="Ex: Instalação Padrão"></div>
-                <div class="col"><label>Valor (R$)</label><input type="number" step="0.01" id="vendaAvulsoValor" placeholder="Ex: 150.00"></div>
-                <div class="col"><label>Tx (%)</label><input type="number" step="0.1" id="vendaAvulsoPerc" value="0"></div>
-                <div class="col"><button type="button" class="btn-secundario" style="width: 100%; height: 35px;" onclick="addAoCarrinhoVenda_Avulso()">➕ Add</button></div>
+            <div class="row form-group" style="align-items: flex-end;">
+                <div class="col" style="flex: 0.5;"><label>Qtd.</label><input type="number" id="vendaProdutoQtd" value="1" min="1" oninput="recalcularPrecoVendaManual()"></div>
+                <div class="col"><label>Custo (R$)</label><input type="number" id="vendaProdutoCusto" readonly style="background-color: #dcdde1;"></div>
+                <div class="col"><label>Margem (%)</label><input type="number" id="vendaProdutoMargem" oninput="recalcularPrecoVendaManual()"></div>
+                <div class="col"><label style="color: #2ecc71;">Venda (R$)</label><input type="number" id="vendaProdutoPrecoFinal" step="0.01"></div>
+                <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; height: 35px; background-color: #27ae60; color: white;" onclick="addAoCarrinhoVenda_Estoque()">➕ ADD</button></div>
             </div>
         </div>
 
-        <div class="container">
-            <h2>Carrinho de Compras</h2>
-            <div id="listaCarrinho" style="font-size: 13px;">Nenhum item adicionado no momento.</div>
-            
-            <div class="bloco-lancamento" style="margin-top: 15px; background-color: #1a252f;">
-                <div class="row" style="align-items: center;">
-                    <div class="col"><label>Desconto R$</label><input type="number" id="vendaDescontoReais" step="0.01" value="0" oninput="calcularTotalComDesconto()"></div>
-                    <div class="col"><label>Desconto %</label><input type="number" id="vendaDescontoPerc" step="0.1" value="0" oninput="calcularTotalComDesconto()"></div>
-                    <div class="col" style="text-align: right;">
-                        <div style="font-size: 12px; color: #bdc3c7;">Subtotal: <span id="vendaSubtotalTxt">R$ 0,00</span></div>
-                        <div style="font-size: 22px; color: #2ecc71; font-weight: bold;" id="vendaTotalFinalTxt">TOTAL: R$ 0,00</div>
-                    </div>
+        <div class="row form-group" style="align-items: flex-end; border-top: 1px solid #7f8c8d; padding-top: 12px;">
+            <div class="col" style="flex: 2;"><label>3. Adicionar Item Avulso</label><input type="text" id="vendaAvulsoNome" placeholder="Ex: Instalação Padrão"></div>
+            <div class="col"><label>Valor (R$)</label><input type="number" step="0.01" id="vendaAvulsoValor" placeholder="Ex: 150.00"></div>
+            <div class="col"><label>Tx (%)</label><input type="number" step="0.1" id="vendaAvulsoPerc" value="0"></div>
+            <div class="col"><button type="button" class="btn-secundario" style="width: 100%; height: 35px;" onclick="addAoCarrinhoVenda_Avulso()">➕ Add</button></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Carrinho de Compras</h2>
+        <div id="listaCarrinho" style="font-size: 13px;">Nenhum item adicionado no momento.</div>
+        
+        <div class="bloco-lancamento" style="margin-top: 15px; background-color: #1a252f;">
+            <div class="row" style="align-items: center;">
+                <div class="col"><label>Desconto R$</label><input type="number" id="vendaDescontoReais" step="0.01" value="0" oninput="calcularTotalComDesconto()"></div>
+                <div class="col"><label>Desconto %</label><input type="number" id="vendaDescontoPerc" step="0.1" value="0" oninput="calcularTotalComDesconto()"></div>
+                <div class="col" style="text-align: right;">
+                    <div style="font-size: 12px; color: #bdc3c7;">Subtotal: <span id="vendaSubtotalTxt">R$ 0,00</span></div>
+                    <div style="font-size: 22px; color: #2ecc71; font-weight: bold;" id="vendaTotalFinalTxt">TOTAL: R$ 0,00</div>
                 </div>
-            </div>
-            
-            <div style="display: flex;">
-                <button type="button" class="btn-primary" style="background-color: #27ae60; padding: 12px; font-size: 15px; flex: 1;" onclick="finalizarVenda()">✅ FINALIZAR E SALVAR</button>
-                <button type="button" class="btn-danger" id="btnCancelarEdicaoVenda" style="display:none; padding: 12px; margin-left: 10px; font-size: 15px;" onclick="cancelarEdicaoDocumento()">❌ CANCELAR EDIÇÃO</button>
             </div>
         </div>
+        
+        <div style="display: flex;">
+            <button type="button" class="btn-primary" style="background-color: #27ae60; padding: 12px; font-size: 15px; flex: 1;" onclick="finalizarVenda()">✅ FINALIZAR E SALVAR</button>
+            <button type="button" class="btn-danger" id="btnCancelarEdicaoVenda" style="display:none; padding: 12px; margin-left: 10px; font-size: 15px;" onclick="cancelarEdicaoDocumento()">❌ CANCELAR EDIÇÃO</button>
+        </div>
+    </div>
+</div>
 
-   </div>
 
-
-   <div id="tabOS" class="tab-content">
-       
-        <div class="container">
-            <h2 style="color: #3498db;">Ordem de Serviço (Em Campo)</h2>
-            <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Preencha com atenção os valores e quantidades. O sistema calcula o total para você.</p>
-            
-            <div class="bloco-lancamento" style="border-color: #3498db;">
-                <div class="row form-group">
-                    <div class="col">
-                        <label style="color: #3498db;">Nº da OS</label>
-                        <input type="number" id="osNumero" style="font-weight: bold; color: #e74c3c;">
-                    </div>
-                    
-                    <div class="col">
-                        <label style="color: #3498db;">Status Pgto</label>
-                        <select id="osStatusPag" style="font-weight: bold; background-color: #2c3e50; color: #f1c40f; border: 1px solid #3498db;">
-                            <option value="PENDENTE" selected>⏳ PENDENTE (Não Soma)</option>
-                            <option value="PAGO">✅ PAGO (Soma no Caixa)</option>
-                        </select>
-                    </div>
-
-                    <div class="col" style="flex: 1.5;">
-                        <label style="color: #3498db;">Cliente (Ou nome avulso)</label>
-                        <input type="text" id="osClienteBusca" list="listaClientesNomesOS" placeholder="Registrado ou avulso...">
-                        <datalist id="listaClientesNomesOS"></datalist>
-                    </div>
-                    <div class="col">
-                        <label style="color: #3498db;">Vencimento</label>
-                        <input type="date" id="osVencimento" style="font-weight: bold;">
-                    </div>
-                </div>
-            </div>
-
-            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">1. Equipe e Horários</h3>
+<div id="tabOS" class="tab-content">
+    <div class="container">
+        <h2 style="color: #3498db;">Ordem de Serviço (Em Campo)</h2>
+        <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Preencha com atenção os valores e quantidades. O sistema calcula o total para você.</p>
+        
+        <div class="bloco-lancamento" style="border-color: #3498db;">
             <div class="row form-group">
-                <div class="col"><label>Equipe</label><input type="text" id="osEquipe" placeholder="Ex: Alpha"></div>
-                <div class="col"><label>Início (Data/Hora)</label><input type="datetime-local" id="osInicio"></div>
-                <div class="col"><label>Saída (Data/Hora)</label><input type="datetime-local" id="osFim"></div>
-                <div class="col"><label>Qtd. Pessoas</label><input type="number" id="osQtdPessoas" value="1" min="1"></div>
-            </div>
-
-            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">2. Deslocamento</h3>
-            <div class="bloco-lancamento">
-                <div class="row form-group">
-                    <div class="col"><label>KM Inicial</label><input type="number" id="osKmInicial" step="0.1" value="0"></div>
-                    <div class="col"><label>KM Final</label><input type="number" id="osKmFinal" step="0.1" value="0"></div>
-                    <div class="col"><label>Valor P/ KM (R$)</label><input type="number" id="osValorKm" step="0.01" value="2.50"></div>
-                    <div class="col"><label>Custo Desloc.</label><input type="text" id="osCustoKmTotal" readonly style="font-weight: bold; color: #2c3e50;" value="R$ 0.00"></div>
+                <div class="col">
+                    <label style="color: #3498db;">Nº da OS</label>
+                    <input type="number" id="osNumero" style="font-weight: bold; color: #e74c3c;">
                 </div>
-            </div>
-
-            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">3. Materiais / Serviços</h3>
-            
-            <div class="bloco-lancamento">
-                <div class="row form-group" style="align-items: flex-end;">
-                    <div class="col" style="flex: 2;">
-                        <label>Material do Estoque (Busca/Bipe)</label>
-                        <input type="text" id="osProdutoEstoqueBusca" list="listaProdutosEstoqueOS" onchange="window.preencherValorEstoqueOS()" placeholder="Nome ou código...">
-                        <datalist id="listaProdutosEstoqueOS"></datalist>
-                    </div>
-                    <div class="col" style="flex: 0.6;"><label>Val. Un. (R$)</label><input type="number" id="osEstoqueValUn" readonly style="font-weight: bold;"></div>
-                    <div class="col" style="flex: 0.4;"><label>Qtd</label><input type="number" id="osEstoqueQtd" value="1" min="1" oninput="window.calcTotalEstoqueOS()"></div>
-                    <div class="col" style="flex: 0.4;"><label>Taxa %</label><input type="number" id="osEstoquePerc" value="0" oninput="window.calcTotalEstoqueOS()"></div>
-                    <div class="col" style="flex: 0.7;"><label>Total (R$)</label><input type="text" id="osEstoqueTotal" readonly style="font-weight: bold; color: #27ae60;"></div>
-                    <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; height: 35px;" onclick="addAoCarrinhoOS_Estoque()">➕ MAT</button></div>
+                
+                <div class="col">
+                    <label style="color: #3498db;">Status Pgto</label>
+                    <select id="osStatusPag" style="font-weight: bold; background-color: #2c3e50; color: #f1c40f; border: 1px solid #3498db;">
+                        <option value="PENDENTE" selected>⏳ PENDENTE (Não Soma)</option>
+                        <option value="PAGO">✅ PAGO (Soma no Caixa)</option>
+                    </select>
                 </div>
-            </div>
 
-            <div class="bloco-lancamento">
-                <div class="row form-group" style="align-items: flex-end;">
-                    <div class="col" style="flex: 2;">
-                        <label>Material Externo (Outra Empresa)</label>
-                        <input type="text" id="osMatExternoNome" placeholder="Ex: Cano comprado na Loja X">
-                    </div>
-                    <div class="col" style="flex: 0.6;"><label>Val. Un. (R$)</label><input type="number" step="0.01" id="osMatExternoValor" placeholder="0.00" oninput="window.calcTotalExternoOS()"></div>
-                    <div class="col" style="flex: 0.4;"><label>Qtd</label><input type="number" id="osMatExternoQtd" value="1" min="1" oninput="window.calcTotalExternoOS()"></div>
-                    <div class="col" style="flex: 0.4;"><label>Taxa %</label><input type="number" id="osMatExternoPerc" value="0" oninput="window.calcTotalExternoOS()"></div>
-                    <div class="col" style="flex: 0.7;"><label>Total (R$)</label><input type="text" id="osMatExternoTotal" readonly style="font-weight: bold; color: #27ae60;"></div>
-                    <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; background-color: #e67e22; height: 35px;" onclick="addAoCarrinhoOS_Externo()">➕ COMPRA</button></div>
-                </div>
-            </div>
-
-            <div class="bloco-lancamento">
-                <div class="row form-group" style="align-items: flex-end;">
-                    <div class="col" style="flex: 3;">
-                        <label>Mão de Obra Avulsa / Serviço Executado</label>
-                        <input type="text" id="osMaoDeObraDesc" placeholder="Descreva os detalhes do serviço...">
-                    </div>
-                    <div class="col" style="flex: 0.8;">
-                        <label>Valor Mão de Obra (R$)</label>
-                        <input type="number" step="0.01" id="osMaoDeObraValor" placeholder="Ex: 350.00">
-                    </div>
-                    <div class="col" style="flex: 0.6;">
-                        <button type="button" class="btn-secundario" style="width: 100%; background-color: #3498db; color: #fff; height: 35px;" onclick="addAoCarrinhoOS_Avulso()">➕ SERV</button>
-                    </div>
-                </div>
-            </div>
-
-            <div style="background-color: #1a252f; padding: 12px; border-radius: 6px; margin-top: 15px;">
-                <h4 style="margin-top: 0; color: #ffffff; font-size: 14px;">Lista do Carrinho da OS</h4>
-                <div id="listaCarrinhoOS" style="margin-bottom: 10px; font-size: 13px;">Nenhum material/serviço lançado.</div>
-                <div class="cart-total" id="osTotalGeral" style="border-top: 1px solid #7f8c8d; padding-top: 10px; color: #2ecc71;">TOTAL OS: R$ 0,00</div>
-            </div>
-
-            <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">4. Fotografia</h3>
-            <div class="form-group">
-                <label>Anexar Foto Conclusão</label>
-                <input type="file" id="osFotoUpload" accept="image/*" capture="environment" style="padding: 5px; border: 1px solid #7f8c8d; background: #ecf0f1; border-radius: 4px;">
-                <img id="previewFotoOS" src="" alt="Foto">
-            </div>
-
-            <div class="row" style="margin-top: 25px;">
-                <div class="col" style="flex: 1;">
-                    <button type="button" class="btn-ver" style="width: 100%; padding: 12px; font-size: 14px;" onclick="gerarPDFdaOS()">🖨️ PDF (RASCUNHO)</button>
-                </div>
                 <div class="col" style="flex: 1.5;">
-                    <button type="button" class="btn-primary" style="background-color: #27ae60; margin-top: 0; width: 100%; padding: 12px; font-size: 14px;" onclick="salvarOrdemDeServico()">✅ SALVAR NO CAIXA</button>
+                    <label style="color: #3498db;">Cliente (Ou nome avulso)</label>
+                    <input type="text" id="osClienteBusca" list="listaClientesNomesOS" placeholder="Registrado ou avulso...">
+                    <datalist id="listaClientesNomesOS"></datalist>
                 </div>
-                <div class="col" style="flex: 1;" id="colCancelarEdicaoOS" style="display:none;">
-                    <button type="button" class="btn-danger" id="btnCancelarEdicaoOS" style="width: 100%; margin-top: 0; padding: 12px; font-size: 14px;" onclick="cancelarEdicaoDocumento()">❌ CANCELAR EDIÇÃO</button>
+                <div class="col">
+                    <label style="color: #3498db;">Vencimento</label>
+                    <input type="date" id="osVencimento" style="font-weight: bold;">
                 </div>
             </div>
-
         </div>
-   </div>
+
+        <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">1. Equipe e Horários</h3>
+        <div class="row form-group">
+            <div class="col"><label>Equipe</label><input type="text" id="osEquipe" placeholder="Ex: Alpha"></div>
+            <div class="col"><label>Início (Data/Hora)</label><input type="datetime-local" id="osInicio"></div>
+            <div class="col"><label>Saída (Data/Hora)</label><input type="datetime-local" id="osFim"></div>
+            <div class="col"><label>Qtd. Pessoas</label><input type="number" id="osQtdPessoas" value="1" min="1"></div>
+        </div>
+
+        <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">2. Deslocamento</h3>
+        <div class="bloco-lancamento">
+            <div class="row form-group">
+                <div class="col"><label>KM Inicial</label><input type="number" id="osKmInicial" step="0.1" value="0"></div>
+                <div class="col"><label>KM Final</label><input type="number" id="osKmFinal" step="0.1" value="0"></div>
+                <div class="col"><label>Valor P/ KM (R$)</label><input type="number" id="osValorKm" step="0.01" value="2.50"></div>
+                <div class="col"><label>Custo Desloc.</label><input type="text" id="osCustoKmTotal" readonly style="font-weight: bold; color: #2c3e50;" value="R$ 0.00"></div>
+            </div>
+        </div>
+
+        <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">3. Materiais / Serviços</h3>
+        
+        <div class="bloco-lancamento">
+            <div class="row form-group" style="align-items: flex-end;">
+                <div class="col" style="flex: 2;">
+                    <label>Material do Estoque (Busca/Bipe)</label>
+                    <input type="text" id="osProdutoEstoqueBusca" list="listaProdutosEstoqueOS" onchange="window.preencherValorEstoqueOS()" placeholder="Nome ou código...">
+                    <datalist id="listaProdutosEstoqueOS"></datalist>
+                </div>
+                <div class="col" style="flex: 0.6;"><label>Val. Un. (R$)</label><input type="number" id="osEstoqueValUn" readonly style="font-weight: bold;"></div>
+                <div class="col" style="flex: 0.4;"><label>Qtd</label><input type="number" id="osEstoqueQtd" value="1" min="1" oninput="window.calcTotalEstoqueOS()"></div>
+                <div class="col" style="flex: 0.4;"><label>Taxa %</label><input type="number" id="osEstoquePerc" value="0" oninput="window.calcTotalEstoqueOS()"></div>
+                <div class="col" style="flex: 0.7;"><label>Total (R$)</label><input type="text" id="osEstoqueTotal" readonly style="font-weight: bold; color: #27ae60;"></div>
+                <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; height: 35px;" onclick="addAoCarrinhoOS_Estoque()">➕ MAT</button></div>
+            </div>
+        </div>
+
+        <div class="bloco-lancamento">
+            <div class="row form-group" style="align-items: flex-end;">
+                <div class="col" style="flex: 2;">
+                    <label>Material Externo (Outra Empresa)</label>
+                    <input type="text" id="osMatExternoNome" placeholder="Ex: Cano comprado na Loja X">
+                </div>
+                <div class="col" style="flex: 0.6;"><label>Val. Un. (R$)</label><input type="number" step="0.01" id="osMatExternoValor" placeholder="0.00" oninput="window.calcTotalExternoOS()"></div>
+                <div class="col" style="flex: 0.4;"><label>Qtd</label><input type="number" id="osMatExternoQtd" value="1" min="1" oninput="window.calcTotalExternoOS()"></div>
+                <div class="col" style="flex: 0.4;"><label>Taxa %</label><input type="number" id="osMatExternoPerc" value="0" oninput="window.calcTotalExternoOS()"></div>
+                <div class="col" style="flex: 0.7;"><label>Total (R$)</label><input type="text" id="osMatExternoTotal" readonly style="font-weight: bold; color: #27ae60;"></div>
+                <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; background-color: #e67e22; height: 35px;" onclick="addAoCarrinhoOS_Externo()">➕ COMPRA</button></div>
+            </div>
+        </div>
+
+        <div class="bloco-lancamento">
+            <div class="row form-group" style="align-items: flex-end;">
+                <div class="col" style="flex: 3;">
+                    <label>Mão de Obra Avulsa / Serviço Executado</label>
+                    <input type="text" id="osMaoDeObraDesc" placeholder="Descreva os detalhes do serviço...">
+                </div>
+                <div class="col" style="flex: 0.8;">
+                    <label>Valor Mão de Obra (R$)</label>
+                    <input type="number" step="0.01" id="osMaoDeObraValor" placeholder="Ex: 350.00">
+                </div>
+                <div class="col" style="flex: 0.6;">
+                    <button type="button" class="btn-secundario" style="width: 100%; background-color: #3498db; color: #fff; height: 35px;" onclick="addAoCarrinhoOS_Avulso()">➕ SERV</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="background-color: #1a252f; padding: 12px; border-radius: 6px; margin-top: 15px;">
+            <h4 style="margin-top: 0; color: #ffffff; font-size: 14px;">Lista do Carrinho da OS</h4>
+            <div id="listaCarrinhoOS" style="margin-bottom: 10px; font-size: 13px;">Nenhum material/serviço lançado.</div>
+            <div class="cart-total" id="osTotalGeral" style="border-top: 1px solid #7f8c8d; padding-top: 10px; color: #2ecc71;">TOTAL OS: R$ 0,00</div>
+        </div>
+
+        <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">4. Fotografia</h3>
+        <div class="form-group">
+            <label>Anexar Foto Conclusão</label>
+            <input type="file" id="osFotoUpload" accept="image/*" capture="environment" style="padding: 5px; border: 1px solid #7f8c8d; background: #ecf0f1; border-radius: 4px;">
+            <img id="previewFotoOS" src="" alt="Foto">
+        </div>
+
+        <div class="row" style="margin-top: 25px;">
+            <div class="col" style="flex: 1;">
+                <button type="button" class="btn-ver" style="width: 100%; padding: 12px; font-size: 14px;" onclick="gerarPDFdaOS()">🖨️ PDF (RASCUNHO)</button>
+            </div>
+            <div class="col" style="flex: 1.5;">
+                <button type="button" class="btn-primary" style="background-color: #27ae60; margin-top: 0; width: 100%; padding: 12px; font-size: 14px;" onclick="salvarOrdemDeServico()">✅ SALVAR NO CAIXA</button>
+            </div>
+            <div class="col" style="flex: 1;" id="colCancelarEdicaoOS" style="display:none;">
+                <button type="button" class="btn-danger" id="btnCancelarEdicaoOS" style="width: 100%; margin-top: 0; padding: 12px; font-size: 14px;" onclick="cancelarEdicaoDocumento()">❌ CANCELAR EDIÇÃO</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+window.iniciarImportacao = async function(inputElement) {
+    const arquivo = inputElement.files.item(0); 
+    
+    if (!arquivo) {
+        alert("⚠️ Nenhum arquivo foi selecionado.");
+        return;
+    }
+
+    alert("🚀 Tudo certo! Iniciando a leitura de:\n" + arquivo.name);
+    document.body.style.cursor = 'wait';
+
+    const leitor = new FileReader();
+
+    leitor.onload = async function(e) {
+        try {
+            const texto = e.target.result;
+            const linhas = texto.split(/\r?\n/);
+            let importados = 0;
+
+            const databaseVar = typeof db !== 'undefined' ? db : (window.db || null);
+
+            for (let i = 1; i < linhas.length; i++) {
+                const linha = linhas[i].trim();
+                if (!linha) continue;
+
+                let col = linha.split('\t'); 
+                if (col.length < 3) col = linha.split(';');
+                if (col.length < 3) continue;
+
+                const limpar = (v) => v ? v.trim().replace(/^"|"$/g, '') : '';
+                
+                let codPronto = limpar(col.at(2)) || limpar(col.at(0)) || ("ID_" + Date.now() + i);
+                
+                let novoProd = {
+                    codigo: codPronto,
+                    codigo_barras: codPronto,
+                    nome: limpar(col.at(1)) || "Sem Nome",
+                    categoria: 'Geral',
+                    custo: limpar(col.at(3)) || '0,00',
+                    venda: limpar(col.at(4)) || '0,00',
+                    quantidade: limpar(col.at(5)) || '0',
+                    estoque: limpar(col.at(5)) || '0', 
+                    ncm: limpar(col.at(6)) || '',
+                    foto: '' 
+                };
+
+                let salvou = false;
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    await firebase.database().ref('produtos').push(novoProd);
+                    salvou = true;
+                } else if (window.firebase && window.firebase.database) {
+                    await window.firebase.database().ref('produtos').push(novoProd);
+                    salvou = true;
+                } else if (typeof push !== 'undefined' && typeof ref !== 'undefined') {
+                    await set(push(ref(databaseVar, 'produtos')), novoProd);
+                    salvou = true;
+                }
+
+                if (!salvou) {
+                    throw new Error("Não consegui conectar com o banco de dados do FH CONTROL!");
+                }
+                importados++;
+            }
+
+            document.body.style.cursor = 'default';
+            alert(`✅ SUCESSO ABSOLUTO!\n\n${importados} produtos foram salvos no estoque!\n\nO sistema será atualizado agora para mostrar os itens na tabela.`);
+            
+            window.location.reload();
+
+        } catch(err) {
+            document.body.style.cursor = 'default';
+            alert("🔴 Erro na hora de salvar: " + err.message);
+        }
+        
+        inputElement.value = ''; 
+    };
+
+    leitor.readAsText(arquivo, 'UTF-8');
+};
+</script>
 
 
    <div id="tabCaixa" class="tab-content">
@@ -1041,6 +1123,7 @@
    </div>
 
 </div>
+
 
 <script type="module">
    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
@@ -3009,7 +3092,8 @@ window.importarJSON = async function() {
 }
       
    } // Fim de bloqueio assinatura remota
-   
+
+  
 </script>
 </body>
 </html>
