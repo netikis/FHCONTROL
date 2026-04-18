@@ -1135,6 +1135,26 @@ window.iniciarImportacao = async function(inputElement) {
    window.meuPush = push;
    window.meuSet = set;
 
+   // --- FUNÇÃO PARA ZERAR TODO O ESTOQUE ---
+window.excluirTodosProdutos = async function() {
+    // Pergunta por segurança para não apagar sem querer
+    const confirmacao = confirm("🚨 ATENÇÃO: Você vai APAGAR TODOS os 636 produtos do seu estoque!\n\nEsta ação não tem volta. Deseja continuar?");
+    
+    if (confirmacao) {
+        try {
+            // "remove" e "ref" já estão importados no seu script lá no topo
+            await remove(ref(db, 'produtos'));
+            alert("🗑️ Estoque zerado com sucesso!");
+            
+            // Recarrega para limpar a tabela visualmente
+            window.location.reload();
+        } catch (error) {
+            console.error("Erro ao zerar:", error);
+            alert("🔴 Erro ao zerar estoque: " + error.message);
+        }
+    }
+};
+
    // ================= VARIÁVEIS GLOBAIS =================
    window.usuarioLogado = null;
    window.usuariosGlobais = [];
