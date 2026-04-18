@@ -1181,6 +1181,106 @@ window.excluirTodosProdutos = async function() {
 
    let paginaAtualCli = 1; const itensPorPaginaCli = 15; let termoBuscaCli = "";
    let paginaAtualProd = 1; const itensPorPaginaProd = 35; let termoBuscaProd = "";
+let tempoEsperaBusca;
+
+// FUNÇÃO: Filtra os produtos sem travar o teclado
+window.filtrarProdutos = function() {
+    // Cancela a busca anterior se você ainda estiver digitando
+    clearTimeout(tempoEsperaBusca);
+
+    // Começa a contagem de 300ms
+    tempoEsperaBusca = setTimeout(() => {
+        const campoBusca = document.getElementById('buscaProduto');
+        const termo = campoBusca.value.toLowerCase();
+        
+        // Filtra na memória (que é ultra rápido)
+        const filtrados = produtosGlobais.filter(p => {
+            const nome = p.nome ? p.nome.toLowerCase() : "";
+            const cod = p.codigo ? p.codigo.toLowerCase() : "";
+            return nome.includes(termo) || cod.includes(termo);
+        });
+
+        // Volta para a página 1 e desenha a tabela com o resultado
+        window.paginaAtualProd = 1;
+        renderizarTabelaEstoque(filtrados);
+    }, 300);
+};
+
+// FUNÇÃO: Desenha a tabela de forma leve (Paginação Real)
+function renderizarTabelaEstoque(listaParaExibir) {
+    const corpoTabela = document.getElementById('tabelaEstoque');
+    if (!corpoTabela) return;
+
+    // Limpa a tabela de uma vez só
+    corpoTabela.innerHTML = "";
+
+    // Calcula o que deve aparecer nesta página
+    const inicio = (window.paginaAtualProd - 1) * window.itensPorPaginaProd;
+    const fim = inicio + window.itensPorPaginaProd;
+    
+    // Pega apenas o "pedaço" de 35 itens da lista de 636
+    const itensDaPagina = listaParaExibir.slice(inicio, fim);
+
+    // Monta o HTML todo em uma única "tripa" de texto para o navegador não cansar
+    let htmlFinal = "";
+
+    itensDaPagina.forEach(prod => {
+        // Alerta de estoque baixo (pisca vermelho)
+        const estiloQtd = Number(prod.quantidade) <= 3 ? 'color: #e74c3c; font-weight: bold; animation: blinker 1s linear infinite;' : '';
+        
+        htmlFinal += `
+            <tr style="border-bottom: 1px solid #34495e;">
+                <td style="padding: 8px;">${prod.codigo}</td>
+                <td style="padding: 8px; font-weight: bold;">${prod.nome}</td>
+                <td style="padding: 8px;">${prod.categoria || 'Geral'}</td>
+                <td style="padding: 8px; text-align: center; ${estiloQtd}">${prod.quantidade}</td>
+                <td style="padding: 8px;">R$ ${prod.custo}</td>
+                <td style="padding: 8px; color: #2ecc71; font-weight: bold;">R$ ${prod.venda}</td>
+                <td style="padding: 8px;">${prod.ncm || ''}</td>
+                <td style="padding: 8px; text-align: center;">
+                    <button class="btn-ver" onclick="editarProduto('${prod.id}')" style="padding: 2px 5px;">✏️</button>
+                    <button class="btn-danger" onclick="excluirProduto('${prod.id}')" style="padding: 2px 5px;">🗑️</button>
+                </td>
+                <td style="padding: 8px; text-align: center;">${prod.foto ? '🖼️' : '❌'}</td>
+            </tr>
+        `;
+    });
+
+    // Joga tudo na tela de uma vez só (Isso acaba com o travamento!)
+    corpoTabela.innerHTML = htmlFinal;
+
+    // Atualiza o texto da paginação lá em cima
+    const totalPaginas = Math.ceil(listaParaExibir.length / window.itensPorPaginaProd);
+    const infoPagina = document.getElementById('infoPaginaProd');
+    if (infoPagina) {
+        infoPagina.innerText = "Pág " + window.paginaAtualProd + " de " + (totalPaginas || 1);
+    }
+}
+
+// FUNÇÃO: Controla os botões de Próximo e Anterior
+window.mudarPaginaProd = function(direcao) {
+    const termo = document.getElementById('buscaProduto').value.toLowerCase();
+    
+    // Filtra a lista atual para saber o total de páginas
+    const listaAtual = produtosGlobais.filter(p => {
+        const nome = p.nome ? p.nome.toLowerCase() : "";
+        const cod = p.codigo ? p.codigo.toLowerCase() : "";
+        return nome.includes(termo) || cod.includes(termo);
+    });
+
+    const totalPaginas = Math.ceil(listaAtual.length / window.itensPorPaginaProd);
+    
+    // Calcula a nova página
+    let novaPag = window.paginaAtualProd + direcao;
+
+    // Só muda se a página existir
+    if (novaPag >= 1 && novaPag <= totalPaginas) {
+        window.paginaAtualProd = novaPag;
+        renderizarTabelaEstoque(listaAtual);
+        // Sobe a tela para o topo da tabela
+        document.querySelector('.table-responsive').scrollTop = 0;
+    }
+};
 
 
    // ================= SISTEMA DE ABAS =================
