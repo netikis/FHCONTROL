@@ -940,8 +940,6 @@ window.iniciarImportacao = async function(inputElement) {
             const linhas = texto.split(/\r?\n/);
             let importados = 0;
 
-            const databaseVar = typeof db !== 'undefined' ? db : (window.db || null);
-
             for (let i = 1; i < linhas.length; i++) {
                 const linha = linhas[i].trim();
                 if (!linha) continue;
@@ -967,32 +965,24 @@ window.iniciarImportacao = async function(inputElement) {
                     foto: '' 
                 };
 
-                let salvou = false;
-                if (typeof firebase !== 'undefined' && firebase.database) {
-                    await firebase.database().ref('produtos').push(novoProd);
-                    salvou = true;
-                } else if (window.firebase && window.firebase.database) {
-                    await window.firebase.database().ref('produtos').push(novoProd);
-                    salvou = true;
-                } else if (typeof push !== 'undefined' && typeof ref !== 'undefined') {
-                    await set(push(ref(databaseVar, 'produtos')), novoProd);
-                    salvou = true;
+                // A CONEXÃO PERFEITA USANDO AS CHAVES QUE VOCÊ CRIOU NO PASSO 1
+                if (!window.meuBanco || !window.meuPush || !window.meuSet || !window.meuRef) {
+                    throw new Error("As chaves do Firebase não foram encontradas! Verifique se você fez o Passo 1 corretamente.");
                 }
 
-                if (!salvou) {
-                    throw new Error("Não consegui conectar com o banco de dados do FH CONTROL!");
-                }
+                await window.meuSet(window.meuPush(window.meuRef(window.meuBanco, 'produtos')), novoProd);
+                
                 importados++;
             }
 
             document.body.style.cursor = 'default';
-            alert(`✅ SUCESSO ABSOLUTO!\n\n${importados} produtos foram salvos no estoque!\n\nO sistema será atualizado agora para mostrar os itens na tabela.`);
+            alert(`✅ SUCESSO ABSOLUTO!\n\n${importados} produtos foram salvos no FH CONTROL!\n\nO sistema será atualizado agora para mostrar os itens na tabela.`);
             
             window.location.reload();
 
         } catch(err) {
             document.body.style.cursor = 'default';
-            alert("🔴 Erro na hora de salvar: " + err.message);
+            alert("🔴 Erro na hora de salvar no banco de dados:\n" + err.message);
         }
         
         inputElement.value = ''; 
@@ -1000,8 +990,8 @@ window.iniciarImportacao = async function(inputElement) {
 
     leitor.readAsText(arquivo, 'UTF-8');
 };
-</script>
 
+</script>
 
    <div id="tabCaixa" class="tab-content">
        <div class="container">
@@ -1140,6 +1130,10 @@ window.iniciarImportacao = async function(inputElement) {
    };
    const app = initializeApp(firebaseConfig);
    const db = getDatabase(app);
+   window.meuBanco = db;
+   window.meuRef = ref;
+   window.meuPush = push;
+   window.meuSet = set;
 
    // ================= VARIÁVEIS GLOBAIS =================
    window.usuarioLogado = null;
