@@ -1135,26 +1135,31 @@ window.iniciarImportacao = async function(inputElement) {
    window.meuPush = push;
    window.meuSet = set;
 
-   // --- FUNÇÃO PARA ZERAR TODO O ESTOQUE ---
+   // --- FUNÇÃO PARA ZERAR ESTOQUE COM CONFIRMAÇÃO POR ESCRITO ---
 window.excluirTodosProdutos = async function() {
-    // Pergunta por segurança para não apagar sem querer
-    const confirmacao = confirm("🚨 ATENÇÃO: Você vai APAGAR TODOS os 636 produtos do seu estoque!\n\nEsta ação não tem volta. Deseja continuar?");
-    
-    if (confirmacao) {
+    // Abre a caixinha para o usuário escrever
+    const resposta = prompt("🚨 ATENÇÃO: Para apagar TODO o seu estoque definitivamente, digite ZERAR abaixo:");
+
+    // Só prossegue se ele escreveu exatamente ZERAR (em maiúsculas)
+    if (resposta === "ZERAR") {
         try {
-            // "remove" e "ref" já estão importados no seu script lá no topo
+            // "db", "remove" e "ref" são as peças que o seu Firebase já usa
             await remove(ref(db, 'produtos'));
-            alert("🗑️ Estoque zerado com sucesso!");
             
-            // Recarrega para limpar a tabela visualmente
+            alert("🗑️ Estoque limpo com sucesso!");
+            
+            // Recarrega a página para limpar a tabela visualmente
             window.location.reload();
         } catch (error) {
-            console.error("Erro ao zerar:", error);
-            alert("🔴 Erro ao zerar estoque: " + error.message);
+            console.error("Erro ao excluir:", error);
+            alert("🔴 Erro ao zerar banco de dados: " + error.message);
         }
+    } else if (resposta !== null) {
+        // Se ele escreveu errado ou desistiu
+        alert("❌ Ação cancelada. Você não digitou ZERAR corretamente.");
     }
 };
-
+   
    // ================= VARIÁVEIS GLOBAIS =================
    window.usuarioLogado = null;
    window.usuariosGlobais = [];
