@@ -6,6 +6,7 @@
    <title>FH Control - ERP & PDV</title>
    
    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
    <style>
         /* =========================================
@@ -479,7 +480,18 @@
                flex-wrap: nowrap;
            }
        }
-   </style>
+
+/* --- PASTAS DO REGISTRO TOTAL --- */
+       .pasta-nivel-1 { background-color: #2c3e50; padding: 12px; margin-bottom: 5px; border-radius: 4px; cursor: pointer; color: #f1c40f; font-weight: bold; border: 1px solid #34495e; transition: 0.2s;}
+       .pasta-nivel-1:hover { background-color: #34495e; }
+       .pasta-nivel-2 { background-color: #34495e; padding: 10px 10px 10px 30px; margin-bottom: 3px; cursor: pointer; color: #3498db; font-weight: bold; display: none; border-left: 3px solid #f1c40f; transition: 0.2s;}
+       .pasta-nivel-2:hover { background-color: #2c3e50; }
+       .pasta-nivel-3 { background-color: #1a252f; padding: 8px 10px 8px 50px; margin-bottom: 2px; cursor: pointer; color: #bdc3c7; display: none; border-left: 3px solid #3498db; font-weight: bold;}
+       .pasta-nivel-3:hover { color: #ffffff; }
+       .pasta-conteudo { padding: 10px 10px 10px 70px; background-color: #111827; display: none; border-left: 3px solid #bdc3c7;}
+       .item-registro { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #34495e; font-size: 12px; color: #ecf0f1; align-items: center;}
+   
+ </style>
 </head>
 <body>
 
@@ -564,6 +576,7 @@
    <button class="menu-btn" id="btnTabVendas" onclick="abrirAba('tabVendas', this)">🛒 Venda / Orçamentos</button>
    <button class="menu-btn" id="btnTabOS" onclick="abrirAba('tabOS', this)" style="color: #ffffff;">📝 OS</button>
    <button class="menu-btn" id="btnTabCaixa" onclick="abrirAba('tabCaixa', this)">💰 Caixa / Relatórios</button>
+   <button class="menu-btn" id="btnTabRegistro" onclick="abrirAba('tabRegistro', this); window.iniciarRegistroTotal();">🗂️ Registro Total</button>
    <button class="menu-btn" id="btnTabConfig" onclick="abrirAba('tabConfig', this)">⚙️ Config / Empresa</button>
    
    <div class="user-info-sidebar" id="blocoUserLogado" style="display: none;">
@@ -736,6 +749,17 @@
                 </select>
             </div>
             
+            <div class="col">
+                <label style="color: #ffffff;">Forma de Pagamento</label>
+                <select id="vendaPagamento" style="font-weight: bold; background-color: #2c3e50; color: #ffffff; border: 1px solid #ffffff;">
+                    <option value="Dinheiro">💵 Dinheiro</option>
+                    <option value="Cartão de Débito">💳 Débito</option>
+                    <option value="Cartão de Crédito">💳 Crédito</option>
+                    <option value="PIX">🌀 PIX</option>
+                    <option value="Boleto">📑 Boleto</option>
+                </select>
+            </div>
+            
             <div class="col" style="flex: 1.5;"><label style="color: #ffffff;">Data Vencimento</label><input type="date" id="vendaVencimento" style="font-weight: bold;"></div>
         </div>
 
@@ -812,6 +836,17 @@
                     <select id="osStatusPag" style="font-weight: bold; background-color: #2c3e50; color: #f1c40f; border: 1px solid #3498db;">
                         <option value="PENDENTE" selected>⏳ PENDENTE (Não Soma)</option>
                         <option value="PAGO">✅ PAGO (Soma no Caixa)</option>
+                    </select>
+                </div>
+
+                <div class="col">
+                    <label style="color: #3498db;">Forma de Pagamento</label>
+                    <select id="osPagamento" style="font-weight: bold; background-color: #2c3e50; color: #ffffff; border: 1px solid #3498db;">
+                        <option value="Dinheiro">💵 Dinheiro</option>
+                        <option value="Cartão de Débito">💳 Débito</option>
+                        <option value="Cartão de Crédito">💳 Crédito</option>
+                        <option value="PIX">🌀 PIX</option>
+                        <option value="Boleto">📑 Boleto</option>
                     </select>
                 </div>
 
@@ -1021,6 +1056,7 @@ window.iniciarImportacao = async function(inputElement) {
                <div class="col"><button class="btn-danger" style="padding: 12px; font-size: 12px;" onclick="document.getElementById('modalDespesa').style.display='flex'">➖ Lançar Despesa</button></div>
                <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #8e44ad; color: #fff; font-size: 12px;" onclick="gerarRelatorioMensal()">📄 Resumo Mensal PDF</button></div>
                <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #f39c12; color: #fff; font-size: 12px;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia</button></div>
+               <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #c0392b; color: #fff; font-size: 12px; font-weight: bold;" onclick="zerarFluxoCaixa()">⚠️ Zerar Caixa</button></div>
            </div>
 
            <div class="table-responsive">
@@ -1111,9 +1147,54 @@ window.iniciarImportacao = async function(inputElement) {
            <button class="btn-danger" style="padding: 10px; font-size: 13px;" onclick="restaurarBackupLocal()">⚠️ RESTAURAR DE ARQUIVO</button>
        </div>
    </div>
+<div id="tabRegistro" class="tab-content">
+       <div class="container">
+           <h2 style="color: #ffffff; border-bottom: 2px solid #ffffff;">🗂️ Registro Total do Sistema</h2>
+           
+           <div style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;">
+               <button class="btn-secundario" id="btnSubBusca" style="background-color: #3498db; color: #ffffff;" onclick="window.mudarSubAbaRegistro('busca')">🔍 1. Busca Geral</button>
+               <button class="btn-secundario" id="btnSubPastas" style="background-color: #34495e; color: #ffffff;" onclick="window.mudarSubAbaRegistro('pastas')">📁 2. Arquivo em Pastas</button>
+               <button class="btn-secundario" id="btnSubGraficos" style="background-color: #34495e; color: #ffffff;" onclick="window.mudarSubAbaRegistro('graficos')">📊 3. Gráficos de Fluxo</button>
+           </div>
 
-</div>
+           <div id="subRegistroBusca" style="display: block;">
+               <h3 style="color: #ffffff;">Localizar Documentos</h3>
+               <input type="text" id="inputBuscaRegistro" class="search-bar" style="width: 100%; margin-bottom: 15px; padding: 10px; font-size: 15px; background-color: #ffffff; color: #000000; border-radius: 4px;" placeholder="Digite uma data (Ex: 19/04/2026), cliente, tipo ou Nº da OS..." onkeyup="window.buscarNoRegistro()">
+               <div class="table-responsive">
+                   <table>
+                       <thead><tr><th>Data</th><th>Nº Doc</th><th>Tipo</th><th>Cliente</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead>
+                       <tbody id="tabelaBuscaRegistro">
+                           <tr><td colspan="7" style="text-align: center;">Digite acima para buscar no histórico completo.</td></tr>
+                       </tbody>
+                   </table>
+               </div>
+           </div>
 
+           <div id="subRegistroPastas" style="display: none;">
+               <h3 style="color: #ffffff;">Navegação por Diretórios</h3>
+               <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Clique nas pastas para expandir o conteúdo.</p>
+               <div id="arvorePastas" style="background: #1a252f; padding: 15px; border-radius: 6px; border: 1px solid #7f8c8d; max-height: 500px; overflow-y: auto; color: #ffffff;">
+                   </div>
+           </div>
+
+           <div id="subRegistroGraficos" style="display: none;">
+               <h3 style="color: #ffffff;">Análise de Entradas e Saídas</h3>
+               <div class="row form-group" style="background-color: #1a252f; padding: 15px; border-radius: 6px;">
+                   <div class="col">
+                       <label style="color: #ffffff;">Selecione o Ano</label>
+                       <select id="filtroAnoGrafico" onchange="window.atualizarGraficoRegistro()" style="background-color: #ffffff; color: #000000;"><option value="">Aguardando dados...</option></select>
+                   </div>
+                   <div class="col">
+                       <label style="color: #ffffff;">Selecione o Mês</label>
+                       <select id="filtroMesGrafico" onchange="window.atualizarGraficoRegistro()" style="background-color: #ffffff; color: #000000;">
+                           <option value="todos">Resumo do Ano Todo</option>
+                       </select>
+                   </div>
+               </div>
+               <div style="background: white; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                   <canvas id="canvasGraficoRegistro" height="100"></canvas>
+               </div>
+           </div>
 
 <script type="module">
    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
@@ -1331,6 +1412,8 @@ window.mudarPaginaProd = function(direcao) {
 
        document.getElementById('vendaStatusPag').value = 'PAGO';
        document.getElementById('osStatusPag').value = 'PENDENTE';
+       document.getElementById('vendaPagamento').value = 'Dinheiro';
+       document.getElementById('osPagamento').value = 'Dinheiro';
 
        window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
        window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO');
@@ -1703,20 +1786,24 @@ window.lerArquivoTXT = async function(event) {
                 if (!linha) continue;
 
                 let col = linha.split('\t'); 
+                if (col.length < 3) col = linha.split(';'); // Tenta ponto-e-vírgula caso a aba falhe
                 if (col.length < 3) continue;
 
-                const limpar = (v) => v ? v.trim().replace(/^"|"$/g, '') : '';
-                let codPronto = limpar(col) || limpar(col);
+                // Converte em String com segurança antes de limpar
+                const limpar = (v) => v ? String(v).trim().replace(/^"|"$/g, '') : '';
+                
+                // Agora o código pega a posição certa do array!
+                let codPronto = limpar(col) || ("ID_" + Date.now() + i);
 
                 let novoProd = {
                     codigo: codPronto,
                     codigo_barras: codPronto,
-                    nome: limpar(col),
+                    nome: limpar(col) || "Sem Nome",
                     categoria: 'Geral',
                     custo: limpar(col) || '0,00',
                     venda: limpar(col) || '0,00',
-                    quantidade: limpar(col) || '0',
-                    estoque: limpar(col) || '0', 
+                    quantidade: parseInt(limpar(col)) || 0,
+                    estoque: parseInt(limpar(col)) || 0, 
                     ncm: limpar(col) || '',
                     foto: '' 
                 };
@@ -1762,24 +1849,31 @@ window.lerArquivoTXT = async function(event) {
        }
 
        window.carregarSelectsGerais = function() {
-           const dCliVenda = document.getElementById('listaClientesNomesVenda'); 
-           const dCliOS = document.getElementById('listaClientesNomesOS'); 
-           if(dCliVenda) dCliVenda.innerHTML = ''; if(dCliOS) dCliOS.innerHTML = ''; 
-           clientesGlobais.forEach(c => { 
-               if(dCliVenda) dCliVenda.innerHTML += `<option value="${c.nome}">`; 
-               if(dCliOS) dCliOS.innerHTML += `<option value="${c.nome}">`; 
-           });
-           
-           const dProdVenda = document.getElementById('listaProdutosEstoqueVenda'); 
-           const dProdOS = document.getElementById('listaProdutosEstoqueOS'); 
-           if(dProdVenda) dProdVenda.innerHTML = ''; if(dProdOS) dProdOS.innerHTML = ''; 
-           produtosGlobais.forEach(p => { 
-               let codTxt = p.codigo ? `[${p.codigo}] ` : '';
-               let opt = `<option value="${p.nome}">${codTxt}R$ ${parseFloat(p.venda).toFixed(2)} (Estoque: ${p.quantidade || 0})</option>`;
-               if(dProdVenda) dProdVenda.innerHTML += opt; 
-               if(dProdOS) dProdOS.innerHTML += opt; 
-           });
-       }
+    // Listas do Venda/OS
+    const dCliVenda = document.getElementById('listaClientesNomesVenda'); 
+    const dCliOS = document.getElementById('listaClientesNomesOS'); 
+    
+    // Constrói HTML do Cliente na memória (Ultra rápido)
+    let optCli = '';
+    clientesGlobais.forEach(c => { optCli += `<option value="${c.nome || ''}">`; });
+    if(dCliVenda) dCliVenda.innerHTML = optCli; 
+    if(dCliOS) dCliOS.innerHTML = optCli; 
+    
+    // Listas de Produto
+    const dProdVenda = document.getElementById('listaProdutosEstoqueVenda'); 
+    const dProdOS = document.getElementById('listaProdutosEstoqueOS'); 
+    
+    // Constrói HTML do Produto na memória (Evita o congelamento da tela)
+    let optProd = '';
+    produtosGlobais.forEach(p => { 
+        let codTxt = p.codigo ? `[${p.codigo}] ` : '';
+        optProd += `<option value="${p.nome || ''}">${codTxt}R$ ${parseFloat(p.venda || 0).toFixed(2)} (Estoque: ${p.quantidade || 0})</option>`;
+    });
+    
+    // Joga na tela tudo de uma vez
+    if(dProdVenda) dProdVenda.innerHTML = optProd; 
+    if(dProdOS) dProdOS.innerHTML = optProd; 
+}
 
 
        // --- 3. VENDAS NORMAIS ---
@@ -1892,7 +1986,8 @@ window.lerArquivoTXT = async function(event) {
            const os = parseInt(document.getElementById('vendaOS').value); 
            const v = document.getElementById('vendaVencimento').value; 
            const n = document.getElementById('vendaClienteBusca').value; 
-           const statusPag = document.getElementById('vendaStatusPag').value; // PAGO ou PENDENTE
+           const statusPag = document.getElementById('vendaStatusPag').value;
+           const formaPag = document.getElementById('vendaPagamento').value; 
            const tipoDocSelecionado = document.getElementById('vendaTipoDoc').value;
 
            if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
@@ -1909,7 +2004,6 @@ window.lerArquivoTXT = async function(event) {
                const snapAntigo = await get(ref(db, 'caixa/' + editandoDocId));
                originalDoc = snapAntigo.val();
                
-               // DEVOLVE O ESTOQUE ANTIGO ANTES DE SALVAR O NOVO
                if (originalDoc && originalDoc.itens) {
                    let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
                    for (let oldItem of antigosItens) {
@@ -1923,6 +2017,7 @@ window.lerArquivoTXT = async function(event) {
 
             const doc = { 
                 tipo: tipoDocSelecionado, os: os, vencimento: v, statusPagamento: statusPag,
+                formaPagamento: formaPag, 
                 dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
                 timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
                 clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total, 
@@ -1936,21 +2031,17 @@ window.lerArquivoTXT = async function(event) {
                 } else {
                     await set(push(ref(db, 'caixa')), doc); 
                 }
-               
-                // CONTROLE DE CAIXA E ESTOQUE (SÓ BAIXA ESTOQUE SE FOR VENDA)
+                
                 if (tipoDocSelecionado === 'VENDA') {
-                    
-                    // Lógica Financeira (Edição e Nova)
                     if (editandoDocId && originalDoc) {
                         let statusAntigo = originalDoc.statusPagamento || 'PAGO';
                         let valorAntigo = originalDoc.total || 0;
-                        if (statusAntigo === 'PAGO') window.registrarMovimentoCaixa('entrada', -valorAntigo); // remove o velho
-                        if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total); // adiciona o novo
+                        if (statusAntigo === 'PAGO') window.registrarMovimentoCaixa('entrada', -valorAntigo);
+                        if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
                     } else {
                         if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
                     }
 
-                    // Baixa de Estoque
                     for (let item of carrinhoVenda) {
                         if (item.ehEstoque && item.idProd) {
                             const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
@@ -1963,6 +2054,7 @@ window.lerArquivoTXT = async function(event) {
                carrinhoVenda = []; window.atualizarCarrinhoVenda(); 
                document.getElementById('vendaClienteBusca').value = ''; 
                document.getElementById('vendaStatusPag').value = 'PAGO';
+               document.getElementById('vendaPagamento').value = 'Dinheiro';
                window.carregarSelectsGerais(); 
                window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
                
@@ -1971,7 +2063,6 @@ window.lerArquivoTXT = async function(event) {
 
            } catch(e) { alert("Erro: " + e); }
        }
-
 
        // --- 4. MÓDULO ORDEM DE SERVIÇO (OS) ---
        document.getElementById('osFotoUpload').addEventListener('change', e => { 
@@ -2128,11 +2219,12 @@ window.lerArquivoTXT = async function(event) {
            document.getElementById('osTotalGeral').innerText = `TOTAL OS: R$ ${(tItens + (km * valKm)).toFixed(2)}`;
        }
 
-       window.salvarOrdemDeServico = async function() {
+      window.salvarOrdemDeServico = async function() {
            const numOS = parseInt(document.getElementById('osNumero').value); 
            const cliNome = document.getElementById('osClienteBusca').value; 
            const venc = document.getElementById('osVencimento').value;
-           const statusPag = document.getElementById('osStatusPag').value; // PAGO ou PENDENTE
+           const statusPag = document.getElementById('osStatusPag').value;
+           const formaPag = document.getElementById('osPagamento').value;
            
            if (!cliNome) return alert("Preencha o Cliente da OS.");
            
@@ -2153,7 +2245,6 @@ window.lerArquivoTXT = async function(event) {
                const snapAntigo = await get(ref(db, 'caixa/' + editandoDocId));
                originalDoc = snapAntigo.val();
                
-               // DEVOLVE O ESTOQUE ANTIGO ANTES DE SALVAR O NOVO
                if (originalDoc && originalDoc.itens) {
                    let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
                    for (let oldItem of antigosItens) {
@@ -2167,6 +2258,7 @@ window.lerArquivoTXT = async function(event) {
 
            const docOS = {
                tipo: 'ORDEM DE SERVIÇO', os: numOS, vencimento: venc, statusPagamento: statusPag,
+               formaPagamento: formaPag,
                dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
                timestamp: originalDoc ? originalDoc.timestamp : Date.now(),
                clienteId: cId, clienteNome: cNome, 
@@ -2185,7 +2277,6 @@ window.lerArquivoTXT = async function(event) {
                     await set(push(ref(db, 'caixa')), docOS); 
                 }
 
-                // CONTROLE FINANCEIRO DE CAIXA
                 if (editandoDocId && originalDoc) {
                     let statusAntigo = originalDoc.statusPagamento || 'PAGO';
                     let valorAntigo = originalDoc.total || 0;
@@ -2195,7 +2286,6 @@ window.lerArquivoTXT = async function(event) {
                     if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', totalGeral);
                 }
                
-                // CONTROLE DE ESTOQUE
                 for (let item of carrinhoOS) {
                    if (item.ehEstoque && item.idProd) {
                        const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
@@ -2208,6 +2298,7 @@ window.lerArquivoTXT = async function(event) {
                ['osClienteBusca','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
                document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
                document.getElementById('osStatusPag').value = 'PENDENTE';
+               document.getElementById('osPagamento').value = 'Dinheiro';
                fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
                window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO'); window.carregarSelectsGerais(); 
                
@@ -2745,34 +2836,48 @@ window.lerArquivoTXT = async function(event) {
            janela.document.close();
        }
 
-       // --- CANCELAR E ESTORNAR ---
+      // --- CANCELAR E ESTORNAR ---
        window.cancelarVenda = async function(id) {
-           if (!confirm("ATENÇÃO: Deseja CANCELAR este documento?\nEle será apagado permanentemente.")) return;
+           if (!confirm("ATENÇÃO: Deseja CANCELAR este documento?\nEle será apagado permanentemente e os valores estornados.")) return;
            try {
-               const snap = await get(ref(db, 'caixa/' + id)); const vCanc = snap.val();
+               const snap = await get(ref(db, 'caixa/' + id)); 
+               const vCanc = snap.val();
                
-               if (vCanc && vCanc.tipo !== 'DESPESA' && vCanc.tipo !== 'FECHAMENTO') {
-                   // Devolve os itens para o Estoque
-                   if (vCanc.itens) {
+               if (vCanc) {
+                   // 1. DEVOLVE OS ITENS PARA O ESTOQUE (Apenas Vendas e OS)
+                   if (vCanc.tipo !== 'DESPESA' && vCanc.tipo !== 'FECHAMENTO' && vCanc.itens) {
                        let itensGarantidos = Array.isArray(vCanc.itens) ? vCanc.itens : Object.values(vCanc.itens);
                        for (let item of itensGarantidos) {
                            if (item.ehEstoque && item.idProd && (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO')) {
-                               const snapP = await get(ref(db, 'produtos/' + item.idProd)); let pDb = snapP.val();
-                               if (pDb) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: (pDb.quantidade || 0) + item.qtdBaixa }); }
+                               const snapP = await get(ref(db, 'produtos/' + item.idProd)); 
+                               let pDb = snapP.val();
+                               if (pDb) { 
+                                   await update(ref(db, 'produtos/' + item.idProd), { quantidade: (pDb.quantidade || 0) + item.qtdBaixa }); 
+                               }
                            }
                        }
                    }
                    
-                   // Remove do Painel Financeiro SOMENTE SE estava como PAGO
+                   // 2. ESTORNA O VALOR DO PAINEL FINANCEIRO DIÁRIO
                    let status = vCanc.statusPagamento || 'PAGO';
-                   if (status === 'PAGO' && (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO')) {
-                       window.registrarMovimentoCaixa('entrada', -vCanc.total);
+                   if (status === 'PAGO') {
+                       // Se for Venda/OS paga, retira o valor das Entradas do dia
+                       if (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO' || vCanc.tipo === 'ORCAMENTO') {
+                           window.registrarMovimentoCaixa('entrada', -vCanc.total);
+                       } 
+                       // Se for Despesa, retira o valor das Saídas do dia (devolvendo o Saldo)
+                       else if (vCanc.tipo === 'DESPESA') {
+                           window.registrarMovimentoCaixa('saida', -vCanc.total);
+                       }
                    }
                }
                
+               // 3. APAGA O REGISTRO DO BANCO DE DADOS
                await remove(ref(db, 'caixa/' + id)); 
-               alert("Documento cancelado com sucesso!");
-           } catch(erro) { alert("Erro ao cancelar: " + erro); }
+               alert("Documento cancelado e Caixa estornado com sucesso!");
+           } catch(erro) { 
+               alert("Erro ao cancelar: " + erro); 
+           }
        }
 
        // --- ENVIAR WHATSAPP / COPIAR LINK ---
@@ -3212,7 +3317,396 @@ window.importarJSON = async function() {
       
    } // Fim de bloqueio assinatura remota
 
-  
+// MÓDULO 7: REGISTRO TOTAL (BUSCA, PASTAS, GRÁFICOS E REIMPRESSÃO)
+       
+       let meuGraficoRegistro = null;
+       const conversorMeses = {
+           "01": "Janeiro", "02": "Fevereiro", "03": "Março", "04": "Abril", "05": "Maio", "06": "Junho",
+           "07": "Julho", "08": "Agosto", "09": "Setembro", "10": "Outubro", "11": "Novembro", "12": "Dezembro"
+       };
+
+       window.mudarSubAbaRegistro = function(aba) {
+           document.getElementById('subRegistroBusca').style.display = aba === 'busca' ? 'block' : 'none';
+           document.getElementById('subRegistroPastas').style.display = aba === 'pastas' ? 'block' : 'none';
+           document.getElementById('subRegistroGraficos').style.display = aba === 'graficos' ? 'block' : 'none';
+           
+           // Reseta a cor de todos para neutro
+           ['btnSubBusca', 'btnSubPastas', 'btnSubGraficos'].forEach(id => {
+               document.getElementById(id).style.backgroundColor = '#34495e';
+               document.getElementById(id).style.color = '#ffffff';
+           });
+           
+           // Pinta só o selecionado de Azul
+           if(aba === 'busca') document.getElementById('btnSubBusca').style.backgroundColor = '#3498db';
+           if(aba === 'pastas') document.getElementById('btnSubPastas').style.backgroundColor = '#3498db';
+           if(aba === 'graficos') document.getElementById('btnSubGraficos').style.backgroundColor = '#3498db';
+       };
+
+       window.iniciarRegistroTotal = function() {
+           window.buscarNoRegistro(); 
+           window.gerarArvoreDePastas(); 
+           window.preencherFiltrosGrafico(); 
+       };
+
+       // 1. LÓGICA DE BUSCA E REIMPRESSÃO
+       window.buscarNoRegistro = function() {
+           const termo = document.getElementById('inputBuscaRegistro').value.toLowerCase();
+           const tabela = document.getElementById('tabelaBuscaRegistro');
+           tabela.innerHTML = '';
+           
+           let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
+
+           if(baseDados.length === 0) {
+               tabela.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #f1c40f;">Nenhum histórico no sistema ainda.</td></tr>';
+               return;
+           }
+
+           if(termo.length < 2 && termo !== '') {
+               tabela.innerHTML = '<tr><td colspan="7" style="text-align: center;">Continue digitando...</td></tr>';
+               return;
+           }
+
+           let resultados = baseDados;
+           if (termo !== '') {
+               resultados = baseDados.filter(v => {
+                   let numOs = String(v.os || '').toLowerCase();
+                   let cliente = String(v.clienteNome || '').toLowerCase();
+                   let data = String(v.dataStr || '').toLowerCase();
+                   let tipo = String(v.tipo || '').toLowerCase();
+                   return numOs.includes(termo) || cliente.includes(termo) || data.includes(termo) || tipo.includes(termo);
+               });
+           }
+
+           if (resultados.length === 0) {
+               tabela.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #e74c3c;">Nenhum registro encontrado.</td></tr>';
+               return;
+           }
+
+           resultados.slice(0, 50).forEach(v => {
+               let cor = v.tipo === 'DESPESA' ? '#e74c3c' : '#2ecc71';
+               let statusTxt = v.statusPagamento || 'PAGO';
+               
+               // Botão de Imprimir
+               let btnImprimir = '';
+               if (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') {
+                   let dadosDoc = encodeURIComponent(JSON.stringify(v));
+                   btnImprimir = `<button onclick="window.reimprimirDocumentoRegistro('${dadosDoc}')" style="background-color: #f39c12; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">🖨️ Imprimir</button>`;
+               }
+
+               tabela.innerHTML += `
+                   <tr>
+                       <td>${v.dataStr.split(' ')}</td>
+                       <td style="font-weight: bold;">${v.os || '-'}</td>
+                       <td>${v.tipo}</td>
+                       <td>${v.clienteNome || '-'}</td>
+                       <td style="color: ${cor}; font-weight: bold;">R$ ${Number(v.total).toFixed(2)}</td>
+                       <td>${statusTxt}</td>
+                       <td>${btnImprimir}</td>
+                   </tr>
+               `;
+           });
+       };
+
+       // FUNÇÃO NOVA: GERAR TELA DE IMPRESSÃO
+       window.reimprimirDocumentoRegistro = function(dadosCodificados) {
+           try {
+               let doc = JSON.parse(decodeURIComponent(dadosCodificados));
+               let janela = window.open('', '_blank', 'width=800,height=600');
+               let itensHtml = '';
+               
+               if(doc.carrinho && doc.carrinho.length > 0) {
+                   doc.carrinho.forEach(item => {
+                       itensHtml += `<tr>
+                           <td style="border: 1px solid #ddd; padding: 8px;">${item.nome}</td>
+                           <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.qtd}</td>
+                           <td style="border: 1px solid #ddd; padding: 8px;">R$ ${Number(item.preco).toFixed(2)}</td>
+                           <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">R$ ${(item.qtd * item.preco).toFixed(2)}</td>
+                       </tr>`;
+                   });
+               } else {
+                   itensHtml = `<tr><td colspan="4" style="text-align:center; padding: 10px;">Itens não detalhados neste registro antigo.</td></tr>`;
+               }
+               
+               janela.document.write(`
+                   <html>
+                   <head>
+                       <title>Reimpressão - ${doc.os || 'Doc'}</title>
+                       <style>
+                           body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; }
+                           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                           .header { text-align: center; border-bottom: 2px dashed #ccc; padding-bottom: 15px; margin-bottom: 20px; }
+                       </style>
+                   </head>
+                   <body>
+                       <div class="header">
+                           <h2 style="margin:0;">REIMPRESSÃO DE COMPROVANTE</h2>
+                           <h3 style="margin: 5px 0;">FH CONTROL - ${doc.tipo} ${doc.os ? 'Nº ' + doc.os : ''}</h3>
+                           <p style="margin: 5px 0;"><strong>Data Original:</strong> ${doc.dataStr}</p>
+                           <p style="margin: 5px 0;"><strong>Cliente:</strong> ${doc.clienteNome || 'Consumidor Final'}</p>
+                       </div>
+                       <table>
+                           <thead>
+                               <tr style="background-color: #f2f2f2;">
+                                   <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Descrição do Item/Serviço</th>
+                                   <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Qtd</th>
+                                   <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Valor Un.</th>
+                                   <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Total</th>
+                               </tr>
+                           </thead>
+                           <tbody>${itensHtml}</tbody>
+                       </table>
+                       <h3 style="text-align: right; margin-top: 20px; font-size: 20px;">Total do Pedido: R$ ${Number(doc.total).toFixed(2)}</h3>
+                       <div style="text-align: center; margin-top: 40px; font-size: 12px; color: #777;">
+                           *** 2ª Via de Documento - Sem Valor Fiscal ***
+                       </div>
+                       <script>
+                           setTimeout(() => { window.print(); }, 500);
+                       <\/script>
+                   </body>
+                   </html>
+               `);
+               janela.document.close();
+           } catch(e) {
+               alert("Erro ao gerar a impressão: " + e.message);
+           }
+       };
+
+       // 2. LÓGICA DE PASTAS
+       window.togglePasta = function(idAlvo) {
+           let el = document.getElementById(idAlvo);
+           el.style.display = el.style.display === 'none' || el.style.display === '' ? 'block' : 'none';
+       };
+
+       window.gerarArvoreDePastas = function() {
+           let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
+           
+           if(baseDados.length === 0) {
+               document.getElementById('arvorePastas').innerHTML = '<div style="color:#f1c40f; padding:10px; text-align:center;">Ainda não há dados registrados para gerar as pastas.</div>';
+               return;
+           }
+
+           let arvore = {};
+           
+           baseDados.forEach(doc => {
+               if(!doc.dataStr) return;
+               let partesData = doc.dataStr.split(' ').split('/');
+               if(partesData.length === 3) {
+                   let dia = partesData;
+                   let mesNum = partesData;
+                   let ano = partesData;
+                   let mesNome = conversorMeses[mesNum] || mesNum;
+
+                   if(!arvore[ano]) arvore[ano] = {};
+                   if(!arvore[ano][mesNome]) arvore[ano][mesNome] = {};
+                   if(!arvore[ano][mesNome][dia]) arvore[ano][mesNome][dia] = [];
+                   
+                   arvore[ano][mesNome][dia].push(doc);
+               }
+           });
+
+           let html = '';
+           let idContador = 0;
+
+           Object.keys(arvore).sort().reverse().forEach(ano => {
+               idContador++; let idAno = `pasta_ano_${idContador}`;
+               html += `<div class="pasta-nivel-1" style="background-color: #2980b9; color: #ffffff; padding: 12px; margin-bottom: 5px; border-radius: 4px; cursor: pointer; font-weight: bold; border: 1px solid #34495e;" onclick="window.togglePasta('${idAno}')">📁 Ano: ${ano}</div>`;
+               html += `<div id="${idAno}" style="display:none;">`;
+               
+               Object.keys(arvore[ano]).forEach(mes => {
+                   idContador++; let idMes = `pasta_mes_${idContador}`;
+                   html += `<div class="pasta-nivel-2" style="background-color: #34495e; padding: 10px 10px 10px 30px; margin-bottom: 3px; cursor: pointer; color: #ffffff; font-weight: bold; border-left: 3px solid #f1c40f;" onclick="window.togglePasta('${idMes}')">📂 Mês: ${mes}</div>`;
+                   html += `<div id="${idMes}" style="display:none;">`;
+                   
+                   Object.keys(arvore[ano][mes]).sort().reverse().forEach(dia => {
+                       idContador++; let idDia = `pasta_dia_${idContador}`;
+                       html += `<div class="pasta-nivel-3" style="background-color: #1a252f; padding: 8px 10px 8px 50px; margin-bottom: 2px; cursor: pointer; color: #bdc3c7; border-left: 3px solid #3498db; font-weight: bold;" onclick="window.togglePasta('${idDia}')">📅 Dia ${dia}</div>`;
+                       html += `<div id="${idDia}" class="pasta-conteudo" style="padding: 10px 10px 10px 70px; background-color: #111827; border-left: 3px solid #bdc3c7;">`;
+                       
+                       arvore[ano][mes][dia].forEach(doc => {
+                           let sigla = doc.tipo.substring(0, 4);
+                           let cor = doc.tipo === 'DESPESA' ? '#e74c3c' : '#2ecc71';
+                           let docNome = doc.tipo === 'DESPESA' || doc.tipo === 'FECHAMENTO' ? doc.tipo : `${doc.tipo} Nº ${doc.os || 'S/N'}`;
+                           html += `
+                               <div class="item-registro" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #34495e; font-size: 13px; color: #ecf0f1;">
+                                   <span><strong>[${sigla}]</strong> ${doc.clienteNome || ''} | ${docNome}</span>
+                                   <span style="color: ${cor}; font-weight:bold;">R$ ${Number(doc.total).toFixed(2)}</span>
+                               </div>
+                           `;
+                       });
+                       html += `</div>`;
+                   });
+                   html += `</div>`;
+               });
+               html += `</div>`;
+           });
+
+           if(html === '') html = '<div style="color:#e74c3c; padding:10px;">Nenhum histórico encontrado.</div>';
+           document.getElementById('arvorePastas').innerHTML = html;
+       };
+
+       // 3. LÓGICA DE GRÁFICOS
+       window.preencherFiltrosGrafico = function() {
+           let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
+           let selectAno = document.getElementById('filtroAnoGrafico');
+           let selectMes = document.getElementById('filtroMesGrafico');
+
+           if(baseDados.length === 0) {
+               selectAno.innerHTML = '<option value="">Sem dados...</option>';
+               return;
+           }
+
+           let anos = new Set();
+           baseDados.forEach(doc => {
+               if(doc.dataStr) {
+                   let anoDoc = doc.dataStr.split(' ').split('/');
+                   if(anoDoc) anos.add(anoDoc);
+               }
+           });
+           
+           selectAno.innerHTML = '<option value="">Selecione o Ano</option>';
+           Array.from(anos).sort().reverse().forEach(ano => {
+               if(ano) selectAno.innerHTML += `<option value="${ano}">${ano}</option>`;
+           });
+
+           selectMes.innerHTML = '<option value="todos">Resumo do Ano Todo</option>';
+           Object.keys(conversorMeses).forEach(num => {
+               selectMes.innerHTML += `<option value="${num}">${conversorMeses[num]}</option>`;
+           });
+       };
+
+       window.atualizarGraficoRegistro = function() {
+           const anoFiltro = document.getElementById('filtroAnoGrafico').value;
+           const mesFiltro = document.getElementById('filtroMesGrafico').value;
+           let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
+           
+           if(!anoFiltro) return; 
+
+           let labels = [];
+           let dadosEntradas = [];
+           let dadosSaidas = [];
+
+           if (mesFiltro === 'todos') {
+               labels = Object.values(conversorMeses);
+               dadosEntradas = new Array(12).fill(0);
+               dadosSaidas = new Array(12).fill(0);
+
+               baseDados.forEach(doc => {
+                   if(!doc.dataStr) return;
+                   let [dia, mesNum, ano] = doc.dataStr.split(' ').split('/');
+                   if (ano === anoFiltro) {
+                       let indexMes = parseInt(mesNum) - 1;
+                       let valor = Number(doc.total) || 0;
+                       let status = doc.statusPagamento || 'PAGO';
+                       
+                       if (status === 'PAGO' && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO')) dadosEntradas[indexMes] += valor;
+                       if (doc.tipo === 'DESPESA') dadosSaidas[indexMes] += valor;
+                   }
+               });
+           } else {
+               let diasNoMes = new Date(anoFiltro, parseInt(mesFiltro), 0).getDate();
+               for(let i = 1; i <= diasNoMes; i++) labels.push(`Dia ${i}`);
+               dadosEntradas = new Array(diasNoMes).fill(0);
+               dadosSaidas = new Array(diasNoMes).fill(0);
+
+               baseDados.forEach(doc => {
+                   if(!doc.dataStr) return;
+                   let [dia, mesNum, ano] = doc.dataStr.split(' ').split('/');
+                   if (ano === anoFiltro && mesNum === mesFiltro) {
+                       let indexDia = parseInt(dia) - 1;
+                       let valor = Number(doc.total) || 0;
+                       let status = doc.statusPagamento || 'PAGO';
+                       
+                       if (status === 'PAGO' && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO')) dadosEntradas[indexDia] += valor;
+                       if (doc.tipo === 'DESPESA') dadosSaidas[indexDia] += valor;
+                   }
+               });
+           }
+
+           if(meuGraficoRegistro) meuGraficoRegistro.destroy();
+
+           const ctx = document.getElementById('canvasGraficoRegistro').getContext('2d');
+           meuGraficoRegistro = new Chart(ctx, {
+               type: 'bar',
+               data: {
+                   labels: labels,
+                   datasets: [
+                       { label: 'Entradas (R$)', data: dadosEntradas, backgroundColor: '#27ae60' },
+                       { label: 'Saídas (R$)', data: dadosSaidas, backgroundColor: '#e74c3c' }
+                   ]
+               },
+               options: {
+                   responsive: true,
+                   plugins: { legend: { position: 'top' } },
+                   scales: { y: { beginAtZero: true } }
+               }
+           });
+       };
+
+window.preencherCamposVendaEstoque = function() {
+           // Pega o valor e o .trim() corta qualquer espaço em branco invisível no final
+           const termoBusca = document.getElementById('vendaProdutoEstoqueBusca').value.trim();
+           
+           // Aqui estava o erro! Removemos o "window." para ele achar a sua lista global
+           const produto = produtosGlobais.find(x => 
+               String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || 
+               String(x.codigo).trim() === termoBusca
+           );
+
+           if (produto) {
+               // Puxa os valores do banco de dados (se não tiver, joga zero)
+               let custo = parseFloat(produto.custo) || 0;
+               let margem = parseFloat(produto.margem) || 0;
+               let venda = parseFloat(produto.venda) || 0;
+
+               // Preenche os campos na tela de Venda
+               document.getElementById('vendaProdutoCusto').value = custo.toFixed(2);
+               document.getElementById('vendaProdutoMargem').value = margem.toFixed(2);
+               document.getElementById('vendaProdutoPrecoFinal').value = venda.toFixed(2);
+           } else {
+               // Limpa os campos se o produto não for encontrado
+               document.getElementById('vendaProdutoCusto').value = '';
+               document.getElementById('vendaProdutoMargem').value = '';
+               document.getElementById('vendaProdutoPrecoFinal').value = '';
+           }
+       };
+
+       window.recalcularPrecoVendaManual = function() {
+           // Permite que o preço final mude na hora se você digitar uma Margem diferente
+           let custo = parseFloat(document.getElementById('vendaProdutoCusto').value) || 0;
+           let margem = parseFloat(document.getElementById('vendaProdutoMargem').value) || 0;
+
+           if (custo > 0) {
+               let novoPreco = custo + (custo * (margem / 100));
+               document.getElementById('vendaProdutoPrecoFinal').value = novoPreco.toFixed(2);
+           }
+       };
+
+window.zerarFluxoCaixa = async function() {
+    if (!confirm("⚠️ ATENÇÃO: Isso vai zerar todas as Entradas e Saídas de HOJE.")) return;
+
+    try {
+        const agora = new Date();
+        const dia = String(agora.getDate()).padStart(2, '0');
+        const mesNum = String(agora.getMonth() + 1).padStart(2, '0');
+        const ano = agora.getFullYear();
+        const mesesNomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const mesExtenso = mesesNomes[agora.getMonth()];
+
+        const zerado = { entradas: 0, saidas: 0, caixaInicial: 0 };
+
+        // LIMPA OS 3 CAMINHOS QUE APARECEM NO SEU FIREBASE
+        await set(ref(db, `caixaStatus/${ano}/${mesExtenso}/${dia}`), zerado);
+        await set(ref(db, `caixaStatus/${dia}-${mesNum}-${ano}`), zerado);
+        await set(ref(db, `caixaStatus/${ano}-${mesNum}-${dia}`), zerado);
+
+        alert("✅ Sistema limpo com sucesso!");
+        location.reload();
+
+    } catch(e) {
+        alert("Erro: " + e.message);
+    }
+};
+
 </script>
 </body>
 </html>
