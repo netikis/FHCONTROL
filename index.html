@@ -2021,7 +2021,7 @@ window.lerArquivoTXT = async function(event) {
                 dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
                 timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
                 clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total, 
-                assinaturaBase64: originalDoc ? originalDoc.assinaturaBase64 : null,
+                assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,                
                 vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' 
             };
 
@@ -2266,7 +2266,7 @@ window.lerArquivoTXT = async function(event) {
                fim: document.getElementById('osFim').value || '', pessoas: document.getElementById('osQtdPessoas').value || 1,
                kmInicial: kmIni, kmFinal: kmFin, kmTotal: kTotal, kmValor: document.getElementById('osValorKm').value || 0,
                kmCusto: tKm, itens: carrinhoOS, total: totalGeral, fotoAnexo: fotoAtualOS_Base64, 
-               assinaturaBase64: originalDoc ? originalDoc.assinaturaBase64 : null,
+               assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,
                vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' 
            };
 
@@ -3680,32 +3680,6 @@ window.preencherCamposVendaEstoque = function() {
                document.getElementById('vendaProdutoPrecoFinal').value = novoPreco.toFixed(2);
            }
        };
-
-window.zerarFluxoCaixa = async function() {
-    if (!confirm("⚠️ ATENÇÃO: Isso vai zerar todas as Entradas e Saídas de HOJE.")) return;
-
-    try {
-        const agora = new Date();
-        const dia = String(agora.getDate()).padStart(2, '0');
-        const mesNum = String(agora.getMonth() + 1).padStart(2, '0');
-        const ano = agora.getFullYear();
-        const mesesNomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        const mesExtenso = mesesNomes[agora.getMonth()];
-
-        const zerado = { entradas: 0, saidas: 0, caixaInicial: 0 };
-
-        // LIMPA OS 3 CAMINHOS QUE APARECEM NO SEU FIREBASE
-        await set(ref(db, `caixaStatus/${ano}/${mesExtenso}/${dia}`), zerado);
-        await set(ref(db, `caixaStatus/${dia}-${mesNum}-${ano}`), zerado);
-        await set(ref(db, `caixaStatus/${ano}-${mesNum}-${dia}`), zerado);
-
-        alert("✅ Sistema limpo com sucesso!");
-        location.reload();
-
-    } catch(e) {
-        alert("Erro: " + e.message);
-    }
-};
 
 </script>
 </body>
