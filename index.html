@@ -877,6 +877,7 @@
                     </select>
                 </div>
 
+         </select>
                 <div class="col" style="flex: 1.5;">
                     <label style="color: #3498db;">Cliente (Ou nome avulso)</label>
                     <input type="text" id="osClienteBusca" list="listaClientesNomesOS" placeholder="Registrado ou avulso...">
@@ -3753,6 +3754,18 @@ window.sincronizarTotaisDoDia = async function() {
     }
 };
 
+window.zerarFluxoCaixa = async function() {
+    if (confirm("Deseja realmente ZERAR os totais do painel?")) {
+        const { ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+        await set(ref(window.meuBanco, 'caixaStatus'), {
+            entradas: 0,
+            saidas: 0,
+            caixaInicial: 0
+        });
+        alert("Caixa zerado!");
+        window.location.reload();
+    }
+};
 
 </script>
 </body>
