@@ -490,7 +490,34 @@
        .pasta-nivel-3:hover { color: #ffffff; }
        .pasta-conteudo { padding: 10px 10px 10px 70px; background-color: #111827; display: none; border-left: 3px solid #bdc3c7;}
        .item-registro { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #34495e; font-size: 12px; color: #ecf0f1; align-items: center;}
-   
+    
+ /* Forçar todos os botões de ação do caixa a ficarem iguais */
+.caixa-actions-header button, 
+.btn-caixa-acao, 
+#btn-zerar-caixa, 
+[onclick*="zerarCaixa"], 
+[onclick*="fecharCaixa"] {
+    background-color: #ffffff !important; /* Fundo Branco */
+    color: #000000 !important;            /* Letra Preta */
+    font-weight: bold !important;         /* Negrito */
+    border: 2px solid #000000 !important; /* Borda preta para destacar */
+    text-transform: uppercase;
+    padding: 4px 8px !important;
+    font-size: 11px !important;           /* Tamanho menor para caber na linha */
+    cursor: pointer;
+}
+
+/* Manter tudo na mesma linha sem quebrar */
+.caixa-actions-header, 
+.container-botoes-caixa {
+    display: flex !important;
+    flex-wrap: nowrap !important;        /* Proíbe pular linha */
+    justify-content: flex-start !important;
+    gap: 5px !important;
+    overflow-x: auto;                    /* Se a tela for muito pequena, cria scroll */
+    padding: 10px 0;
+}
+
  </style>
 </head>
 <body>
@@ -1051,13 +1078,14 @@ window.iniciarImportacao = async function(inputElement) {
                </div>
            </div>
            
-           <div class="row" style="margin-bottom: 20px;">
-               <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #34495e; color: #fff; font-size: 12px; border: 1px solid #7f8c8d;" onclick="definirCaixaInicial()">💵 Informar Caixa Inicial</button></div>
-               <div class="col"><button class="btn-danger" style="padding: 12px; font-size: 12px;" onclick="document.getElementById('modalDespesa').style.display='flex'">➖ Lançar Despesa</button></div>
-               <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #8e44ad; color: #fff; font-size: 12px;" onclick="gerarRelatorioMensal()">📄 Resumo Mensal PDF</button></div>
-               <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #f39c12; color: #fff; font-size: 12px;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia</button></div>
-               <div class="col"><button class="btn-secundario" style="padding: 12px; background-color: #c0392b; color: #fff; font-size: 12px; font-weight: bold;" onclick="zerarFluxoCaixa()">⚠️ Zerar Caixa</button></div>
-           </div>
+          <div class="caixa-actions-header"> 
+    <button class="btn-secundario" onclick="definirCaixaInicial()">💵 Informar Caixa Inicial</button>
+    <button class="btn-danger" onclick="document.getElementById('modalDespesa').style.display='flex'">➖ Lançar Despesa</button>
+    <button class="btn-secundario" style="background-color: #8e44ad;" onclick="gerarRelatorioMensal()">📄 Resumo Mensal PDF</button>
+    <button class="btn-secundario" style="background-color: #f39c12;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia</button>
+    <button class="btn-secundario" style="background-color: #c0392b;" onclick="zerarFluxoCaixa()">⚠️ Zerar Caixa</button>
+    <button class="btn-secundario" style="background-color: #27ae60;" onclick="window.sincronizarTotaisDoDia()">🔄 Sincronizar Painel</button>
+</div>
 
            <div class="table-responsive">
                <table>
@@ -2369,7 +2397,8 @@ window.lerArquivoTXT = async function(event) {
                if (!v.assinaturaBase64) {
                    acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
                }
-               
+               acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
+acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
                acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
                acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
                
@@ -2383,7 +2412,7 @@ window.lerArquivoTXT = async function(event) {
                acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
 
                let corTipo = v.tipo === 'VENDA' ? '#3498db' : (v.tipo === 'ORCAMENTO' ? '#9b59b6' : (v.tipo === 'DESPESA' ? '#e74c3c' : '#f39c12'));
-               let sigla = v.tipo === 'VENDA' ? 'VD' : (v.tipo === 'ORCAMENTO' ? 'ORC' : (v.tipo === 'DESPESA' ? 'DESP' : (v.tipo === 'FECHAMENTO' ? 'FECH' : 'OS')));
+               let sigla = v.tipo === 'VENDA' ? 'VENDA' : (v.tipo === 'ORCAMENTO' ? 'ORCAMENTO' : (v.tipo === 'DESPESA' ? 'DESPESAS' : (v.tipo === 'FECHAMENTO' ? 'FECH.CAIXA' : 'ORDEM.SERV.')));
 
                if(v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
                    acoesHtml = `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Registro">🗑️</button>`;
@@ -3680,6 +3709,50 @@ window.preencherCamposVendaEstoque = function() {
                document.getElementById('vendaProdutoPrecoFinal').value = novoPreco.toFixed(2);
            }
        };
+
+window.sincronizarTotaisDoDia = async function() {
+    let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
+    let totalEntradas = 0;
+    let totalSaidas = 0;
+
+    // Pega a data de hoje no formato do seu sistema (DD/MM/AAAA)
+    let hoje = new Date().toLocaleDateString('pt-BR');
+
+    baseDados.forEach(doc => {
+        // Verifica se o documento é de hoje
+        if (doc.dataStr && doc.dataStr.includes(hoje)) {
+            let valor = parseFloat(doc.total) || 0;
+            let status = doc.statusPagamento || 'PAGO';
+
+            // Soma entradas (Vendas e OS pagas)
+            if (status === 'PAGO' && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO' || doc.tipo === 'VD')) {
+                totalEntradas += valor;
+            }
+            // Soma saídas (Despesas)
+            if (doc.tipo === 'DESPESA') {
+                totalSaidas += valor;
+            }
+        }
+    });
+
+    try {
+        // Atualiza o resumo do Firebase com os valores reais da lista
+        // Usamos window.meuBanco e window.meuSet que já estão no seu código
+        const { getDatabase, ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+        
+        await set(ref(window.meuBanco, 'caixaStatus'), {
+            entradas: totalEntradas,
+            saidas: totalSaidas,
+            caixaInicial: window.caixaFinanceiro.caixaInicial || 0
+        });
+
+        alert(`✅ Sincronização Concluída!\n\nEntradas de hoje: R$ ${totalEntradas.toFixed(2)}\nSaídas de hoje: R$ ${totalSaidas.toFixed(2)}`);
+        // O painel atualizará sozinho por causa do onValue que você já tem
+    } catch (e) {
+        alert("Erro ao sincronizar: " + e.message);
+    }
+};
+
 
 </script>
 </body>
