@@ -2045,14 +2045,20 @@ window.lerArquivoTXT = async function(event) {
            }
 
             const doc = { 
-                tipo: tipoDocSelecionado, os: os, vencimento: v, statusPagamento: statusPag,
-                formaPagamento: formaPag, 
-                dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
-                timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
-                clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total, 
-                assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,                
-                vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' 
-            };
+    tipo: tipoDocSelecionado, 
+    os: os, 
+    vencimento: v, 
+    statusPagamento: statusPag,
+    formaPagamento: formaPag, // <--- Isso salva se é PIX, Dinheiro, etc.
+    dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
+    timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
+    clienteId: cId, 
+    clienteNome: cNome, 
+    itens: carrinhoVenda, 
+    total: total, 
+    assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,                
+    vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' 
+};
 
            try {
                 if (editandoDocId) {
@@ -2381,16 +2387,21 @@ window.lerArquivoTXT = async function(event) {
                const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
                let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
 
-               // Tratamento visual do Status de Pagamento
-               let statusStr = v.statusPagamento || 'PAGO'; 
-               let txtBadge = '';
-               if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
-                   txtBadge = '-';
-               } else if (statusStr === 'PAGO') {
-                   txtBadge = '<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO</span>';
-               } else {
-                   txtBadge = '<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE</span>';
-               }
+             // Tratamento visual do Status de Pagamento
+let statusStr = v.statusPagamento || 'PAGO'; 
+let txtBadge = '';
+
+// Puxa a forma de pagamento e tira a palavra "Cartão de " para economizar espaço na tela
+let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
+let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
+
+if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+    txtBadge = '-';
+} else if (statusStr === 'PAGO') {
+    txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO${detalhePgto}</span>`;
+} else {
+    txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE${detalhePgto}</span>`;
+}
 
                let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#ffffff;">✏️ Ed</button>`;
                acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
@@ -3414,7 +3425,8 @@ window.importarJSON = async function() {
 
            resultados.slice(0, 50).forEach(v => {
                let cor = v.tipo === 'DESPESA' ? '#e74c3c' : '#2ecc71';
-               let statusTxt = v.statusPagamento || 'PAGO';
+               let formaPgtoRegistro = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '').toUpperCase() : '';
+               let statusTxt = (v.statusPagamento || 'PAGO') + (formaPgtoRegistro ? ` (${formaPgtoRegistro})` : '');
                
                // Botão de Imprimir
                let btnImprimir = '';
