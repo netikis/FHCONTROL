@@ -697,7 +697,7 @@
                     <div class="row form-group">
                         <div class="col"><label>Preço de Custo (R$)</label><input type="number" step="0.01" id="prodCusto" required></div>
                         <div class="col"><label>Margem de Lucro (%)</label><input type="number" step="0.1" id="prodMargem" required></div>
-                        <div class="col"><label>Preço de Venda (R$)</label><input type="number" step="0.01" id="prodVenda" readonly style="font-weight: bold; color: #2c3e50;"></div>
+                        <div class="col"><label>Preço de Venda (R$)</label><input type="number" step="0.01" id="prodVenda" style="font-weight: bold; color: #2c3e50;"></div>
                         <div class="col"><label style="color: #ffffff;">Qtd. Estoque</label><input type="number" step="1" id="prodQtd" value="0" required></div>
                     </div>
                     <div class="form-group"><label>Foto do Produto (Opcional)</label><input type="file" id="prodFoto" accept="image/*" style="padding: 5px; border: 1px solid #7f8c8d; border-radius: 4px; background: #ecf0f1;"></div>
@@ -1702,8 +1702,25 @@ window.mudarPaginaProd = function(direcao) {
 
        // --- 2. ESTOQUE E IMPRESSÃO DE ETIQUETAS ---
        let fotoBase64Atual = ""; 
-       document.getElementById('prodMargem').addEventListener('input', calcularVenda); document.getElementById('prodCusto').addEventListener('input', calcularVenda);
-       function calcularVenda() { let c = parseFloat(document.getElementById('prodCusto').value) || 0; let m = parseFloat(document.getElementById('prodMargem').value) || 0; document.getElementById('prodVenda').value = (c + (c * (m / 100))).toFixed(2); }
+       // --- CALCULO DUPLO: CUSTO X MARGEM X VENDA ---
+       document.getElementById('prodMargem').addEventListener('input', calcularVenda); 
+       document.getElementById('prodCusto').addEventListener('input', calcularVenda);
+       document.getElementById('prodVenda').addEventListener('input', calcularMargem); // NOVO GATILHO
+
+       function calcularVenda() { 
+           let c = parseFloat(document.getElementById('prodCusto').value) || 0; 
+           let m = parseFloat(document.getElementById('prodMargem').value) || 0; 
+           if(c > 0) { document.getElementById('prodVenda').value = (c + (c * (m / 100))).toFixed(2); }
+       }
+
+       function calcularMargem() {
+           let c = parseFloat(document.getElementById('prodCusto').value) || 0; 
+           let v = parseFloat(document.getElementById('prodVenda').value) || 0;
+           if(c > 0 && v > 0) {
+               let m = ((v - c) / c) * 100;
+               document.getElementById('prodMargem').value = m.toFixed(2);
+           }
+       }
        document.getElementById('prodFoto').addEventListener('change', e => { const f = e.target.files; if (f && f.length > 0) { const r = new FileReader(); r.onload = ev => { fotoBase64Atual = ev.target.result; }; r.readAsDataURL(f); } });
 
        onValue(ref(db, 'produtos'), function(snapshot) {
@@ -1778,30 +1795,38 @@ window.renderizarTabelaEstoque = function() {
        });
 
        window.editarProd = function(id) { 
-    const p = produtosGlobais.find(x => x.id === id); 
-    if(!p) return; 
-    ['nome','codigo','ncm','categoria','custo','margem','venda','qtd'].forEach(k => { 
-        let campo = document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1));
-        if(campo) {
-            if (k === 'qtd') campo.value = p.quantidade || 0;
-            else if (k === 'codigo') campo.value = p.codigo || '';
-            else if (k === 'ncm') campo.value = p.ncm || '';
-            else if (k === 'custo' || k === 'venda' || k === 'margem') {
-                // O SEGREDO ESTÁ AQUI: Corrige vírgula para ponto e não deixa o campo em branco!
-                let valStr = String(p[k] || '0');
-                if (valStr.includes(',') && valStr.includes('.')) {
-                    campo.value = parseFloat(valStr.replace(/\./g, '').replace(',', '.')) || 0;
-                } else if (valStr.includes(',')) {
-                    campo.value = parseFloat(valStr.replace(',', '.')) || 0;
-                } else {
-                    campo.value = parseFloat(valStr) || 0;
-                }
-            }
-            else campo.value = p[k] || '';
-        }
-    }); 
-    fotoBase64Atual = p.foto || ""; editandoProdId = id; document.getElementById('tituloProduto').innerText = "Editando Produto"; document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; document.getElementById('btnCancelarProd').style.display = "inline-block"; window.scrollTo(0,0); 
-}
+           const p = produtosGlobais.find(x => x.id === id); 
+           if(!p) return; 
+           ['nome','codigo','ncm','categoria','custo','margem','venda','qtd'].forEach(k => { 
+               let campo = document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1));
+               if(campo) {
+                   if (k === 'qtd') campo.value = p.quantidade || 0;
+                   else if (k === 'codigo') campo.value = p.codigo || '';
+                   else if (k === 'ncm') campo.value = p.ncm || '';
+                   else if (k === 'custo' || k === 'venda' || k === 'margem') {
+                       let valStr = String(p[k] || '0');
+                       if (valStr.includes(',') && valStr.includes('.')) {
+                           campo.value = parseFloat(valStr.replace(/\./g, '').replace(',', '.')) || 0;
+                       } else if (valStr.includes(',')) {
+                           campo.value = parseFloat(valStr.replace(',', '.')) || 0;
+                       } else {
+                           campo.value = parseFloat(valStr) || 0;
+                       }
+                   }
+                   else campo.value = p[k] || '';
+               }
+           }); 
+           
+           // INTELIGÊNCIA: Recalcula a margem se no banco estiver zerada, mas tiver preço de venda
+           let c = parseFloat(document.getElementById('prodCusto').value) || 0;
+           let v = parseFloat(document.getElementById('prodVenda').value) || 0;
+           let m = parseFloat(document.getElementById('prodMargem').value) || 0;
+           if(c > 0 && v > 0 && m === 0) {
+               document.getElementById('prodMargem').value = (((v - c) / c) * 100).toFixed(2);
+           }
+
+           fotoBase64Atual = p.foto || ""; editandoProdId = id; document.getElementById('tituloProduto').innerText = "Editando Produto"; document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; document.getElementById('btnCancelarProd').style.display = "inline-block"; window.scrollTo(0,0); 
+       }
            window.cancelarEdicaoProd = function() { editandoProdId = null; document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; document.getElementById('tituloProduto').innerText = "Cadastro de Produto"; document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; document.getElementById('btnCancelarProd').style.display = "none"; }
        window.excluirProd = function(id) { if(confirm("Excluir produto do estoque?")) remove(ref(db, 'produtos/' + id)); }
 
