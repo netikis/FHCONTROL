@@ -4,7 +4,7 @@
    <meta charset="UTF-8">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>FH Control - ERP & PDV</title>
-   
+   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -991,12 +991,9 @@
 window.iniciarImportacao = async function(inputElement) {
     const arquivo = inputElement.files.item(0); 
     
-    if (!arquivo) {
-        alert("⚠️ Nenhum arquivo foi selecionado.");
-        return;
-    }
+    if (!arquivo) return alert("⚠️ Nenhum arquivo foi selecionado.");
 
-    alert("🚀 Tudo certo! Iniciando a leitura de:\n" + arquivo.name);
+    alert("🚀 Iniciando a leitura e cálculo de margens de:\n" + arquivo.name);
     document.body.style.cursor = 'wait';
 
     const leitor = new FileReader();
@@ -1006,6 +1003,15 @@ window.iniciarImportacao = async function(inputElement) {
             const texto = e.target.result;
             const linhas = texto.split(/\r?\n/);
             let importados = 0;
+
+            // Motor que entende dinheiro com Ponto ou Vírgula
+            const parseMoeda = (val) => {
+                if (!val) return 0;
+                let str = String(val).trim().replace(/[R$]/gi, '').trim();
+                if (str.includes('.') && str.includes(',')) { str = str.replace(/\./g, '').replace(',', '.'); } 
+                else if (str.includes(',')) { str = str.replace(',', '.'); }
+                return Number.parseFloat(str) || 0;
+            };
 
             for (let i = 1; i < linhas.length; i++) {
                 const linha = linhas[i].trim();
@@ -1017,47 +1023,49 @@ window.iniciarImportacao = async function(inputElement) {
 
                 const limpar = (v) => v ? v.trim().replace(/^"|"$/g, '') : '';
                 
-                let codPronto = limpar(col.at(2)) || limpar(col.at(0)) || ("ID_" + Date.now() + i);
+                let codTxt = limpar(col[2]);
+                if(!codTxt) codTxt = limpar(col[0]);
+                let codPronto = codTxt || ("ID_" + Date.now() + i);
+                
+                // CAPTURA O CUSTO, A VENDA E CALCULA A MARGEM AQUI!
+                let cst = parseMoeda(col[3]);
+                let vnd = parseMoeda(col[4]);
+                let mrg = cst > 0 ? ((vnd - cst) / cst) * 100 : 0;
                 
                 let novoProd = {
                     codigo: codPronto,
                     codigo_barras: codPronto,
                     nome: limpar(col[1]) || "Sem Nome", 
                     categoria: 'Geral',
-                    custo: limpar(col[3]) || '0,00', 
-                    venda: limpar(col[4]) || '0,00', 
-                    quantidade: limpar(col[5]) || '0', 
-                    estoque: limpar(col[5]) || '0', 
+                    custo: cst, 
+                    venda: vnd, 
+                    margem: Number.parseFloat(mrg.toFixed(2)) || 0,
+                    quantidade: parseInt(limpar(col[5])) || 0, 
+                    estoque: parseInt(limpar(col[5])) || 0, 
                     ncm: limpar(col[6]) || '', 
                     foto: '' 
                 };
 
-                // A CONEXÃO PERFEITA USANDO AS CHAVES QUE VOCÊ CRIOU NO PASSO 1
                 if (!window.meuBanco || !window.meuPush || !window.meuSet || !window.meuRef) {
-                    throw new Error("As chaves do Firebase não foram encontradas! Verifique se você fez o Passo 1 corretamente.");
+                    throw new Error("As chaves do Firebase não foram encontradas!");
                 }
 
                 await window.meuSet(window.meuPush(window.meuRef(window.meuBanco, 'produtos')), novoProd);
-                
                 importados++;
             }
 
             document.body.style.cursor = 'default';
-            alert(`✅ SUCESSO ABSOLUTO!\n\n${importados} produtos foram salvos no FH CONTROL!\n\nO sistema será atualizado agora para mostrar os itens na tabela.`);
-            
+            alert(`✅ SUCESSO!\n\nForam importados ${importados} produtos.\nO Preço de Custo e a Porcentagem foram calculados e salvos corretamente!`);
             window.location.reload();
 
         } catch(err) {
             document.body.style.cursor = 'default';
-            alert("🔴 Erro na hora de salvar no banco de dados:\n" + err.message);
+            alert("🔴 Erro na hora de salvar:\n" + err.message);
         }
-        
         inputElement.value = ''; 
     };
-
-    leitor.readAsText(arquivo, 'UTF-8');
+    leitor.readAsText(arquivo, 'ISO-8859-1');
 };
-
 </script>
 
    <div id="tabCaixa" class="tab-content">
@@ -1706,7 +1714,7 @@ window.mudarPaginaProd = function(direcao) {
        window.filtrarProdutos = function() { termoBuscaProd = document.getElementById('buscaProduto').value.toLowerCase(); paginaAtualProd = 1; window.renderizarTabelaEstoque(); }
        window.mudarPaginaProd = function(direcao) { const f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd))); const max = Math.ceil(f.length / itensPorPaginaProd); if (paginaAtualProd + direcao >= 1 && paginaAtualProd + direcao <= max) { paginaAtualProd += direcao; window.renderizarTabelaEstoque(); } }
 
-       window.renderizarTabelaEstoque = function() {
+window.renderizarTabelaEstoque = function() {
            const tab = document.getElementById('tabelaEstoque'); tab.innerHTML = '';
            
            let f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd)));
@@ -1734,25 +1742,25 @@ window.mudarPaginaProd = function(direcao) {
                
                let ncmTxt = p.ncm || '-'; 
                
-               // ADICIONADO CHECKBOX AQUI
+               // AQUI ESTÁ A LETRA B: O checkbox inserido na primeira coluna de cada linha
                tr.innerHTML = `
-    <td style="text-align: center; padding: 5px;"><input type="checkbox" class="check-etiqueta" data-nome="${p.nome}" data-codigo="${p.codigo || ''}" data-venda="${p.venda}"></td>
-    <td style="font-weight:bold; color:#f1c40f; font-size:11px; overflow:hidden; text-overflow:ellipsis; padding: 5px;">${p.codigo || '-'}</td>
-    <td style="font-weight:bold; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding: 5px;" title="${p.nome}">${p.nome}</td>
-    <td style="padding: 5px;"><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td>
-    <td style="font-weight:bold; font-size:14px; text-align:center; padding: 5px;">${p.quantidade || 0}</td>
-    <td style="font-weight:bold; padding: 5px;">R$ ${(parseFloat(String(p.custo).replace(',', '.')) || 0).toFixed(2)}</td>
-    <td style="color:#2ecc71; font-weight:bold; padding: 5px;">R$ ${(parseFloat(String(p.venda).replace(',', '.')) || 0).toFixed(2)}</td>
-    <td style="font-weight:bold; padding: 5px;">${ncmTxt}</td>
-    <td class="acoes-flex" style="text-align: center; justify-content: center; padding: 5px;">
-        <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️</button>
-        <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
-    </td>
-    <td style="text-align: center; padding: 5px;">${img}</td>`;
+                <td style="text-align: center; padding: 5px;"><input type="checkbox" class="check-etiqueta" data-nome="${p.nome}" data-codigo="${p.codigo || ''}" data-venda="${p.venda}"></td>
+                <td style="font-weight:bold; color:#f1c40f; font-size:11px; overflow:hidden; text-overflow:ellipsis; padding: 5px;">${p.codigo || '-'}</td>
+                <td style="font-weight:bold; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding: 5px;" title="${p.nome}">${p.nome}</td>
+                <td style="padding: 5px;"><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td>
+                <td style="font-weight:bold; font-size:14px; text-align:center; padding: 5px;">${p.quantidade || 0}</td>
+                <td style="font-weight:bold; padding: 5px;">R$ ${(parseFloat(String(p.custo).replace(',', '.')) || 0).toFixed(2)}</td>
+                <td style="color:#2ecc71; font-weight:bold; padding: 5px;">R$ ${(parseFloat(String(p.venda).replace(',', '.')) || 0).toFixed(2)}</td>
+                <td style="font-weight:bold; padding: 5px;">${ncmTxt}</td>
+                <td class="acoes-flex" style="text-align: center; justify-content: center; padding: 5px;">
+                    <button class="btn-acao edit" onclick="editarProd('${p.id}')" title="Editar Produto">✏️</button>
+                    <button class="btn-acao del" onclick="excluirProd('${p.id}')" title="Excluir Produto">🗑️</button>
+                </td>
+                <td style="text-align: center; padding: 5px;">${img}</td>`;
                tab.appendChild(tr);
            });
        }
-             
+
        document.getElementById('formProduto').addEventListener('submit', e => {
            e.preventDefault(); 
            const d = { 
@@ -1770,31 +1778,42 @@ window.mudarPaginaProd = function(direcao) {
        });
 
        window.editarProd = function(id) { 
-           const p = produtosGlobais.find(x => x.id === id); 
-           if(!p) return; 
-           ['nome','codigo','ncm','categoria','custo','margem','venda','qtd'].forEach(k => { 
-               let campo = document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1));
-               if(campo) {
-                   if (k === 'qtd') campo.value = p.quantidade || 0;
-                   else if (k === 'codigo') campo.value = p.codigo || '';
-                   else if (k === 'ncm') campo.value = p.ncm || '';
-                   else campo.value = p[k] || 0;
-               }
-           }); 
-           fotoBase64Atual = p.foto || ""; editandoProdId = id; document.getElementById('tituloProduto').innerText = "Editando Produto"; document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; document.getElementById('btnCancelarProd').style.display = "inline-block"; window.scrollTo(0,0); 
-       }
-       window.cancelarEdicaoProd = function() { editandoProdId = null; document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; document.getElementById('tituloProduto').innerText = "Cadastro de Produto"; document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; document.getElementById('btnCancelarProd').style.display = "none"; }
+    const p = produtosGlobais.find(x => x.id === id); 
+    if(!p) return; 
+    ['nome','codigo','ncm','categoria','custo','margem','venda','qtd'].forEach(k => { 
+        let campo = document.getElementById('prod'+k.charAt(0).toUpperCase()+k.slice(1));
+        if(campo) {
+            if (k === 'qtd') campo.value = p.quantidade || 0;
+            else if (k === 'codigo') campo.value = p.codigo || '';
+            else if (k === 'ncm') campo.value = p.ncm || '';
+            else if (k === 'custo' || k === 'venda' || k === 'margem') {
+                // O SEGREDO ESTÁ AQUI: Corrige vírgula para ponto e não deixa o campo em branco!
+                let valStr = String(p[k] || '0');
+                if (valStr.includes(',') && valStr.includes('.')) {
+                    campo.value = parseFloat(valStr.replace(/\./g, '').replace(',', '.')) || 0;
+                } else if (valStr.includes(',')) {
+                    campo.value = parseFloat(valStr.replace(',', '.')) || 0;
+                } else {
+                    campo.value = parseFloat(valStr) || 0;
+                }
+            }
+            else campo.value = p[k] || '';
+        }
+    }); 
+    fotoBase64Atual = p.foto || ""; editandoProdId = id; document.getElementById('tituloProduto').innerText = "Editando Produto"; document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; document.getElementById('btnCancelarProd').style.display = "inline-block"; window.scrollTo(0,0); 
+}
+           window.cancelarEdicaoProd = function() { editandoProdId = null; document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; document.getElementById('tituloProduto').innerText = "Cadastro de Produto"; document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; document.getElementById('btnCancelarProd').style.display = "none"; }
        window.excluirProd = function(id) { if(confirm("Excluir produto do estoque?")) remove(ref(db, 'produtos/' + id)); }
 
 // =========================================================
 // FUNÇÕES DE ETIQUETA
 // =========================================================
-       window.toggleTodasEtiquetas = function(source) {
-           const checkboxes = document.querySelectorAll('.check-etiqueta');
-           checkboxes.forEach(chk => chk.checked = source.checked);
-       };
+   window.toggleTodasEtiquetas = function(source) {
+    const checkboxes = document.querySelectorAll('.check-etiqueta');
+    checkboxes.forEach(chk => chk.checked = source.checked);
+};
 
-       window.imprimirEtiquetasEstoque = function() {
+window.imprimirEtiquetasEstoque = function() {
            const checkboxes = document.querySelectorAll('.check-etiqueta:checked');
            if (checkboxes.length === 0) {
                alert("⚠️ Selecione pelo menos um produto marcando a caixinha na tabela para imprimir.");
@@ -1804,51 +1823,76 @@ window.mudarPaginaProd = function(direcao) {
            let qtdCopias = prompt("Quantas cópias de cada etiqueta selecionada você deseja imprimir?", "1");
            if (!qtdCopias || isNaN(qtdCopias) || qtdCopias <= 0) return;
 
-           // Adicionado JsBarcode no head da janela de impressão
            let htmlEtiquetas = `
                <html>
                <head>
                    <title>Impressão de Etiquetas - FH Control</title>
                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
                    <style>
-                       body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #ecf0f1; text-align: center; }
+                       /* CONFIGURAÇÃO PARA ROLO DUPLO (2 ETIQUETAS LADO A LADO) */
+                       @page {
+                           size: 10.5cm 3.5cm; /* Largura total do rolo (105mm) x Altura (35mm). Ajuste se necessário. */
+                           margin: 0mm; 
+                       }
+                       
+                       body { 
+                           font-family: Arial, sans-serif; 
+                           margin: 0; 
+                           padding: 0; 
+                           background: #fff; 
+                           width: 10.5cm; /* Força a largura total na impressão */
+                       }
+                       
                        .etiqueta-container {
                            display: flex;
                            flex-wrap: wrap;
-                           justify-content: center;
-                           gap: 10px;
+                           width: 10.5cm;
+                           justify-content: space-between; /* Joga uma etiqueta pra cada lado */
                        }
+                       
                        .etiqueta {
-                           width: 5cm;
+                           width: 5cm; /* Largura exata de UMA etiqueta individual */
                            height: 3.5cm;
-                           background: #fff;
-                           border: 1px dashed #7f8c8d;
-                           padding: 6px;
                            box-sizing: border-box;
+                           padding: 2mm 3mm; 
                            display: flex;
                            flex-direction: column;
-                           justify-content: space-between;
-                           align-items: flex-start;
-                           border-radius: 4px;
+                           justify-content: flex-start;
                            overflow: hidden;
                        }
-                       .etq-topo { font-size: 8px; color: #555; margin-bottom: 2px; width: 100%; text-align: left;}
-                       .etq-nome { font-size: 10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; width: 100%; text-align: left; line-height: 1.1; margin-bottom: 2px;}
-                       .etq-cod { font-size: 8px; margin: 2px 0; color: #333; text-align: left; width: 100%;}
-                       .etq-preco { font-size: 16px; font-weight: 900; color: #000; text-align: left; width: 100%; margin-bottom: 2px;}
-                       .etq-barcode-container { width: 100%; display: flex; justify-content: center; align-items: center; flex: 1; overflow: hidden; }
-                       .etq-barcode-container svg { max-width: 100%; max-height: 100%; }
+                       
+                       .etq-topo { font-size: 8px; color: #000; margin-bottom: 2px; text-align: left; font-weight: bold;}
+                       .etq-nome { font-size: 10px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; width: 100%; text-align: left; line-height: 1.1; margin-bottom: 3px;}
+                       .etq-cod { font-size: 8px; margin-bottom: 2px; color: #000; text-align: left;}
+                       .etq-preco { font-size: 15px; font-weight: 900; color: #000; text-align: left; margin-bottom: 2px;}
+                       
+                       .etq-barcode-container { width: 100%; display: flex; justify-content: flex-start; align-items: center; }
+                       .etq-barcode-container svg { max-width: 100%; max-height: 28px; } 
+                       
+                       /* Div invisível que força a impressora a pular o rolo a cada 2 etiquetas */
+                       .quebra-pagina {
+                           width: 100%;
+                           height: 0;
+                           page-break-after: always;
+                       }
+
+                       /* Estilos apenas para você visualizar na tela do PC antes de imprimir */
+                       @media screen {
+                           body { background: #ecf0f1; padding: 20px; display: flex; justify-content: center; width: 100%;}
+                           .etiqueta-container { background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); padding: 5px; }
+                           .etiqueta { border: 1px dashed #bdc3c7; }
+                       }
                        
                        @media print {
-                           body { background: #fff; margin: 0; padding: 0; }
                            .btn-imprimir { display: none !important; }
-                           .etiqueta { border: none; page-break-inside: avoid; }
                        }
+                       
                        .btn-imprimir {
                            position: fixed; bottom: 20px; right: 20px;
                            background: #27ae60; color: white; border: none;
                            padding: 15px 20px; font-size: 16px; font-weight: bold;
                            border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                           z-index: 1000;
                        }
                        .btn-imprimir:hover { background: #2ecc71; }
                    </style>
@@ -1857,6 +1901,8 @@ window.mudarPaginaProd = function(direcao) {
                    <button class="btn-imprimir" onclick="window.print()">🖨️ IMPRIMIR AGORA</button>
                    <div class="etiqueta-container">
            `;
+
+           let contador = 0;
 
            checkboxes.forEach(chk => {
                let nome = chk.getAttribute('data-nome');
@@ -1876,27 +1922,36 @@ window.mudarPaginaProd = function(direcao) {
                                    jsbarcode-displayvalue="true"
                                    jsbarcode-width="1.5"
                                    jsbarcode-height="25"
-                                   jsbarcode-fontSize="10"
-                                   jsbarcode-textmargin="0"
+                                   jsbarcode-fontSize="11"
+                                   jsbarcode-textmargin="2"
                                    jsbarcode-margin="0">
                                </svg>
                            </div>
                        </div>
                    `;
+                   
+                   contador++;
+                   
+                   // Se completou 2 etiquetas (uma linha inteira da Elgin), força a quebra de página (picote)!
+                   if (contador % 2 === 0) {
+                       htmlEtiquetas += `<div class="quebra-pagina"></div>`;
+                   }
                }
            });
+
+           // Se sobrar 1 etiqueta ímpar na última linha, garante a quebra de página no final para não bugar a próxima impressão
+           if (contador % 2 !== 0) {
+                htmlEtiquetas += `<div class="quebra-pagina"></div>`;
+           }
 
            htmlEtiquetas += `
                    </div>
                    <script>
-                       // Inicializa a criação do código de barras após carregar a biblioteca do JsBarcode
                        window.onload = function() {
                            if (typeof JsBarcode !== 'undefined') {
                                JsBarcode(".barcode").init();
                            } else {
-                               setTimeout(() => {
-                                   if (typeof JsBarcode !== 'undefined') JsBarcode(".barcode").init();
-                               }, 500);
+                               setTimeout(() => { if (typeof JsBarcode !== 'undefined') JsBarcode(".barcode").init(); }, 500);
                            }
                        };
                    <\/script>
@@ -1908,7 +1963,6 @@ window.mudarPaginaProd = function(direcao) {
            janela.document.write(htmlEtiquetas);
            janela.document.close();
        };
-
 
 // =========================================================
 // FUNÇÃO 1: EXCLUIR TODOS OS PRODUTOS (ZERAR ESTOQUE)
