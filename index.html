@@ -1839,7 +1839,7 @@ window.imprimirEtiquetasEstoque = function() {
            let htmlEtiquetas = `
                <html>
                <head>
-                   <title>Impressão de Etiquetas - FH Control</title>
+                   <title>Impressão de Etiquetas - Workman</title>
                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
                    <style>
                        /* CONFIGURAÇÃO PARA ROLO DUPLO (2 ETIQUETAS LADO A LADO) */
@@ -2966,7 +2966,7 @@ acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%
                        ${assinaturaHTML}
                    </div>
 
-                   <div class="rodape">Documento gerado eletronicamente pelo sistema FH CONTROL.</div>
+                   <div class="rodape">Documento gerado eletronicamente pelo sistema Workan.</div>
                    
                    <button class="btn-imprimir-flutuante" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
                </body>
@@ -3468,7 +3468,7 @@ acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%
                     
                     <div style="text-align: center; margin-top: 40px; font-size: 11px; color: #7f8c8d;">
                         Atenção: Os valores pendentes não aparecem neste relatório.<br>
-                        Documento gerado automaticamente pelo sistema FH Control.
+                        Documento gerado automaticamente pelo sistema Workman.
                     </div>
                     
                     <button class="btn-print" onclick="window.print()">🖨️ Imprimir PDF</button>
@@ -3602,7 +3602,7 @@ window.importarJSON = async function() {
            window.preencherFiltrosGrafico(); 
        };
 
-       // 1. LÓGICA DE BUSCA E REIMPRESSÃO
+     // 1. LÓGICA DE BUSCA E REIMPRESSÃO
        window.buscarNoRegistro = function() {
            const termo = document.getElementById('inputBuscaRegistro').value.toLowerCase();
            const tabela = document.getElementById('tabelaBuscaRegistro');
@@ -3641,16 +3641,15 @@ window.importarJSON = async function() {
                let formaPgtoRegistro = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '').toUpperCase() : '';
                let statusTxt = (v.statusPagamento || 'PAGO') + (formaPgtoRegistro ? ` (${formaPgtoRegistro})` : '');
                
-               // Botão de Imprimir
+               // CORREÇÃO 1: Botão de Imprimir agora passa apenas o ID, evitando quebra no HTML
                let btnImprimir = '';
                if (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') {
-                   let dadosDoc = encodeURIComponent(JSON.stringify(v));
-                   btnImprimir = `<button onclick="window.reimprimirDocumentoRegistro('${dadosDoc}')" style="background-color: #f39c12; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">🖨️ Imprimir</button>`;
+                   btnImprimir = `<button onclick="window.reimprimirDocumentoRegistro('${v.id}')" style="background-color: #f39c12; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">🖨️ Imprimir</button>`;
                }
 
                tabela.innerHTML += `
                    <tr>
-                       <td>${v.dataStr.split(' ')[0]}</td>
+                       <td>${v.dataStr.split(' ')[0].replace(',', '')}</td>
                        <td style="font-weight: bold;">${v.os || '-'}</td>
                        <td>${v.tipo}</td>
                        <td>${v.clienteNome || '-'}</td>
@@ -3662,20 +3661,34 @@ window.importarJSON = async function() {
            });
        };
 
-       // FUNÇÃO NOVA: GERAR TELA DE IMPRESSÃO
-       window.reimprimirDocumentoRegistro = function(dadosCodificados) {
+       // CORREÇÃO 1 (Continuação): Função reescrita para puxar pelo ID e com as variáveis corretas
+       window.reimprimirDocumentoRegistro = function(idDocumento) {
            try {
-               let doc = JSON.parse(decodeURIComponent(dadosCodificados));
+               let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
+               let doc = baseDados.find(x => x.id === idDocumento);
+               
+               if (!doc) {
+                   alert("Documento não encontrado no sistema.");
+                   return;
+               }
+               
                let janela = window.open('', '_blank', 'width=800,height=600');
                let itensHtml = '';
                
-               if(doc.carrinho && doc.carrinho.length > 0) {
-                   doc.carrinho.forEach(item => {
+               let itensGarantidos = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
+               
+               if(itensGarantidos.length > 0) {
+                   itensGarantidos.forEach(item => {
+                       let nome = item.nome || 'Item';
+                       let qtd = item.qtdBaixa || item.qtd || 1;
+                       let unit = item.valorOriginal || item.preco || item.valor || 0;
+                       let tot = item.valor || (qtd * unit) || 0;
+                       
                        itensHtml += `<tr>
-                           <td style="border: 1px solid #ddd; padding: 8px;">${item.nome}</td>
-                           <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.qtd}</td>
-                           <td style="border: 1px solid #ddd; padding: 8px;">R$ ${Number(item.preco).toFixed(2)}</td>
-                           <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">R$ ${(item.qtd * item.preco).toFixed(2)}</td>
+                           <td style="border: 1px solid #ddd; padding: 8px;">${nome}</td>
+                           <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${qtd}</td>
+                           <td style="border: 1px solid #ddd; padding: 8px;">R$ ${Number(unit).toFixed(2)}</td>
+                           <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">R$ ${Number(tot).toFixed(2)}</td>
                        </tr>`;
                    });
                } else {
@@ -3695,7 +3708,7 @@ window.importarJSON = async function() {
                    <body>
                        <div class="header">
                            <h2 style="margin:0;">REIMPRESSÃO DE COMPROVANTE</h2>
-                           <h3 style="margin: 5px 0;">FH CONTROL - ${doc.tipo} ${doc.os ? 'Nº ' + doc.os : ''}</h3>
+                           <h3 style="margin: 5px 0;">Workman - ${doc.tipo} ${doc.os ? 'Nº ' + doc.os : ''}</h3>
                            <p style="margin: 5px 0;"><strong>Data Original:</strong> ${doc.dataStr}</p>
                            <p style="margin: 5px 0;"><strong>Cliente:</strong> ${doc.clienteNome || 'Consumidor Final'}</p>
                        </div>
@@ -3729,179 +3742,203 @@ window.importarJSON = async function() {
        // 2. LÓGICA DE PASTAS
        window.togglePasta = function(idAlvo) {
            let el = document.getElementById(idAlvo);
-           el.style.display = el.style.display === 'none' || el.style.display === '' ? 'block' : 'none';
+           if (el) {
+               el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+           }
        };
 
        window.gerarArvoreDePastas = function() {
-    let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
-    
-    if(baseDados.length === 0) {
-        document.getElementById('arvorePastas').innerHTML = '<div style="color:#f1c40f; padding:10px; text-align:center;">Ainda não há dados registrados para gerar as pastas.</div>';
-        return;
-    }
+           let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
+           
+           if(baseDados.length === 0) {
+               document.getElementById('arvorePastas').innerHTML = '<div style="color:#f1c40f; padding:10px; text-align:center;">Ainda não há dados registrados para gerar as pastas.</div>';
+               return;
+           }
 
-    let arvore = {};
-    
-    baseDados.forEach(doc => {
-        if(!doc.dataStr) return;
-        
-        let partesData = doc.dataStr.split(' ')[0].split('/');
-        
-        if(partesData.length === 3) {
-            let dia = partesData[0];
-            let mesNum = partesData[1];
-            let ano = partesData[2];
-            let mesNome = conversorMeses[mesNum] || mesNum;
+           let arvore = {};
+           
+           baseDados.forEach(doc => {
+               if(!doc.dataStr) return;
+               
+               // CORREÇÃO 2: Remove a vírgula da data que estava quebrando o split
+               let dataLimpa = doc.dataStr.split(' ')[0].replace(',', '');
+               let partesData = dataLimpa.split('/');
+               
+               if(partesData.length === 3) {
+                   let dia = partesData[0];
+                   let mesNum = partesData[1];
+                   let ano = partesData[2];
+                   let mesNome = conversorMeses[mesNum] || mesNum;
 
-            if(!arvore[ano]) arvore[ano] = {};
-            if(!arvore[ano][mesNome]) arvore[ano][mesNome] = {};
-            if(!arvore[ano][mesNome][dia]) arvore[ano][mesNome][dia] = [];
-            
-            arvore[ano][mesNome][dia].push(doc);
-        }
-    });
+                   if(!arvore[ano]) arvore[ano] = {};
+                   if(!arvore[ano][mesNome]) arvore[ano][mesNome] = {};
+                   if(!arvore[ano][mesNome][dia]) arvore[ano][mesNome][dia] = [];
+                   
+                   arvore[ano][mesNome][dia].push(doc);
+               }
+           });
 
-    let html = '';
-    let idContador = 0;
+           let html = '';
+           let idContador = 0;
 
-    Object.keys(arvore).sort().reverse().forEach(ano => {
-        idContador++; let idAno = `pasta_ano_${idContador}`;
-        html += `<div class="pasta-nivel-1" style="background-color: #2980b9; color: #ffffff; padding: 12px; margin-bottom: 5px; border-radius: 4px; cursor: pointer; font-weight: bold; border: 1px solid #34495e;" onclick="window.togglePasta('${idAno}')">📁 Ano: ${ano}</div>`;
-        html += `<div id="${idAno}" style="display:none;">`;
-        
-        Object.keys(arvore[ano]).forEach(mes => {
-            idContador++; let idMes = `pasta_mes_${idContador}`;
-            html += `<div class="pasta-nivel-2" style="background-color: #34495e; padding: 10px 10px 10px 30px; margin-bottom: 3px; cursor: pointer; color: #ffffff; font-weight: bold; border-left: 3px solid #f1c40f;" onclick="window.togglePasta('${idMes}')">📂 Mês: ${mes}</div>`;
-            html += `<div id="${idMes}" style="display:none;">`;
-            
-            Object.keys(arvore[ano][mes]).sort().reverse().forEach(dia => {
-                idContador++; let idDia = `pasta_dia_${idContador}`;
-                html += `<div class="pasta-nivel-3" style="background-color: #1a252f; padding: 8px 10px 8px 50px; margin-bottom: 2px; cursor: pointer; color: #bdc3c7; border-left: 3px solid #3498db; font-weight: bold;" onclick="window.togglePasta('${idDia}')">📅 Dia ${dia}</div>`;
-                html += `<div id="${idDia}" class="pasta-conteudo" style="padding: 10px 10px 10px 70px; background-color: #111827; border-left: 3px solid #bdc3c7;">`;
-                
-                arvore[ano][mes][dia].forEach(doc => {
-                    let sigla = doc.tipo.substring(0, 4);
-                    let cor = doc.tipo === 'DESPESA' ? '#e74c3c' : '#2ecc71';
-                    let docNome = doc.tipo === 'DESPESA' || doc.tipo === 'FECHAMENTO' ? doc.tipo : `${doc.tipo} Nº ${doc.os || 'S/N'}`;
-                    html += `
-                        <div class="item-registro" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #34495e; font-size: 13px; color: #ecf0f1;">
-                            <span><strong>[${sigla}]</strong> ${doc.clienteNome || ''} | ${docNome}</span>
-                            <span style="color: ${cor}; font-weight:bold;">R$ ${Number(doc.total).toFixed(2)}</span>
-                        </div>
-                    `;
-                });
-                html += `</div>`;
-            });
-            html += `</div>`;
-        });
-        html += `</div>`;
-    });
+           Object.keys(arvore).sort().reverse().forEach(ano => {
+               idContador++; let idAno = `pasta_ano_${idContador}`;
+               html += `<div class="pasta-nivel-1" style="background-color: #2980b9; color: #ffffff; padding: 12px; margin-bottom: 5px; border-radius: 4px; cursor: pointer; font-weight: bold; border: 1px solid #34495e;" onclick="window.togglePasta('${idAno}')">📁 Ano: ${ano}</div>`;
+               html += `<div id="${idAno}" style="display:none;">`;
+               
+               Object.keys(arvore[ano]).forEach(mes => {
+                   idContador++; let idMes = `pasta_mes_${idContador}`;
+                   html += `<div class="pasta-nivel-2" style="background-color: #34495e; padding: 10px 10px 10px 30px; margin-bottom: 3px; cursor: pointer; color: #ffffff; font-weight: bold; border-left: 3px solid #f1c40f;" onclick="window.togglePasta('${idMes}')">📂 Mês: ${mes}</div>`;
+                   html += `<div id="${idMes}" style="display:none;">`;
+                   
+                   Object.keys(arvore[ano][mes]).sort().reverse().forEach(dia => {
+                       idContador++; let idDia = `pasta_dia_${idContador}`;
+                       html += `<div class="pasta-nivel-3" style="background-color: #1a252f; padding: 8px 10px 8px 50px; margin-bottom: 2px; cursor: pointer; color: #bdc3c7; border-left: 3px solid #3498db; font-weight: bold;" onclick="window.togglePasta('${idDia}')">📅 Dia ${dia}</div>`;
+                       html += `<div id="${idDia}" class="pasta-conteudo" style="padding: 10px 10px 10px 70px; background-color: #111827; border-left: 3px solid #bdc3c7;">`;
+                       
+                       arvore[ano][mes][dia].forEach(doc => {
+                           let sigla = doc.tipo.substring(0, 4);
+                           let cor = doc.tipo === 'DESPESA' ? '#e74c3c' : '#2ecc71';
+                           let docNome = doc.tipo === 'DESPESA' || doc.tipo === 'FECHAMENTO' ? doc.tipo : `${doc.tipo} Nº ${doc.os || 'S/N'}`;
+                           html += `
+                               <div class="item-registro" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #34495e; font-size: 13px; color: #ecf0f1;">
+                                   <span><strong>[${sigla}]</strong> ${doc.clienteNome || ''} | ${docNome}</span>
+                                   <span style="color: ${cor}; font-weight:bold;">R$ ${Number(doc.total).toFixed(2)}</span>
+                               </div>
+                           `;
+                       });
+                       html += `</div>`;
+                   });
+                   html += `</div>`;
+               });
+               html += `</div>`;
+           });
 
-    if(html === '') html = '<div style="color:#e74c3c; padding:10px;">Nenhum histórico encontrado.</div>';
-    document.getElementById('arvorePastas').innerHTML = html;
-};
+           if(html === '') html = '<div style="color:#e74c3c; padding:10px;">Nenhum histórico encontrado.</div>';
+           document.getElementById('arvorePastas').innerHTML = html;
+       };
 
        // 3. LÓGICA DE GRÁFICOS
-      window.preencherFiltrosGrafico = function() {
-    let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
-    let selectAno = document.getElementById('filtroAnoGrafico');
-    let selectMes = document.getElementById('filtroMesGrafico');
+       window.preencherFiltrosGrafico = function() {
+           let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
+           let selectAno = document.getElementById('filtroAnoGrafico');
+           let selectMes = document.getElementById('filtroMesGrafico');
 
-    if(baseDados.length === 0) {
-        selectAno.innerHTML = '<option value="">Sem dados...</option>';
-        return;
-    }
+           if(baseDados.length === 0) {
+               selectAno.innerHTML = '<option value="">Sem dados...</option>';
+               return;
+           }
 
-    let anos = new Set();
-    baseDados.forEach(doc => {
-        if(doc.dataStr) {
-            let partesData = doc.dataStr.split(' ')[0].split('/');
-            if(partesData.length === 3) {
-                anos.add(partesData[2]); 
-            }
-        }
-    });
-    
-    selectAno.innerHTML = '<option value="">Selecione o Ano</option>';
-    Array.from(anos).sort().reverse().forEach(ano => {
-        if(ano) selectAno.innerHTML += `<option value="${ano}">${ano}</option>`;
-    });
+           let anos = new Set();
+           baseDados.forEach(doc => {
+               if(doc.dataStr) {
+                   // Limpa a vírgula
+                   let dataLimpa = doc.dataStr.split(' ')[0].replace(',', '');
+                   let partesData = dataLimpa.split('/');
+                   if(partesData.length === 3) {
+                       anos.add(partesData[2]); 
+                   }
+               }
+           });
+           
+           selectAno.innerHTML = '<option value="">Selecione o Ano</option>';
+           Array.from(anos).sort().reverse().forEach(ano => {
+               if(ano) selectAno.innerHTML += `<option value="${ano}">${ano}</option>`;
+           });
 
-    selectMes.innerHTML = '<option value="todos">Resumo do Ano Todo</option>';
-    Object.keys(conversorMeses).forEach(num => {
-        selectMes.innerHTML += `<option value="${num}">${conversorMeses[num]}</option>`;
-    });
-};
+           selectMes.innerHTML = '<option value="todos">Resumo do Ano Todo</option>';
+           Object.keys(conversorMeses).forEach(num => {
+               selectMes.innerHTML += `<option value="${num}">${conversorMeses[num]}</option>`;
+           });
+
+           // CORREÇÃO 3: Auto-selecionar o ano e mês atuais ao invés de JANEIRO
+           let dataHoje = new Date();
+           let anoAtual = dataHoje.getFullYear().toString();
+           let mesAtual = String(dataHoje.getMonth() + 1).padStart(2, '0');
+
+           if(selectAno.querySelector(`option[value="${anoAtual}"]`)) {
+               selectAno.value = anoAtual;
+           } else if (anos.size > 0) {
+               selectAno.value = Array.from(anos).sort().reverse()[0]; 
+           }
+           
+           selectMes.value = mesAtual; 
+           
+           // Renderiza o gráfico automaticamente
+           window.atualizarGraficoRegistro();
+       };
 
        window.atualizarGraficoRegistro = function() {
-    const anoFiltro = document.getElementById('filtroAnoGrafico').value;
-    const mesFiltro = document.getElementById('filtroMesGrafico').value;
-    let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
-    
-    if(!anoFiltro) return; 
+           const anoFiltro = document.getElementById('filtroAnoGrafico').value;
+           const mesFiltro = document.getElementById('filtroMesGrafico').value;
+           let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
+           
+           if(!anoFiltro) return; 
 
-    let labels = [];
-    let dadosEntradas = [];
-    let dadosSaidas = [];
+           let labels = [];
+           let dadosEntradas = [];
+           let dadosSaidas = [];
 
-    if (mesFiltro === 'todos') {
-        labels = Object.values(conversorMeses);
-        dadosEntradas = new Array(12).fill(0);
-        dadosSaidas = new Array(12).fill(0);
+           if (mesFiltro === 'todos') {
+               labels = Object.values(conversorMeses);
+               dadosEntradas = new Array(12).fill(0);
+               dadosSaidas = new Array(12).fill(0);
 
-        baseDados.forEach(doc => {
-            if(!doc.dataStr) return;
-            let [dia, mesNum, ano] = doc.dataStr.split(' ')[0].split('/');
-            
-            if (ano === anoFiltro) {
-                let indexMes = parseInt(mesNum) - 1;
-                let valor = Number(doc.total) || 0;
-                let status = doc.statusPagamento || 'PAGO';
-                
-                if (status === 'PAGO' && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO')) dadosEntradas[indexMes] += valor;
-if (doc.tipo === 'DESPESA') dadosSaidas[indexMes] += valor;
-            }
-        });
-    } else {
-        let diasNoMes = new Date(anoFiltro, parseInt(mesFiltro), 0).getDate();
-        for(let i = 1; i <= diasNoMes; i++) labels.push(`Dia ${i}`);
-        dadosEntradas = new Array(diasNoMes).fill(0);
-        dadosSaidas = new Array(diasNoMes).fill(0);
+               baseDados.forEach(doc => {
+                   if(!doc.dataStr) return;
+                   let dataLimpa = doc.dataStr.split(' ')[0].replace(',', '');
+                   let [dia, mesNum, ano] = dataLimpa.split('/');
+                   
+                   if (ano === anoFiltro) {
+                       let indexMes = parseInt(mesNum) - 1;
+                       let valor = Number(doc.total) || 0;
+                       let status = doc.statusPagamento || 'PAGO';
+                       
+                       if (status === 'PAGO' && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO')) dadosEntradas[indexMes] += valor;
+                       if (doc.tipo === 'DESPESA') dadosSaidas[indexMes] += valor;
+                   }
+               });
+           } else {
+               let diasNoMes = new Date(anoFiltro, parseInt(mesFiltro), 0).getDate();
+               for(let i = 1; i <= diasNoMes; i++) labels.push(`Dia ${i}`);
+               dadosEntradas = new Array(diasNoMes).fill(0);
+               dadosSaidas = new Array(diasNoMes).fill(0);
 
-        baseDados.forEach(doc => {
-            if(!doc.dataStr) return;
-            let [dia, mesNum, ano] = doc.dataStr.split(' ')[0].split('/');
-            
-            if (ano === anoFiltro && mesNum === mesFiltro) {
-                let indexDia = parseInt(dia) - 1;
-                let valor = Number(doc.total) || 0;
-                let status = doc.statusPagamento || 'PAGO';
-                
-                if (status === 'PAGO' && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO')) dadosEntradas[indexDia] += valor;
-                if (doc.tipo === 'DESPESA') dadosSaidas[indexDia] += valor;
-            }
-        });
-    }
+               baseDados.forEach(doc => {
+                   if(!doc.dataStr) return;
+                   let dataLimpa = doc.dataStr.split(' ')[0].replace(',', '');
+                   let [dia, mesNum, ano] = dataLimpa.split('/');
+                   
+                   if (ano === anoFiltro && mesNum === mesFiltro) {
+                       let indexDia = parseInt(dia) - 1;
+                       let valor = Number(doc.total) || 0;
+                       let status = doc.statusPagamento || 'PAGO';
+                       
+                       if (status === 'PAGO' && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO')) dadosEntradas[indexDia] += valor;
+                       if (doc.tipo === 'DESPESA') dadosSaidas[indexDia] += valor;
+                   }
+               });
+           }
 
-    if(meuGraficoRegistro) meuGraficoRegistro.destroy();
+           if(meuGraficoRegistro) meuGraficoRegistro.destroy();
 
-    const ctx = document.getElementById('canvasGraficoRegistro').getContext('2d');
-    meuGraficoRegistro = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                { label: 'Entradas (R$)', data: dadosEntradas, backgroundColor: '#27ae60' },
-                { label: 'Saídas (R$)', data: dadosSaidas, backgroundColor: '#e74c3c' }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'top' } },
-            scales: { y: { beginAtZero: true } }
-        }
-    });
-};
+           const ctx = document.getElementById('canvasGraficoRegistro').getContext('2d');
+           meuGraficoRegistro = new Chart(ctx, {
+               type: 'bar',
+               data: {
+                   labels: labels,
+                   datasets: [
+                       { label: 'Entradas (R$)', data: dadosEntradas, backgroundColor: '#27ae60' },
+                       { label: 'Saídas (R$)', data: dadosSaidas, backgroundColor: '#e74c3c' }
+                   ]
+               },
+               options: {
+                   responsive: true,
+                   plugins: { legend: { position: 'top' } },
+                   scales: { y: { beginAtZero: true } }
+               }
+           });
+       };
 
 window.preencherCamposVendaEstoque = function() {
     const termoBusca = document.getElementById('vendaProdutoEstoqueBusca').value.trim();
