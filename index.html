@@ -812,10 +812,10 @@
                 </div>
             </div>
             <div class="row form-group" style="align-items: flex-end;">
-                <div class="col" style="flex: 0.5;"><label>Qtd.</label><input type="number" id="vendaProdutoQtd" value="1" min="1" oninput="recalcularPrecoVendaManual()"></div>
-                <div class="col"><label>Custo (R$)</label><input type="number" id="vendaProdutoCusto" readonly style="background-color: #dcdde1;"></div>
-                <div class="col"><label>Margem (%)</label><input type="number" id="vendaProdutoMargem" oninput="recalcularPrecoVendaManual()"></div>
-                <div class="col"><label style="color: #2ecc71;">Venda (R$)</label><input type="number" id="vendaProdutoPrecoFinal" step="0.01"></div>
+                <div class="col" style="flex: 0.5;"><label>Qtd.</label><input type="number" id="vendaProdutoQtd" value="1" min="1"></div>
+                <div class="col"><label>Custo (R$)</label><input type="number" id="vendaProdutoCusto" step="0.01" oninput="window.recalcularPrecoVendaManual()"></div>
+                <div class="col"><label>Margem (%)</label><input type="number" id="vendaProdutoMargem" step="0.1" oninput="window.recalcularPrecoVendaManual()"></div>
+                <div class="col"><label style="color: #2ecc71;">Venda (R$)</label><input type="number" id="vendaProdutoPrecoFinal" step="0.01" oninput="window.recalcularMargemVendaManual()"></div>
                 <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; height: 35px; background-color: #27ae60; color: white;" onclick="addAoCarrinhoVenda_Estoque()">➕ ADD</button></div>
             </div>
         </div>
@@ -919,16 +919,18 @@
 
         <h3 style="border-bottom: 1px solid #7f8c8d; padding-bottom: 5px; margin-top: 20px;">3. Materiais / Serviços</h3>
         
-        <div class="bloco-lancamento">
+       <div class="bloco-lancamento">
             <div class="row form-group" style="align-items: flex-end;">
-                <div class="col" style="flex: 2;">
-                    <label>Material do Estoque (Busca/Bipe)</label>
+                <div class="col" style="flex: 1.5;">
+                    <label>Material (Busca/Bipe)</label>
                     <input type="text" id="osProdutoEstoqueBusca" list="listaProdutosEstoqueOS" onchange="window.preencherValorEstoqueOS()" placeholder="Nome ou código...">
                     <datalist id="listaProdutosEstoqueOS"></datalist>
                 </div>
-                <div class="col" style="flex: 0.6;"><label>Val. Un. (R$)</label><input type="number" id="osEstoqueValUn" readonly style="font-weight: bold;"></div>
                 <div class="col" style="flex: 0.4;"><label>Qtd</label><input type="number" id="osEstoqueQtd" value="1" min="1" oninput="window.calcTotalEstoqueOS()"></div>
-                <div class="col" style="flex: 0.4;"><label>Taxa %</label><input type="number" id="osEstoquePerc" value="0" oninput="window.calcTotalEstoqueOS()"></div>
+                <div class="col" style="flex: 0.5;"><label>Custo (R$)</label><input type="number" id="osEstoqueCusto" step="0.01" oninput="window.recalcularPrecoOSEstoque()"></div>
+                <div class="col" style="flex: 0.5;"><label>Margem(%)</label><input type="number" id="osEstoqueMargem" step="0.1" oninput="window.recalcularPrecoOSEstoque()"></div>
+                <div class="col" style="flex: 0.6;"><label>Venda (R$)</label><input type="number" id="osEstoqueValUn" step="0.01" oninput="window.recalcularMargemOSEstoque()" style="font-weight: bold;"></div>
+                <div class="col" style="flex: 0.5;"><label>Taxa %</label><input type="number" id="osEstoquePerc" step="0.1" value="0" oninput="window.calcTotalEstoqueOS()"></div>
                 <div class="col" style="flex: 0.7;"><label>Total (R$)</label><input type="text" id="osEstoqueTotal" readonly style="font-weight: bold; color: #27ae60;"></div>
                 <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; height: 35px;" onclick="addAoCarrinhoOS_Estoque()">➕ MAT</button></div>
             </div>
@@ -998,6 +1000,15 @@
 </div>
 
 <script>
+// FUNÇÃO GLOBAL DE CONVERSÃO DE MOEDA (Corrige "1,50" e "1.500,00")
+window.parseMoedaBr = function(v) {
+    if (!v) return 0;
+    let s = String(v).trim().replace(/[R$]/gi, '').trim();
+    if (s.includes(',') && s.includes('.')) { return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0; } 
+    else if (s.includes(',')) { return parseFloat(s.replace(',', '.')) || 0; }
+    return parseFloat(s) || 0;
+};
+
 window.iniciarImportacao = async function(inputElement) {
     const arquivo = inputElement.files.item(0); 
     
@@ -1014,15 +1025,6 @@ window.iniciarImportacao = async function(inputElement) {
             const linhas = texto.split(/\r?\n/);
             let importados = 0;
 
-            // Motor que entende dinheiro com Ponto ou Vírgula
-            const parseMoeda = (val) => {
-                if (!val) return 0;
-                let str = String(val).trim().replace(/[R$]/gi, '').trim();
-                if (str.includes('.') && str.includes(',')) { str = str.replace(/\./g, '').replace(',', '.'); } 
-                else if (str.includes(',')) { str = str.replace(',', '.'); }
-                return Number.parseFloat(str) || 0;
-            };
-
             for (let i = 1; i < linhas.length; i++) {
                 const linha = linhas[i].trim();
                 if (!linha) continue;
@@ -1037,9 +1039,8 @@ window.iniciarImportacao = async function(inputElement) {
                 if(!codTxt) codTxt = limpar(col[0]);
                 let codPronto = codTxt || ("ID_" + Date.now() + i);
                 
-                // CAPTURA O CUSTO, A VENDA E CALCULA A MARGEM AQUI!
-                let cst = parseMoeda(col[3]);
-                let vnd = parseMoeda(col[4]);
+                let cst = window.parseMoedaBr(col[3]);
+                let vnd = window.parseMoedaBr(col[4]);
                 let mrg = cst > 0 ? ((vnd - cst) / cst) * 100 : 0;
                 
                 let novoProd = {
@@ -1269,25 +1270,17 @@ window.iniciarImportacao = async function(inputElement) {
 
    // --- FUNÇÃO PARA ZERAR ESTOQUE COM CONFIRMAÇÃO POR ESCRITO ---
 window.excluirTodosProdutos = async function() {
-    // Abre a caixinha para o usuário escrever
     const resposta = prompt("🚨 ATENÇÃO: Para apagar TODO o seu estoque definitivamente, digite ZERAR abaixo:");
-
-    // Só prossegue se ele escreveu exatamente ZERAR (em maiúsculas)
     if (resposta === "ZERAR") {
         try {
-            // "db", "remove" e "ref" são as peças que o seu Firebase já usa
             await remove(ref(db, 'produtos'));
-            
             alert("🗑️ Estoque limpo com sucesso!");
-            
-            // Recarrega a página para limpar a tabela visualmente
             window.location.reload();
         } catch (error) {
             console.error("Erro ao excluir:", error);
             alert("🔴 Erro ao zerar banco de dados: " + error.message);
         }
     } else if (resposta !== null) {
-        // Se ele escreveu errado ou desistiu
         alert("❌ Ação cancelada. Você não digitou ZERAR corretamente.");
     }
 };
@@ -1313,26 +1306,21 @@ window.excluirTodosProdutos = async function() {
 
    let paginaAtualCli = 1; const itensPorPaginaCli = 15; let termoBuscaCli = "";
    let paginaAtualProd = 1; const itensPorPaginaProd = 35; let termoBuscaProd = "";
-let tempoEsperaBusca;
+   let tempoEsperaBusca;
 
 // FUNÇÃO: Filtra os produtos sem travar o teclado
 window.filtrarProdutos = function() {
-    // Cancela a busca anterior se você ainda estiver digitando
     clearTimeout(tempoEsperaBusca);
-
-    // Começa a contagem de 300ms
     tempoEsperaBusca = setTimeout(() => {
         const campoBusca = document.getElementById('buscaProduto');
         const termo = campoBusca.value.toLowerCase();
         
-        // Filtra na memória (que é ultra rápido)
         const filtrados = produtosGlobais.filter(p => {
             const nome = p.nome ? p.nome.toLowerCase() : "";
             const cod = p.codigo ? p.codigo.toLowerCase() : "";
             return nome.includes(termo) || cod.includes(termo);
         });
 
-        // Volta para a página 1 e desenha a tabela com o resultado
         window.paginaAtualProd = 1;
         renderizarTabelaEstoque(filtrados);
     }, 300);
@@ -1343,24 +1331,18 @@ function renderizarTabelaEstoque(listaParaExibir) {
     const corpoTabela = document.getElementById('tabelaEstoque');
     if (!corpoTabela) return;
 
-    // Limpa a tabela de uma vez só
     corpoTabela.innerHTML = "";
 
-    // Calcula o que deve aparecer nesta página
     const inicio = (window.paginaAtualProd - 1) * window.itensPorPaginaProd;
     const fim = inicio + window.itensPorPaginaProd;
     
-    // Pega apenas o "pedaço" de 35 itens da lista de 636
     const itensDaPagina = listaParaExibir.slice(inicio, fim);
 
-    // Monta o HTML todo em uma única "tripa" de texto para o navegador não cansar
     let htmlFinal = "";
 
     itensDaPagina.forEach(prod => {
-        // Alerta de estoque baixo (pisca vermelho)
         const estiloQtd = Number(prod.quantidade) <= 3 ? 'color: #e74c3c; font-weight: bold; animation: blinker 1s linear infinite;' : '';
         
-        // Atualizado: checkbox para etiquetas
         htmlFinal += `
             <tr style="border-bottom: 1px solid #34495e;">
                 <td style="text-align: center; padding: 5px;"><input type="checkbox" class="check-etiqueta" data-nome="${prod.nome}" data-codigo="${prod.codigo}" data-venda="${prod.venda}"></td>
@@ -1380,10 +1362,8 @@ function renderizarTabelaEstoque(listaParaExibir) {
         `;
     });
 
-    // Joga tudo na tela de uma vez só (Isso acaba com o travamento!)
     corpoTabela.innerHTML = htmlFinal;
 
-    // Atualiza o texto da paginação lá em cima
     const totalPaginas = Math.ceil(listaParaExibir.length / window.itensPorPaginaProd);
     const infoPagina = document.getElementById('infoPaginaProd');
     if (infoPagina) {
@@ -1394,8 +1374,6 @@ function renderizarTabelaEstoque(listaParaExibir) {
 // FUNÇÃO: Controla os botões de Próximo e Anterior
 window.mudarPaginaProd = function(direcao) {
     const termo = document.getElementById('buscaProduto').value.toLowerCase();
-    
-    // Filtra a lista atual para saber o total de páginas
     const listaAtual = produtosGlobais.filter(p => {
         const nome = p.nome ? p.nome.toLowerCase() : "";
         const cod = p.codigo ? p.codigo.toLowerCase() : "";
@@ -1403,15 +1381,11 @@ window.mudarPaginaProd = function(direcao) {
     });
 
     const totalPaginas = Math.ceil(listaAtual.length / window.itensPorPaginaProd);
-    
-    // Calcula a nova página
     let novaPag = window.paginaAtualProd + direcao;
 
-    // Só muda se a página existir
     if (novaPag >= 1 && novaPag <= totalPaginas) {
         window.paginaAtualProd = novaPag;
         renderizarTabelaEstoque(listaAtual);
-        // Sobe a tela para o topo da tabela
         document.querySelector('.table-responsive').scrollTop = 0;
     }
 };
@@ -1460,6 +1434,7 @@ window.mudarPaginaProd = function(direcao) {
        
        document.getElementById('vendaClienteBusca').value = '';
        document.getElementById('vendaObservacao').value = '';
+       
        ['osClienteBusca','osEquipe','osInicio','osFim','osObservacao'].forEach(id=>document.getElementById(id).value='');
        document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
        fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
@@ -1468,6 +1443,9 @@ window.mudarPaginaProd = function(direcao) {
        document.getElementById('osStatusPag').value = 'PENDENTE';
        document.getElementById('vendaPagamento').value = 'Dinheiro';
        document.getElementById('osPagamento').value = 'Dinheiro';
+
+       document.getElementById('osEstoqueCusto').value = '';
+       document.getElementById('osEstoqueMargem').value = '';
 
        window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
        window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO');
@@ -2044,19 +2022,41 @@ window.imprimirEtiquetasEstoque = function() {
        // --- 3. VENDAS NORMAIS ---
        
        window.preencherCamposVendaEstoque = function() {
-           const busca = document.getElementById('vendaProdutoEstoqueBusca').value;
-           const p = produtosGlobais.find(x => x.nome === busca || x.codigo === busca);
+           const termoBusca = document.getElementById('vendaProdutoEstoqueBusca').value.trim();
+           const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || String(x.codigo).trim() === termoBusca);
+
            if (p) {
-               document.getElementById('vendaProdutoCusto').value = p.custo || 0;
-               document.getElementById('vendaProdutoMargem').value = p.margem || 0;
-               document.getElementById('vendaProdutoPrecoFinal').value = p.venda || 0;
+               let custo = window.parseMoedaBr(p.custo);
+               let venda = window.parseMoedaBr(p.venda);
+               let margem = window.parseMoedaBr(p.margem);
+
+               if(custo > 0 && venda > 0 && margem === 0) {
+                   margem = ((venda - custo) / custo) * 100;
+               }
+
+               document.getElementById('vendaProdutoCusto').value = custo.toFixed(2);
+               document.getElementById('vendaProdutoMargem').value = margem.toFixed(2);
+               document.getElementById('vendaProdutoPrecoFinal').value = venda.toFixed(2);
+           } else {
+               document.getElementById('vendaProdutoCusto').value = '';
+               document.getElementById('vendaProdutoMargem').value = '';
+               document.getElementById('vendaProdutoPrecoFinal').value = '';
            }
-       }
+       };
 
        window.recalcularPrecoVendaManual = function() {
            const custo = parseFloat(document.getElementById('vendaProdutoCusto').value) || 0;
            const margem = parseFloat(document.getElementById('vendaProdutoMargem').value) || 0;
            document.getElementById('vendaProdutoPrecoFinal').value = (custo + (custo * (margem / 100))).toFixed(2);
+       }
+
+       window.recalcularMargemVendaManual = function() {
+           const custo = parseFloat(document.getElementById('vendaProdutoCusto').value) || 0;
+           const venda = parseFloat(document.getElementById('vendaProdutoPrecoFinal').value) || 0;
+           if (custo > 0 && venda > 0) {
+               let m = ((venda - custo) / custo) * 100;
+               document.getElementById('vendaProdutoMargem').value = m.toFixed(2);
+           }
        }
 
        window.addAoCarrinhoVenda_Estoque = function() {
@@ -2068,7 +2068,7 @@ window.imprimirEtiquetasEstoque = function() {
 
            if (!busca || isNaN(precoUn)) return alert("Selecione um produto e confira os valores.");
 
-           const p = produtosGlobais.find(x => x.nome === busca || x.codigo === busca);
+           const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === busca.trim().toLowerCase() || String(x.codigo).trim() === busca.trim());
            const nomeExibir = p ? `${p.nome} (Cód: ${p.codigo || '-'}) (Qtd: ${qtd})` : `${busca} (Qtd: ${qtd})`;
 
            carrinhoVenda.push({
@@ -2103,8 +2103,14 @@ window.imprimirEtiquetasEstoque = function() {
            
            if (item.ehEstoque) {
                let nomePuro = item.nome.split(' (Qtd:');
-               document.getElementById('vendaProdutoEstoqueBusca').value = nomePuro;
+               document.getElementById('vendaProdutoEstoqueBusca').value = nomePuro[0].trim();
                document.getElementById('vendaProdutoQtd').value = item.qtdBaixa || 1;
+               window.preencherCamposVendaEstoque();
+
+               if (item.custoOriginal !== undefined) document.getElementById('vendaProdutoCusto').value = item.custoOriginal.toFixed(2);
+               if (item.margemOriginal !== undefined) document.getElementById('vendaProdutoMargem').value = item.margemOriginal.toFixed(2);
+               if (item.valorOriginal !== undefined) document.getElementById('vendaProdutoPrecoFinal').value = item.valorOriginal.toFixed(2);
+
                document.getElementById('vendaProdutoQtd').focus();
            } else {
                document.getElementById('vendaAvulsoNome').value = item.nome;
@@ -2258,21 +2264,53 @@ window.imprimirEtiquetasEstoque = function() {
        document.getElementById('osValorKm').addEventListener('input', window.calcularDeslocamentoOS);
 
        window.preencherValorEstoqueOS = function() {
-           const n = document.getElementById('osProdutoEstoqueBusca').value;
-           const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
+           const n = document.getElementById('osProdutoEstoqueBusca').value.trim();
+           const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === n.toLowerCase() || String(x.codigo).trim() === n);
            if(p) {
-               document.getElementById('osEstoqueValUn').value = parseFloat(p.venda).toFixed(2);
+               let custo = window.parseMoedaBr(p.custo);
+               let venda = window.parseMoedaBr(p.venda);
+               let margem = window.parseMoedaBr(p.margem);
+
+               if(custo > 0 && venda > 0 && margem === 0) {
+                   margem = ((venda - custo) / custo) * 100;
+               }
+
+               document.getElementById('osEstoqueCusto').value = custo.toFixed(2);
+               document.getElementById('osEstoqueMargem').value = margem.toFixed(2);
+               document.getElementById('osEstoqueValUn').value = venda.toFixed(2);
                window.calcTotalEstoqueOS();
            } else {
+               document.getElementById('osEstoqueCusto').value = '';
+               document.getElementById('osEstoqueMargem').value = '';
                document.getElementById('osEstoqueValUn').value = '';
                document.getElementById('osEstoqueTotal').value = '';
            }
        }
 
+       window.recalcularPrecoOSEstoque = function() {
+           let custo = parseFloat(document.getElementById('osEstoqueCusto').value) || 0;
+           let margem = parseFloat(document.getElementById('osEstoqueMargem').value) || 0;
+           
+           let novoPreco = custo + (custo * (margem / 100));
+           document.getElementById('osEstoqueValUn').value = novoPreco.toFixed(2);
+           window.calcTotalEstoqueOS();
+       };
+
+       window.recalcularMargemOSEstoque = function() {
+           let custo = parseFloat(document.getElementById('osEstoqueCusto').value) || 0;
+           let venda = parseFloat(document.getElementById('osEstoqueValUn').value) || 0;
+           if (custo > 0) {
+               let m = ((venda - custo) / custo) * 100;
+               document.getElementById('osEstoqueMargem').value = m.toFixed(2);
+           }
+           window.calcTotalEstoqueOS();
+       };
+
        window.calcTotalEstoqueOS = function() {
            let valUn = parseFloat(document.getElementById('osEstoqueValUn').value) || 0;
            let qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
            let perc = parseFloat(document.getElementById('osEstoquePerc').value) || 0;
+           
            let total = valUn * qtd;
            total = total + (total * (perc / 100));
            document.getElementById('osEstoqueTotal').value = total.toFixed(2);
@@ -2292,15 +2330,32 @@ window.imprimirEtiquetasEstoque = function() {
            const qtd = parseInt(document.getElementById('osEstoqueQtd').value) || 1;
            const valTotal = parseFloat(document.getElementById('osEstoqueTotal').value);
            const perc = parseFloat(document.getElementById('osEstoquePerc').value) || 0;
+           
+           const valUn = parseFloat(document.getElementById('osEstoqueValUn').value) || 0;
+           const custoUn = parseFloat(document.getElementById('osEstoqueCusto').value) || 0;
+           const margem = parseFloat(document.getElementById('osEstoqueMargem').value) || 0;
 
            if (!n || isNaN(valTotal)) return alert("Selecione um produto do estoque válido.");
            
-           const p = produtosGlobais.find(x => x.nome.toLowerCase() === n.toLowerCase() || x.codigo === n);
+           const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === n.trim().toLowerCase() || String(x.codigo).trim() === n.trim());
            if (!p) return alert("Produto não encontrado no estoque!");
            
-           carrinhoOS.push({ idProd: p.id, nome: `[Estoque] ${p.nome} (Qtd: ${qtd})`, valor: valTotal, qtdBaixa: qtd, percOriginal: perc, ehEstoque: true, categoriaOS: 'material' });
+           carrinhoOS.push({ 
+               idProd: p.id, 
+               nome: `[Estoque] ${p.nome} (Qtd: ${qtd})`, 
+               valor: valTotal, 
+               valorOriginal: valUn,
+               custoOriginal: custoUn,
+               margemOriginal: margem,
+               qtdBaixa: qtd, 
+               percOriginal: perc, 
+               ehEstoque: true, 
+               categoriaOS: 'material' 
+           });
            
            document.getElementById('osProdutoEstoqueBusca').value = ''; 
+           document.getElementById('osEstoqueCusto').value = ''; 
+           document.getElementById('osEstoqueMargem').value = ''; 
            document.getElementById('osEstoqueValUn').value = ''; 
            document.getElementById('osEstoqueQtd').value = 1; 
            document.getElementById('osEstoquePerc').value = 0; 
@@ -2345,14 +2400,20 @@ window.imprimirEtiquetasEstoque = function() {
            
            if (item.ehEstoque) {
                let nomePuro = item.nome.replace('[Estoque] ', '').split(' (Qtd:');
-               document.getElementById('osProdutoEstoqueBusca').value = nomePuro;
+               document.getElementById('osProdutoEstoqueBusca').value = nomePuro[0].trim();
                document.getElementById('osEstoqueQtd').value = item.qtdBaixa || 1;
                document.getElementById('osEstoquePerc').value = item.percOriginal || 0;
                window.preencherValorEstoqueOS(); 
+               
+               if (item.custoOriginal !== undefined) document.getElementById('osEstoqueCusto').value = item.custoOriginal.toFixed(2);
+               if (item.margemOriginal !== undefined) document.getElementById('osEstoqueMargem').value = item.margemOriginal.toFixed(2);
+               if (item.valorOriginal !== undefined) document.getElementById('osEstoqueValUn').value = item.valorOriginal.toFixed(2);
+               
+               window.calcTotalEstoqueOS();
                document.getElementById('osEstoqueQtd').focus();
            } else if (item.nome.startsWith('[Externo]')) {
                let nomePuro = item.nome.replace('[Externo] ', '').split(' (Qtd:');
-               document.getElementById('osMatExternoNome').value = nomePuro;
+               document.getElementById('osMatExternoNome').value = nomePuro[0].trim();
                document.getElementById('osMatExternoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
                document.getElementById('osMatExternoQtd').value = item.qtdBaixa || 1; 
                document.getElementById('osMatExternoPerc').value = item.percOriginal || 0; 
@@ -3798,7 +3859,7 @@ window.importarJSON = async function() {
                 let status = doc.statusPagamento || 'PAGO';
                 
                 if (status === 'PAGO' && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO')) dadosEntradas[indexMes] += valor;
-                if (doc.tipo === 'DESPESA') dadosSaidas[indexMes] += valor;
+if (doc.tipo === 'DESPESA') dadosSaidas[indexMes] += valor;
             }
         });
     } else {
@@ -3843,37 +3904,227 @@ window.importarJSON = async function() {
 };
 
 window.preencherCamposVendaEstoque = function() {
-           const termoBusca = document.getElementById('vendaProdutoEstoqueBusca').value.trim();
-           
-           const produto = produtosGlobais.find(x => 
-               String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || 
-               String(x.codigo).trim() === termoBusca
-           );
+    const termoBusca = document.getElementById('vendaProdutoEstoqueBusca').value.trim();
+    const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || String(x.codigo).trim() === termoBusca);
 
-           if (produto) {
-               let custo = parseFloat(produto.custo) || 0;
-               let margem = parseFloat(produto.margem) || 0;
-               let venda = parseFloat(produto.venda) || 0;
+    if (p) {
+        let custo = window.parseMoedaBr(p.custo);
+        let venda = window.parseMoedaBr(p.venda);
+        let margem = window.parseMoedaBr(p.margem);
 
-               document.getElementById('vendaProdutoCusto').value = custo.toFixed(2);
-               document.getElementById('vendaProdutoMargem').value = margem.toFixed(2);
-               document.getElementById('vendaProdutoPrecoFinal').value = venda.toFixed(2);
-           } else {
-               document.getElementById('vendaProdutoCusto').value = '';
-               document.getElementById('vendaProdutoMargem').value = '';
-               document.getElementById('vendaProdutoPrecoFinal').value = '';
-           }
-       };
+        if(custo > 0 && venda > 0 && margem === 0) {
+            margem = ((venda - custo) / custo) * 100;
+        }
 
-       window.recalcularPrecoVendaManual = function() {
-           let custo = parseFloat(document.getElementById('vendaProdutoCusto').value) || 0;
-           let margem = parseFloat(document.getElementById('vendaProdutoMargem').value) || 0;
+        document.getElementById('vendaProdutoCusto').value = custo.toFixed(2);
+        document.getElementById('vendaProdutoMargem').value = margem.toFixed(2);
+        document.getElementById('vendaProdutoPrecoFinal').value = venda.toFixed(2);
+    } else {
+        document.getElementById('vendaProdutoCusto').value = '';
+        document.getElementById('vendaProdutoMargem').value = '';
+        document.getElementById('vendaProdutoPrecoFinal').value = '';
+    }
+};
 
-           if (custo > 0) {
-               let novoPreco = custo + (custo * (margem / 100));
-               document.getElementById('vendaProdutoPrecoFinal').value = novoPreco.toFixed(2);
-           }
-       };
+window.recalcularPrecoVendaManual = function() {
+    const custo = parseFloat(document.getElementById('vendaProdutoCusto').value) || 0;
+    const margem = parseFloat(document.getElementById('vendaProdutoMargem').value) || 0;
+    let novoPreco = custo + (custo * (margem / 100));
+    document.getElementById('vendaProdutoPrecoFinal').value = novoPreco.toFixed(2);
+};
+
+window.recalcularMargemVendaManual = function() {
+    const custo = parseFloat(document.getElementById('vendaProdutoCusto').value) || 0;
+    const venda = parseFloat(document.getElementById('vendaProdutoPrecoFinal').value) || 0;
+    if (custo > 0 && venda > 0) {
+        let m = ((venda - custo) / custo) * 100;
+        document.getElementById('vendaProdutoMargem').value = m.toFixed(2);
+    }
+};
+
+window.addAoCarrinhoVenda_Estoque = function() {
+    const busca = document.getElementById('vendaProdutoEstoqueBusca').value;
+    const qtd = parseInt(document.getElementById('vendaProdutoQtd').value) || 1;
+    const precoUn = parseFloat(document.getElementById('vendaProdutoPrecoFinal').value);
+    const custoUn = parseFloat(document.getElementById('vendaProdutoCusto').value);
+    const margem = parseFloat(document.getElementById('vendaProdutoMargem').value);
+
+    if (!busca || isNaN(precoUn)) return alert("Selecione um produto e confira os valores.");
+
+    const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === busca.trim().toLowerCase() || String(x.codigo).trim() === busca.trim());
+    const nomeExibir = p ? `${p.nome} (Cód: ${p.codigo || '-'}) (Qtd: ${qtd})` : `${busca} (Qtd: ${qtd})`;
+
+    carrinhoVenda.push({
+        idProd: p ? p.id : null, nome: nomeExibir, valor: precoUn * qtd, valorOriginal: precoUn, 
+        custoOriginal: custoUn, margemOriginal: margem, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material'
+    });
+
+    ['vendaProdutoEstoqueBusca','vendaProdutoCusto','vendaProdutoMargem','vendaProdutoPrecoFinal'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('vendaProdutoQtd').value = 1;
+    window.atualizarCarrinhoVenda();
+};
+
+window.addAoCarrinhoVenda_Avulso = function() {
+    const n = document.getElementById('vendaAvulsoNome').value; 
+    const v = parseFloat(document.getElementById('vendaAvulsoValor').value); 
+    const perc = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
+  
+    if (!n || isNaN(v)) return alert("Preencha Nome e Valor.");
+      
+    carrinhoVenda.push({ nome: n, valor: v + (v * (perc / 100)), valorOriginal: v, percOriginal: perc, ehEstoque: false, categoriaOS: 'material' });
+      
+    document.getElementById('vendaAvulsoNome').value = ''; 
+    document.getElementById('vendaAvulsoValor').value = ''; 
+    document.getElementById('vendaAvulsoPerc').value = '0'; 
+    window.atualizarCarrinhoVenda();
+};
+
+window.editarItemCarrinhoVenda = function(idx) {
+    const item = carrinhoVenda[idx];
+    carrinhoVenda.splice(idx, 1);
+    window.atualizarCarrinhoVenda();
+    
+    if (item.ehEstoque) {
+        let nomePuro = item.nome.split(' (Qtd:');
+        document.getElementById('vendaProdutoEstoqueBusca').value = nomePuro[0].trim();
+        document.getElementById('vendaProdutoQtd').value = item.qtdBaixa || 1;
+        window.preencherCamposVendaEstoque();
+
+        if (item.custoOriginal !== undefined) document.getElementById('vendaProdutoCusto').value = item.custoOriginal.toFixed(2);
+        if (item.margemOriginal !== undefined) document.getElementById('vendaProdutoMargem').value = item.margemOriginal.toFixed(2);
+        if (item.valorOriginal !== undefined) document.getElementById('vendaProdutoPrecoFinal').value = item.valorOriginal.toFixed(2);
+
+        document.getElementById('vendaProdutoQtd').focus();
+    } else {
+        document.getElementById('vendaAvulsoNome').value = item.nome;
+        document.getElementById('vendaAvulsoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
+        document.getElementById('vendaAvulsoPerc').value = item.percOriginal || 0;
+        document.getElementById('vendaAvulsoValor').focus();
+    }
+};
+
+window.atualizarCarrinhoVenda = function() {
+    const div = document.getElementById('listaCarrinho'); div.innerHTML = ''; 
+    let subtotal = 0;
+    if (carrinhoVenda.length === 0) { div.innerHTML = 'Nenhum item adicionado no momento.'; } else {
+        carrinhoVenda.forEach((item, i) => { 
+            subtotal += item.valor; 
+            div.innerHTML += `
+            <div class="cart-item">
+                <span>${item.nome}</span>
+                <span>R$ ${item.valor.toFixed(2)} 
+                    <button class="btn-acao edit" style="padding:2px 6px;margin-left:10px;" onclick="editarItemCarrinhoVenda(${i})" title="Editar Item">✏️</button>
+                    <button class="btn-danger" style="padding:2px 6px;margin-left:5px;" onclick="removerDoCarrinhoVenda(${i})" title="Remover Item">X</button>
+                </span>
+            </div>`; 
+        });
+    }
+    document.getElementById('vendaSubtotalTxt').innerText = `R$ ${subtotal.toFixed(2)}`;
+    window.calcularTotalComDesconto();
+};
+
+window.calcularTotalComDesconto = function() {
+    const subtotalTxt = document.getElementById('vendaSubtotalTxt').innerText.replace('R$ ', '');
+    const subtotal = parseFloat(subtotalTxt) || 0;
+    const descReais = parseFloat(document.getElementById('vendaDescontoReais').value) || 0;
+    const descPerc = parseFloat(document.getElementById('vendaDescontoPerc').value) || 0;
+    
+    let totalDesconto = descReais + (subtotal * (descPerc / 100));
+    let totalFinal = subtotal - totalDesconto;
+    document.getElementById('vendaTotalFinalTxt').innerText = `TOTAL: R$ ${Math.max(0, totalFinal).toFixed(2)}`;
+};
+
+window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); window.atualizarCarrinhoVenda(); };
+
+window.finalizarVenda = async function() {
+    const os = parseInt(document.getElementById('vendaOS').value); 
+    const v = document.getElementById('vendaVencimento').value; 
+    const n = document.getElementById('vendaClienteBusca').value; 
+    const statusPag = document.getElementById('vendaStatusPag').value;
+    const formaPag = document.getElementById('vendaPagamento').value; 
+    const tipoDocSelecionado = document.getElementById('vendaTipoDoc').value;
+
+    if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
+    
+    let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
+    let cId = cli ? cli.id : 'avulso';
+    let cNome = cli ? cli.nome : n;
+
+    const totalText = document.getElementById('vendaTotalFinalTxt').innerText.replace('TOTAL: R$ ', '');
+    const total = parseFloat(totalText) || 0;
+
+    let originalDoc = null;
+    if (editandoDocId) {
+        const snapAntigo = await get(ref(db, 'caixa/' + editandoDocId));
+        originalDoc = snapAntigo.val();
+        
+        if (originalDoc && originalDoc.itens) {
+            let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
+            for (let oldItem of antigosItens) {
+                if (oldItem.ehEstoque && oldItem.idProd) {
+                    const snapP = await get(ref(db, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
+                    if (pDb) { await update(ref(db, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); }
+                }
+            }
+        }
+    }
+
+    const doc = { 
+        tipo: tipoDocSelecionado, 
+        os: os, 
+        vencimento: v, 
+        statusPagamento: statusPag,
+        formaPagamento: formaPag,
+        dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
+        timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
+        clienteId: cId, 
+        clienteNome: cNome, 
+        itens: carrinhoVenda, 
+        total: total, 
+        assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,                
+        vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
+        observacao: document.getElementById('vendaObservacao').value
+    };
+
+    try {
+        if (editandoDocId) {
+            await update(ref(db, 'caixa/' + editandoDocId), doc);
+        } else {
+            await set(push(ref(db, 'caixa')), doc); 
+        }
+        
+        if (tipoDocSelecionado === 'VENDA') {
+            if (editandoDocId && originalDoc) {
+                let statusAntigo = originalDoc.statusPagamento || 'PAGO';
+                let valorAntigo = originalDoc.total || 0;
+                if (statusAntigo === 'PAGO') window.registrarMovimentoCaixa('entrada', -valorAntigo);
+                if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
+            } else {
+                if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
+            }
+
+            for (let item of carrinhoVenda) {
+                if (item.ehEstoque && item.idProd) {
+                    const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
+                    if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
+                }
+            }
+        }
+
+        alert(editandoDocId ? "Venda Atualizada com Sucesso!" : "Venda Registrada!"); 
+        carrinhoVenda = []; window.atualizarCarrinhoVenda(); 
+        document.getElementById('vendaClienteBusca').value = ''; 
+        document.getElementById('vendaObservacao').value = '';
+        document.getElementById('vendaStatusPag').value = 'PAGO';
+        document.getElementById('vendaPagamento').value = 'Dinheiro';
+        window.carregarSelectsGerais(); 
+        window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
+        
+        editandoDocId = null;
+        document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
+
+    } catch(e) { alert("Erro: " + e); }
+};
 
 window.sincronizarTotaisDoDia = async function() {
     let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
