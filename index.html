@@ -843,7 +843,12 @@
             </div>
         </div>
         
-        <div style="display: flex;">
+        <div class="form-group" style="margin-top: 15px;">
+            <label>Observações da Venda / Orçamento</label>
+            <textarea id="vendaObservacao" rows="3" placeholder="Ex: Prazo de entrega, detalhes da garantia, etc..."></textarea>
+        </div>
+        
+        <div style="display: flex; margin-top: 15px;">
             <button type="button" class="btn-primary" style="background-color: #27ae60; padding: 12px; font-size: 15px; flex: 1;" onclick="finalizarVenda()">✅ FINALIZAR E SALVAR</button>
             <button type="button" class="btn-danger" id="btnCancelarEdicaoVenda" style="display:none; padding: 12px; margin-left: 10px; font-size: 15px;" onclick="cancelarEdicaoDocumento()">❌ CANCELAR EDIÇÃO</button>
         </div>
@@ -970,6 +975,11 @@
             <label>Anexar Foto Conclusão</label>
             <input type="file" id="osFotoUpload" accept="image/*" capture="environment" style="padding: 5px; border: 1px solid #7f8c8d; background: #ecf0f1; border-radius: 4px;">
             <img id="previewFotoOS" src="" alt="Foto">
+        </div>
+
+        <div class="form-group" style="margin-top: 15px;">
+            <label>Observações da Ordem de Serviço</label>
+            <textarea id="osObservacao" rows="3" placeholder="Relatório técnico, pendências ou observações do serviço..."></textarea>
         </div>
 
         <div class="row" style="margin-top: 25px;">
@@ -1449,7 +1459,8 @@ window.mudarPaginaProd = function(direcao) {
        carrinhoOS = []; window.atualizarCarrinhoOS();
        
        document.getElementById('vendaClienteBusca').value = '';
-       ['osClienteBusca','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
+       document.getElementById('vendaObservacao').value = '';
+       ['osClienteBusca','osEquipe','osInicio','osFim','osObservacao'].forEach(id=>document.getElementById(id).value='');
        document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
        fotoAtualOS_Base64=''; document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; document.getElementById('osFotoUpload').value='';
 
@@ -1705,7 +1716,7 @@ window.mudarPaginaProd = function(direcao) {
        // --- CALCULO DUPLO: CUSTO X MARGEM X VENDA ---
        document.getElementById('prodMargem').addEventListener('input', calcularVenda); 
        document.getElementById('prodCusto').addEventListener('input', calcularVenda);
-       document.getElementById('prodVenda').addEventListener('input', calcularMargem); // NOVO GATILHO
+       document.getElementById('prodVenda').addEventListener('input', calcularMargem);
 
        function calcularVenda() { 
            let c = parseFloat(document.getElementById('prodCusto').value) || 0; 
@@ -1731,7 +1742,7 @@ window.mudarPaginaProd = function(direcao) {
        window.filtrarProdutos = function() { termoBuscaProd = document.getElementById('buscaProduto').value.toLowerCase(); paginaAtualProd = 1; window.renderizarTabelaEstoque(); }
        window.mudarPaginaProd = function(direcao) { const f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd))); const max = Math.ceil(f.length / itensPorPaginaProd); if (paginaAtualProd + direcao >= 1 && paginaAtualProd + direcao <= max) { paginaAtualProd += direcao; window.renderizarTabelaEstoque(); } }
 
-window.renderizarTabelaEstoque = function() {
+       window.renderizarTabelaEstoque = function() {
            const tab = document.getElementById('tabelaEstoque'); tab.innerHTML = '';
            
            let f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd)));
@@ -1759,7 +1770,6 @@ window.renderizarTabelaEstoque = function() {
                
                let ncmTxt = p.ncm || '-'; 
                
-               // AQUI ESTÁ A LETRA B: O checkbox inserido na primeira coluna de cada linha
                tr.innerHTML = `
                 <td style="text-align: center; padding: 5px;"><input type="checkbox" class="check-etiqueta" data-nome="${p.nome}" data-codigo="${p.codigo || ''}" data-venda="${p.venda}"></td>
                 <td style="font-weight:bold; color:#f1c40f; font-size:11px; overflow:hidden; text-overflow:ellipsis; padding: 5px;">${p.codigo || '-'}</td>
@@ -1785,9 +1795,9 @@ window.renderizarTabelaEstoque = function() {
                codigo: document.getElementById('prodCodigo').value, 
                ncm: document.getElementById('prodNcm').value, 
                categoria: document.getElementById('prodCategoria').value, 
-               custo: document.getElementById('prodCusto').value, 
-               margem: document.getElementById('prodMargem').value, 
-               venda: document.getElementById('prodVenda').value, 
+               custo: parseFloat(document.getElementById('prodCusto').value) || 0, 
+               margem: parseFloat(document.getElementById('prodMargem').value) || 0, 
+               venda: parseFloat(document.getElementById('prodVenda').value) || 0, 
                quantidade: parseInt(document.getElementById('prodQtd').value) || 0, 
                foto: fotoBase64Atual 
            };
@@ -1827,7 +1837,7 @@ window.renderizarTabelaEstoque = function() {
 
            fotoBase64Atual = p.foto || ""; editandoProdId = id; document.getElementById('tituloProduto').innerText = "Editando Produto"; document.getElementById('btnSalvarProd').innerText = "Atualizar Produto"; document.getElementById('btnCancelarProd').style.display = "inline-block"; window.scrollTo(0,0); 
        }
-           window.cancelarEdicaoProd = function() { editandoProdId = null; document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; document.getElementById('tituloProduto').innerText = "Cadastro de Produto"; document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; document.getElementById('btnCancelarProd').style.display = "none"; }
+       window.cancelarEdicaoProd = function() { editandoProdId = null; document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; document.getElementById('tituloProduto').innerText = "Cadastro de Produto"; document.getElementById('btnSalvarProd').innerText = "Salvar Produto"; document.getElementById('btnCancelarProd').style.display = "none"; }
        window.excluirProd = function(id) { if(confirm("Excluir produto do estoque?")) remove(ref(db, 'produtos/' + id)); }
 
 // =========================================================
@@ -1989,87 +1999,7 @@ window.imprimirEtiquetasEstoque = function() {
            janela.document.close();
        };
 
-// =========================================================
-// FUNÇÃO 1: EXCLUIR TODOS OS PRODUTOS (ZERAR ESTOQUE)
-// =========================================================
-window.lerArquivoTXT = async function(event) {
-    alert("🟢 PASSO 1: O botão funcionou e chamou a função!");
 
-    let arquivo = event.target.files;
-    if (!arquivo) {
-        alert("🔴 ERRO: O arquivo não foi selecionado direito.");
-        return;
-    }
-
-    alert("🟢 PASSO 2: O sistema enxergou o arquivo: " + arquivo.name);
-
-    let leitor = new FileReader();
-    
-    leitor.onload = async function(e) {
-        alert("🟢 PASSO 3: O sistema conseguiu ler o texto dentro do arquivo!");
-        
-        try {
-            let texto = e.target.result;
-            let linhas = texto.split(/\r?\n/);
-            
-            alert("🟢 PASSO 4: O arquivo tem " + linhas.length + " linhas. O sistema vai começar a enviar para a Nuvem (Firebase) agora! (Isso pode demorar uns segundos dependendo da internet)");
-            
-            let importados = 0;
-
-            for (let i = 1; i < linhas.length; i++) {
-                let linha = linhas[i].trim();
-                if (!linha) continue;
-
-                let col = linha.split('\t'); 
-                if (col.length < 3) col = linha.split(';'); // Tenta ponto-e-vírgula caso a aba falhe
-                if (col.length < 3) continue;
-
-                // Converte em String com segurança antes de limpar
-                const limpar = (v) => v ? String(v).trim().replace(/^"|"$/g, '') : '';
-                
-                // Agora o código pega a posição certa do array!
-                let codPronto = limpar(col[0]) || ("ID_" + Date.now() + i);
-
-                let novoProd = {
-                    codigo: codPronto,
-                    codigo_barras: codPronto,
-                    nome: limpar(col[1]) || "Sem Nome",
-                    categoria: 'Geral',
-                    custo: limpar(col[3]) || '0,00',
-                    venda: limpar(col[4]) || '0,00',
-                    quantidade: parseInt(limpar(col[5])) || 0,
-                    estoque: parseInt(limpar(col[5])) || 0, 
-                    ncm: limpar(col[6]) || '',
-                    foto: '' 
-                };
-
-                // Enviando para o Firebase
-                if (typeof push !== 'undefined' && typeof ref !== 'undefined') {
-                    let databaseVar = typeof db !== 'undefined' ? db : (window.db || null);
-                    await set(push(ref(databaseVar, 'produtos')), novoProd);
-                } else if (window.firebase && window.firebase.database) {
-                    await window.firebase.database().ref('produtos').push(novoProd);
-                }
-                
-                importados++;
-            }
-
-            document.body.style.cursor = 'default';
-            alert(`✅ PASSO 5 (FINAL): SUCESSO ABSOLUTO!\n\nForam salvos ${importados} produtos no sistema!`);
-            
-            if(window.filtrarProdutos) window.filtrarProdutos();
-            if(window.renderizarTabelaEstoque) window.renderizarTabelaEstoque();
-
-        } catch(err) {
-            document.body.style.cursor = 'default';
-            alert(`🔴 ERRO NO PASSO 4 (Erro ao salvar no banco): ${err.message}`);
-        }
-        
-        event.target.value = '';
-    };
-
-    leitor.readAsText(arquivo, 'ISO-8859-1');
-};
        // --- FUNÇÕES COMPARTILHADAS GLOBAIS ---
        window.gerarProximoNumeroDoc = function(inputId, valorInicial, tipoDoc) {
            let maxNum = valorInicial; 
@@ -2251,20 +2181,21 @@ window.lerArquivoTXT = async function(event) {
            }
 
             const doc = { 
-    tipo: tipoDocSelecionado, 
-    os: os, 
-    vencimento: v, 
-    statusPagamento: statusPag,
-    formaPagamento: formaPag,
-    dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
-    timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
-    clienteId: cId, 
-    clienteNome: cNome, 
-    itens: carrinhoVenda, 
-    total: total, 
-    assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,                
-    vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' 
-};
+                tipo: tipoDocSelecionado, 
+                os: os, 
+                vencimento: v, 
+                statusPagamento: statusPag,
+                formaPagamento: formaPag,
+                dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
+                timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
+                clienteId: cId, 
+                clienteNome: cNome, 
+                itens: carrinhoVenda, 
+                total: total, 
+                assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,                
+                vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
+                observacao: document.getElementById('vendaObservacao').value
+            };
 
            try {
                 if (editandoDocId) {
@@ -2294,6 +2225,7 @@ window.lerArquivoTXT = async function(event) {
                alert(editandoDocId ? "Venda Atualizada com Sucesso!" : "Venda Registrada!"); 
                carrinhoVenda = []; window.atualizarCarrinhoVenda(); 
                document.getElementById('vendaClienteBusca').value = ''; 
+               document.getElementById('vendaObservacao').value = '';
                document.getElementById('vendaStatusPag').value = 'PAGO';
                document.getElementById('vendaPagamento').value = 'Dinheiro';
                window.carregarSelectsGerais(); 
@@ -2508,7 +2440,8 @@ window.lerArquivoTXT = async function(event) {
                kmInicial: kmIni, kmFinal: kmFin, kmTotal: kTotal, kmValor: document.getElementById('osValorKm').value || 0,
                kmCusto: tKm, itens: carrinhoOS, total: totalGeral, fotoAnexo: fotoAtualOS_Base64, 
                assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,
-               vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema' 
+               vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
+               observacao: document.getElementById('osObservacao').value
            };
 
             try {
@@ -2536,7 +2469,7 @@ window.lerArquivoTXT = async function(event) {
                
                alert(editandoDocId ? "Ordem de Serviço Atualizada!" : "OS Salva! Estoque atualizado.");
                carrinhoOS = []; window.atualizarCarrinhoOS(); 
-               ['osClienteBusca','osEquipe','osInicio','osFim'].forEach(id=>document.getElementById(id).value='');
+               ['osClienteBusca','osEquipe','osInicio','osFim','osObservacao'].forEach(id=>document.getElementById(id).value='');
                document.getElementById('osKmInicial').value='0'; document.getElementById('osKmFinal').value='0';
                document.getElementById('osStatusPag').value = 'PENDENTE';
                document.getElementById('osPagamento').value = 'Dinheiro';
@@ -2568,7 +2501,8 @@ window.lerArquivoTXT = async function(event) {
                kmInicial: kmIni, kmFinal: kmFin, kmTotal: km, kmValor: valKm, kmCusto: km * valKm,
                itens: carrinhoOS, total: carrinhoOS.reduce((acc, i) => acc + i.valor, 0) + (km * valKm),
                fotoAnexo: fotoAtualOS_Base64, dataStr: new Date().toLocaleString('pt-BR'),
-               vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema'
+               vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
+               observacao: document.getElementById('osObservacao').value
            };
            window.construirPDF(objVirtual);
        }
@@ -2696,6 +2630,7 @@ acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%
                    document.getElementById('vendaVencimento').value = doc.vencimento || '';
                    document.getElementById('vendaClienteBusca').value = doc.clienteNome || '';
                    document.getElementById('vendaStatusPag').value = doc.statusPagamento || 'PAGO';
+                   document.getElementById('vendaObservacao').value = doc.observacao || '';
                    
                    carrinhoVenda = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
                    window.atualizarCarrinhoVenda();
@@ -2718,6 +2653,7 @@ acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%
                    document.getElementById('osKmInicial').value = doc.kmInicial || 0;
                    document.getElementById('osKmFinal').value = doc.kmFinal || 0;
                    document.getElementById('osValorKm').value = doc.kmValor || 2.50;
+                   document.getElementById('osObservacao').value = doc.observacao || '';
                    
                    carrinhoOS = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
                    
@@ -2851,6 +2787,8 @@ acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%
                    </div>
                `;
            }
+           
+           let obsHTML = doc.observacao ? `<div class="info-card" style="margin-top:10px;"><div class="card-title">OBSERVAÇÕES</div><div style="font-size: 10px; white-space: pre-wrap;">${doc.observacao}</div></div>` : '';
 
            // Tratamento de Imagens e Assinatura
            let fotoHTML = doc.fotoAnexo ? `<div class="foto-box"><div class="card-title">REGISTRO FOTOGRÁFICO</div><img src="${doc.fotoAnexo}"></div>` : '';
@@ -2954,6 +2892,7 @@ acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%
 
                    ${blocoDados}
                    ${htmlTabelas}
+                   ${obsHTML}
 
                    <div class="total-destaque">TOTAL GERAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
                    
@@ -3004,6 +2943,10 @@ acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%
 
            } else { 
                if(itensGarantidos) itensGarantidos.forEach(i => { itensHtml += `<tr><td style="padding-bottom:5px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+           }
+           
+           if(doc.observacao) {
+               itensHtml += `<tr><td colspan="2" style="padding-top:10px; padding-bottom:5px; font-size:11px; border-top:1px dashed #000;"><b>OBS:</b> ${doc.observacao}</td></tr>`;
            }
 
            // Cabeçalho da Empresa Dinâmico no Cupom
@@ -3155,6 +3098,10 @@ acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%
            if(itensGarantidos) itensGarantidos.forEach(i => { msg += `- ${i.nome}: R$ ${i.valor.toFixed(2)}\n`; });
            
            msg += `\n*Valor Total: R$ ${parseFloat(v.total).toFixed(2)}*\n\n`;
+           
+           if(v.observacao) {
+               msg += `*Observações:* ${v.observacao}\n\n`;
+           }
 
            if (!v.assinaturaBase64 && (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO')) {
                const link = window.location.origin + window.location.pathname + "?assinar=" + v.id;
