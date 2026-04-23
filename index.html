@@ -559,6 +559,15 @@
 </div>
 
 <div id="modalDespesa" class="modal">
+<div id="modalGraficoPgto" class="modal">
+    <div class="modal-content" style="text-align: center; max-width: 600px;">
+        <span class="close-btn" onclick="document.getElementById('modalGraficoPgto').style.display='none'">&times;</span>
+        <h2 style="margin-top: 0; color: #3498db;">📊 Entradas por Pagamento (Hoje)</h2>
+        <div style="background: #1a252f; padding: 20px; border-radius: 8px; margin-top: 15px; height: 300px; display: flex; justify-content: center;">
+            <canvas id="canvasGraficoPgto"></canvas>
+        </div>
+    </div>
+</div>
     <div class="modal-content">
         <span class="close-btn" onclick="document.getElementById('modalDespesa').style.display='none'">&times;</span>
         <h2 style="margin-top: 0; color: #e74c3c;">Lançar Despesa / Saída</h2>
@@ -1101,14 +1110,32 @@ window.iniciarImportacao = async function(inputElement) {
                    <h3 style="color: #ecf0f1;">Balanço Final do Dia</h3><h2 id="dashSaldo" style="color: #ffffff;">R$ 0,00</h2>
                </div>
            </div>
-           
-          <div class="caixa-actions-header"> 
+
+<div style="background-color: #1a252f; padding: 15px; border-radius: 6px; border: 1px solid #7f8c8d; margin-bottom: 15px;">
+               <h3 style="margin-top: 0; color: #f1c40f; font-size: 14px; text-transform: uppercase;">Resumo do Caixa de Hoje (Entradas e Saídas)</h3>
+               <table style="margin-top: 0;">
+                   <thead>
+                       <tr>
+                           <th>Forma de Pagto / Discriminação</th>
+                           <th style="text-align: center; width: 80px;">Qtd</th>
+                           <th style="text-align: right; width: 150px;">Total (R$)</th>
+                           <th style="text-align: center; width: 100px;">Tipo</th>
+                       </tr>
+                   </thead>
+                   <tbody id="tabelaResumoPgto">
+                       <tr><td colspan="4" style="text-align: center;">Calculando movimentações...</td></tr>
+                   </tbody>
+               </table>
+           </div>           
+
+        <div class="caixa-actions-header"> 
     <button class="btn-secundario" onclick="definirCaixaInicial()">💵 Informar Caixa Inicial</button>
     <button class="btn-danger" onclick="document.getElementById('modalDespesa').style.display='flex'">➖ Lançar Despesa</button>
     <button class="btn-secundario" style="background-color: #8e44ad;" onclick="gerarRelatorioMensal()">📄 Resumo Mensal PDF</button>
-    <button class="btn-secundario" style="background-color: #f39c12;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia</button>
+     <button class="btn-secundario" style="background-color: #f39c12;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia</button>
     <button class="btn-secundario" style="background-color: #c0392b;" onclick="zerarFluxoCaixa()">⚠️ Zerar Caixa</button>
     <button class="btn-secundario" style="background-color: #27ae60;" onclick="window.sincronizarTotaisDoDia()">🔄 Sincronizar Painel</button>
+    <button id="btnDesfazerSinc" class="btn-secundario" style="background-color: #7f8c8d; color: #fff; display: none;" onclick="window.desfazerSincronizacao()">⏪ Desfazer Sincronização</button>
 </div>
 
            <div class="table-responsive">
@@ -2577,40 +2604,46 @@ window.imprimirEtiquetasEstoque = function() {
        }
 
 
-       // ================================================================
+      // ================================================================
        // MÓDULO 5: CAIXA E NOVOS BOTÕES (VER PDF E CUPOM E RELATÓRIO)
        // ================================================================
        
        onValue(ref(db, 'caixa'), function(snapshot) {
            caixaGlobal = []; const dados = snapshot.val();
            if (dados) { Object.keys(dados).forEach(key => caixaGlobal.push({ id: key, ...dados[key] })); }
-           caixaGlobal.sort((a, b) => b.timestamp - a.timestamp); renderizarTabelaCaixa();
+           caixaGlobal.sort((a, b) => b.timestamp - a.timestamp); 
+           renderizarTabelaCaixa();
        });
        
        function renderizarTabelaCaixa() {
-           const tabela = document.getElementById('tabelaCaixa'); tabela.innerHTML = '';
-           if (caixaGlobal.length === 0) { tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum documento registrado.</td></tr>'; return; }
+           const tabela = document.getElementById('tabelaCaixa'); 
+           if(!tabela) return;
+           tabela.innerHTML = '';
+           
+           if (caixaGlobal.length === 0) { 
+               tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum documento registrado.</td></tr>'; 
+               if(window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
+               return; 
+           }
 
            caixaGlobal.forEach(v => {
                const tr = document.createElement('tr'); 
                const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
                let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
 
-             // Tratamento visual do Status de Pagamento
-let statusStr = v.statusPagamento || 'PAGO'; 
-let txtBadge = '';
+               let statusStr = v.statusPagamento || 'PAGO'; 
+               let txtBadge = '';
 
-// Puxa a forma de pagamento e tira a palavra "Cartão de " para economizar espaço na tela
-let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
-let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
+               let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
+               let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
 
-if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
-    txtBadge = '-';
-} else if (statusStr === 'PAGO') {
-    txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO${detalhePgto}</span>`;
-} else {
-    txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE${detalhePgto}</span>`;
-}
+               if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+                   txtBadge = '-';
+               } else if (statusStr === 'PAGO') {
+                   txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO${detalhePgto}</span>`;
+               } else {
+                   txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE${detalhePgto}</span>`;
+               }
 
                let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#ffffff;">✏️ Ed</button>`;
                acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
@@ -2619,11 +2652,10 @@ if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
                    acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
                }
                acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
-acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
+               acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
                acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
                acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
                
-               // BOTÕES DE DAR BAIXA OU ESTORNAR PAGAMENTO
                if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PENDENTE') {
                    acoesHtml += `<button class="btn-acao receber" style="border-color:#27ae60; color:#27ae60;" onclick="marcarComoPago('${v.id}')" title="Registrar Pagamento">💰 Receber</button>`;
                } else if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PAGO') {
@@ -2652,8 +2684,127 @@ acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%
                `; 
                tabela.appendChild(tr);
            });
+
+           if(window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
        }
 
+       window.meuGraficoPgto = null;
+
+       // --- NOVO MOTOR: RESUMO DE FORMAS DE PAGAMENTO DO DIA (FIXO) ---
+       window.atualizarResumoPagamentosHoje = function() {
+           let hoje = new Date().toLocaleDateString('pt-BR');
+           
+           let resumo = {
+               'Dinheiro': { qtd: 0, total: 0, icone: '💵' },
+               'PIX': { qtd: 0, total: 0, icone: '💠' },
+               'Cartão de Crédito': { qtd: 0, total: 0, icone: '💳' },
+               'Cartão de Débito': { qtd: 0, total: 0, icone: '💳' },
+               'Boleto': { qtd: 0, total: 0, icone: '📑' }
+           };
+           
+           let totalDespesas = 0;
+           let qtdDespesas = 0;
+
+           caixaGlobal.forEach(doc => {
+               if (doc.dataStr && doc.dataStr.includes(hoje)) {
+                   let valor = parseFloat(doc.total) || 0;
+                   let status = doc.statusPagamento || 'PAGO';
+                   let tipo = doc.tipo || '';
+
+                   if (status === 'PAGO' && (tipo === 'VENDA' || tipo === 'ORDEM DE SERVIÇO' || tipo === 'VD')) {
+                       let forma = doc.formaPagamento || 'Outros';
+                       if (resumo[forma]) {
+                           resumo[forma].qtd++;
+                           resumo[forma].total += valor;
+                       } else {
+                           resumo[forma] = { qtd: 1, total: valor, icone: '💰' };
+                       }
+                   }
+                   
+                   if (tipo === 'DESPESA') {
+                       qtdDespesas++;
+                       totalDespesas += valor;
+                   }
+               }
+           });
+
+           window.dadosGraficoHoje = resumo; // Salva para o gráfico puxar
+
+           let tbody = document.getElementById('tabelaResumoPgto');
+           if(!tbody) return;
+
+           let html = '';
+           
+           Object.keys(resumo).forEach(forma => {
+               let val = resumo[forma].total;
+               let q = resumo[forma].qtd;
+               let icone = resumo[forma].icone || '💰';
+
+               html += `<tr style="border-bottom: 1px solid #2c3e50;">
+                   <td style="font-weight: bold; color: #ecf0f1; padding: 10px;">${icone} ${forma}</td>
+                   <td style="text-align: center; color: #bdc3c7;">${q}</td>
+                   <td style="text-align: right; font-weight: bold; color: #2ecc71;">R$ ${val.toFixed(2)}</td>
+                   <td style="text-align: center;"><span style="background-color: #27ae60; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px;">ENTRADA</span></td>
+               </tr>`;
+           });
+
+           html += `<tr>
+               <td style="font-weight: bold; color: #e74c3c; padding: 10px;">🔻 Despesas / Saídas (Gastos)</td>
+               <td style="text-align: center; color: #e74c3c;">${qtdDespesas}</td>
+               <td style="text-align: right; font-weight: bold; color: #e74c3c;">- R$ ${totalDespesas.toFixed(2)}</td>
+               <td style="text-align: center;"><span style="background-color: #e74c3c; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px;">SAÍDA</span></td>
+           </tr>`;
+
+           tbody.innerHTML = html;
+       };
+
+       // --- LÓGICA DO GRÁFICO DE PIZZA ---
+       window.abrirGraficoPagamentos = function() {
+           document.getElementById('modalGraficoPgto').style.display = 'flex';
+           
+           if(window.meuGraficoPgto) { window.meuGraficoPgto.destroy(); }
+
+           let labels = [];
+           let data = [];
+           let bgColors = ['#27ae60', '#3498db', '#f1c40f', '#e67e22', '#9b59b6'];
+
+           if (window.dadosGraficoHoje) {
+               Object.keys(window.dadosGraficoHoje).forEach(forma => {
+                   let valor = window.dadosGraficoHoje[forma].total;
+                   if(valor > 0) { 
+                       labels.push(forma);
+                       data.push(valor);
+                   }
+               });
+           }
+
+           if(data.length === 0) {
+               labels = ['Nenhuma Entrada'];
+               data = [1];
+               bgColors = ['#7f8c8d'];
+           }
+
+           const ctx = document.getElementById('canvasGraficoPgto').getContext('2d');
+           window.meuGraficoPgto = new Chart(ctx, {
+               type: 'doughnut',
+               data: {
+                   labels: labels,
+                   datasets: [{
+                       data: data,
+                       backgroundColor: bgColors,
+                       borderWidth: 0
+                   }]
+               },
+               options: {
+                   responsive: true,
+                   maintainAspectRatio: false,
+                   plugins: {
+                       legend: { position: 'right', labels: { color: '#ecf0f1' } }
+                   }
+               }
+           });
+       };
+        
        // --- AÇÕES RÁPIDAS DE PAGAMENTO DIRETO NA TABELA ---
        window.marcarComoPago = async function(id) {
            const doc = caixaGlobal.find(x => x.id === id);
@@ -4204,6 +4355,93 @@ window.sincronizarTotaisDoDia = async function() {
         alert(`✅ Sincronização Concluída!\n\nEntradas de hoje: R$ ${totalEntradas.toFixed(2)}\nSaídas de hoje: R$ ${totalSaidas.toFixed(2)}`);
     } catch (e) {
         alert("Erro ao sincronizar: " + e.message);
+    }
+};
+
+window.zerarFluxoCaixa = async function() {
+    if (confirm("Deseja realmente ZERAR os totais do painel?")) {
+        const { ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+        await set(ref(window.meuBanco, 'caixaStatus'), {
+            entradas: 0,
+            saidas: 0,
+            caixaInicial: 0
+        });
+        alert("Caixa zerado!");
+        window.location.reload();
+    }
+};
+
+window.backupCaixaStatus = null; // Variável para guardar o backup invisível
+
+window.sincronizarTotaisDoDia = async function() {
+    let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
+    let totalEntradas = 0;
+    let totalSaidas = 0;
+
+    let hoje = new Date().toLocaleDateString('pt-BR');
+
+    baseDados.forEach(doc => {
+        if (doc.dataStr && doc.dataStr.includes(hoje)) {
+            let valor = parseFloat(doc.total) || 0;
+            let status = doc.statusPagamento || 'PAGO';
+
+            if (status === 'PAGO' && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO' || doc.tipo === 'VD')) {
+                totalEntradas += valor;
+            }
+            if (doc.tipo === 'DESPESA') {
+                totalSaidas += valor;
+            }
+        }
+    });
+
+    try {
+        // 1. SALVA O BACKUP ANTES DE MUDAR OS VALORES
+        window.backupCaixaStatus = {
+            entradas: window.caixaFinanceiro.entradas || 0,
+            saidas: window.caixaFinanceiro.saidas || 0,
+            caixaInicial: window.caixaFinanceiro.caixaInicial || 0
+        };
+
+        const { getDatabase, ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+        
+        // 2. ATUALIZA COM OS DADOS SINCRONIZADOS
+        await set(ref(window.meuBanco, 'caixaStatus'), {
+            entradas: totalEntradas,
+            saidas: totalSaidas,
+            caixaInicial: window.caixaFinanceiro.caixaInicial || 0
+        });
+
+        // 3. MOSTRA O BOTÃO "DESFAZER" NA TELA
+        let btnDesfazer = document.getElementById('btnDesfazerSinc');
+        if(btnDesfazer) btnDesfazer.style.display = 'inline-block';
+
+        alert(`✅ Sincronização Concluída!\n\nEntradas de hoje: R$ ${totalEntradas.toFixed(2)}\nSaídas de hoje: R$ ${totalSaidas.toFixed(2)}`);
+    } catch (e) {
+        alert("Erro ao sincronizar: " + e.message);
+    }
+};
+
+window.desfazerSincronizacao = async function() {
+    if (!window.backupCaixaStatus) {
+        return alert("Não há nenhuma sincronização recente para desfazer.");
+    }
+    
+    if (confirm("Deseja desfazer a última sincronização e voltar os valores como estavam antes?")) {
+        try {
+            const { ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+            
+            // VOLTA OS DADOS DO BACKUP PRO BANCO DE DADOS
+            await set(ref(window.meuBanco, 'caixaStatus'), window.backupCaixaStatus);
+            
+            alert("⏪ Sincronização desfeita com sucesso! Os valores anteriores foram restaurados.");
+            
+            // ESCONDE O BOTÃO DE DESFAZER NOVAMENTE E LIMPA O BACKUP
+            document.getElementById('btnDesfazerSinc').style.display = 'none';
+            window.backupCaixaStatus = null; 
+            
+        } catch (e) {
+            alert("Erro ao desfazer: " + e.message);
+        }
     }
 };
 
