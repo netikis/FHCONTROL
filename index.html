@@ -577,7 +577,24 @@
         <button class="btn-danger" style="width: 100%; padding: 12px;" onclick="salvarDespesa()">➖ RETIRAR DO CAIXA</button>
     </div>
 </div>
-
+<div id="modalLancamentoBanco" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('modalLancamentoBanco').style.display='none'">&times;</span>
+        <h2 id="tituloModalBanco" style="margin-top: 0; color: #3498db;">Lançar no Banco</h2>
+        <input type="hidden" id="tipoLancamentoBanco">
+        <p style="font-size: 12px; color:#bdc3c7;">Este lançamento afeta apenas o fluxo da conta bancária.</p>
+        
+        <div class="form-group">
+            <label>Descrição (Ex: Recebimento PIX, Pgto Fornecedor, Taxa)</label>
+            <input type="text" id="descBanco">
+        </div>
+        <div class="form-group">
+            <label>Valor (R$)</label>
+            <input type="number" step="0.01" id="valorBanco">
+        </div>
+        <button id="btnSalvarBanco" class="btn-primary" style="width: 100%; padding: 12px; font-size: 15px;" onclick="salvarLancamentoBanco()">CONFIRMAR LANÇAMENTO</button>
+    </div>
+</div>
 <div id="telaAssinaturaRemota" style="display: none; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; height: 100%; background-color: #2c3e50; padding: 40px 20px 100px 20px; box-sizing: border-box; color: #ecf0f1; text-align: center; overflow-y: auto;">
    <img id="logoAssinaturaRemota" src="https://image2url.com/r2/default/images/1775222635762-bb7b4bc7-d027-4c9a-abc4-add5cdbf79ba.png" style="max-width: 120px; border-radius: 8px; margin-bottom: 20px; background-color: #fff; padding: 5px; flex-shrink: 0;">
    
@@ -1160,6 +1177,51 @@ window.iniciarImportacao = async function(inputElement) {
        </div>
    </div>
 
+<div class="container" style="margin-top: 30px; border: 1px solid #3498db;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(52, 152, 219, 0.5); padding-bottom: 10px;">
+        <div>
+            <h2 style="border: none; padding: 0; margin: 0; color: #3498db;">Caixa do Banco (Digital / PIX / Cartões)</h2>
+        </div>
+    </div>
+
+    <div class="row" style="margin-bottom: 15px;">
+        <div class="col dash-card" style="background-color: #34495e; border: 1px solid #3498db;">
+            <h3 style="color: #ecf0f1;">Saldo Inicial Banco</h3><h2 id="dashIniBanco" style="color: #3498db;">R$ 0,00</h2>
+        </div>
+        <div class="col dash-card" style="background-color: #27ae60;">
+            <h3 style="color: #ecf0f1;">Entradas (Recebimentos)</h3><h2 id="dashEntBanco" style="color: #ffffff;">R$ 0,00</h2>
+        </div>
+        <div class="col dash-card" style="background-color: #e74c3c;">
+            <h3 style="color: #ecf0f1;">Saídas (Pagamentos)</h3><h2 id="dashSaiBanco" style="color: #ffffff;">R$ 0,00</h2>
+        </div>
+        <div class="col dash-card" style="background-color: #2980b9;">
+            <h3 style="color: #ecf0f1;">Saldo Atual Banco</h3><h2 id="dashSaldoBanco" style="color: #ffffff;">R$ 0,00</h2>
+        </div>
+    </div>
+
+    <div class="caixa-actions-header">
+        <button class="btn-secundario" style="border-color: #3498db; border-width: 2px; border-style: solid;" onclick="definirSaldoInicialBanco()">🏦 Inf. Saldo Inicial</button>
+        <button class="btn-secundario" style="background-color: #27ae60;" onclick="abrirModalBanco('ENTRADA')">➕ Lançar Entrada</button>
+        <button class="btn-danger" onclick="abrirModalBanco('SAIDA')">➖ Lançar Saída</button>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th style="text-align: right;">Valor (R$)</th>
+                    <th style="text-align: center;">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaCaixaBanco">
+                <tr><td colspan="5" style="text-align: center;">Carregando extrato bancário...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
    <div id="tabConfig" class="tab-content">
        
@@ -4456,6 +4518,136 @@ window.zerarFluxoCaixa = async function() {
         alert("Caixa zerado!");
         window.location.reload();
     }
+};
+
+// ================================================================
+// MÓDULO CAIXA DO BANCO (LÓGICA)
+// ================================================================
+window.saldoInicialBanco = 0;
+window.extratoBanco = [];
+
+// Monitora o Saldo Inicial do Banco no Firebase
+onValue(ref(window.meuBanco, 'caixaBancoStatus'), s => {
+    let val = s.val();
+    window.saldoInicialBanco = val ? (val.saldoInicial || 0) : 0;
+    if(window.atualizarPainelBanco) window.atualizarPainelBanco();
+});
+
+// Monitora o Extrato do Banco no Firebase
+onValue(ref(window.meuBanco, 'caixaBancoExtrato'), s => {
+    window.extratoBanco = [];
+    const dados = s.val();
+    if (dados) {
+        Object.keys(dados).forEach(key => window.extratoBanco.push({ id: key, ...dados[key] }));
+    }
+    // Ordena do mais recente pro mais antigo
+    window.extratoBanco.sort((a, b) => b.timestamp - a.timestamp);
+    if(window.renderizarTabelaBanco) window.renderizarTabelaBanco();
+    if(window.atualizarPainelBanco) window.atualizarPainelBanco();
+});
+
+window.definirSaldoInicialBanco = function() {
+    let valorStr = prompt("Informe o Saldo Inicial do Banco (ex: 1500.00):");
+    if(!valorStr) return;
+    let valor = parseFloat(valorStr.replace(',', '.'));
+    if(isNaN(valor)) return alert("Valor inválido. Use pontos para separar os centavos.");
+    
+    update(ref(window.meuBanco, 'caixaBancoStatus'), { saldoInicial: valor })
+        .then(() => alert("Saldo inicial do banco atualizado com sucesso!"));
+};
+
+window.abrirModalBanco = function(tipo) {
+    document.getElementById('tipoLancamentoBanco').value = tipo;
+    document.getElementById('descBanco').value = '';
+    document.getElementById('valorBanco').value = '';
+    
+    let titulo = tipo === 'ENTRADA' ? '➕ Lançar Entrada no Banco' : '➖ Lançar Saída no Banco';
+    let corBtn = tipo === 'ENTRADA' ? '#27ae60' : '#e74c3c';
+    
+    document.getElementById('tituloModalBanco').innerText = titulo;
+    document.getElementById('tituloModalBanco').style.color = corBtn;
+    document.getElementById('tituloModalBanco').style.borderBottomColor = corBtn;
+    document.getElementById('btnSalvarBanco').style.backgroundColor = corBtn;
+    
+    document.getElementById('modalLancamentoBanco').style.display = 'flex';
+    document.getElementById('descBanco').focus();
+};
+
+window.salvarLancamentoBanco = function() {
+    let desc = document.getElementById('descBanco').value.trim();
+    let val = parseFloat(document.getElementById('valorBanco').value);
+    let tipo = document.getElementById('tipoLancamentoBanco').value;
+    
+    if(!desc || isNaN(val) || val <= 0) return alert("Preencha corretamente a descrição e um valor maior que zero.");
+    
+    let doc = {
+        tipo: tipo,
+        descricao: desc,
+        valor: val,
+        dataStr: new Date().toLocaleString('pt-BR'),
+        timestamp: Date.now(),
+        usuario: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema'
+    };
+    
+    set(push(ref(window.meuBanco, 'caixaBancoExtrato')), doc).then(() => {
+        document.getElementById('modalLancamentoBanco').style.display = 'none';
+    }).catch(e => alert("Erro ao salvar: " + e));
+};
+
+window.excluirLancamentoBanco = function(id) {
+    if(confirm("Deseja realmente excluir este lançamento bancário? O saldo será recalculado automaticamente.")) {
+        remove(ref(window.meuBanco, 'caixaBancoExtrato/' + id));
+    }
+};
+
+window.renderizarTabelaBanco = function() {
+    const tabela = document.getElementById('tabelaCaixaBanco');
+    if(!tabela) return;
+    tabela.innerHTML = '';
+    
+    if (window.extratoBanco.length === 0) {
+        tabela.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhum movimento bancário registrado.</td></tr>';
+        return;
+    }
+
+    window.extratoBanco.forEach(v => {
+        let cor = v.tipo === 'ENTRADA' ? '#2ecc71' : '#e74c3c';
+        let sinal = v.tipo === 'ENTRADA' ? '+' : '-';
+        
+        tabela.innerHTML += `
+            <tr>
+                <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
+                <td><span style="background-color: ${cor}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${v.tipo}</span></td>
+                <td style="font-weight: bold;">${v.descricao}</td>
+                <td style="color:${cor}; font-weight:bold; text-align: right;">${sinal} R$ ${v.valor.toFixed(2)}</td>
+                <td style="text-align: center;">
+                    <button class="btn-acao del" onclick="excluirLancamentoBanco('${v.id}')" title="Excluir Lançamento">🗑️</button>
+                </td>
+            </tr>
+        `;
+    });
+};
+
+window.atualizarPainelBanco = function() {
+    if(!document.getElementById('dashIniBanco')) return;
+    
+    let ent = 0;
+    let sai = 0;
+    
+    // Filtra para pegar tudo que tá no extrato ou apenas o do dia (nesse caso está pegando o saldo global de tudo)
+    // Se quiser restringir para pegar apenas do dia, adicione a lógica de "hoje" parecida com a do caixa presencial.
+    window.extratoBanco.forEach(v => {
+        if(v.tipo === 'ENTRADA') ent += v.valor;
+        if(v.tipo === 'SAIDA') sai += v.valor;
+    });
+    
+    let inicial = window.saldoInicialBanco;
+    let saldoFinal = inicial + ent - sai;
+    
+    document.getElementById('dashIniBanco').innerText = `R$ ${inicial.toFixed(2)}`;
+    document.getElementById('dashEntBanco').innerText = `R$ ${ent.toFixed(2)}`;
+    document.getElementById('dashSaiBanco').innerText = `R$ ${sai.toFixed(2)}`;
+    document.getElementById('dashSaldoBanco').innerText = `R$ ${saldoFinal.toFixed(2)}`;
 };
 
 </script>
