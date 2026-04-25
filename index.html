@@ -1149,13 +1149,22 @@ window.iniciarImportacao = async function(inputElement) {
     <button class="btn-secundario" onclick="definirCaixaInicial()">💵 Informar Caixa Inicial</button>
     <button class="btn-danger" onclick="document.getElementById('modalDespesa').style.display='flex'">➖ Lançar Despesa</button>
     <button class="btn-secundario" style="background-color: #8e44ad;" onclick="gerarRelatorioMensal()">📄 Resumo Mensal PDF</button>
-     <button class="btn-secundario" style="background-color: #f39c12;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia</button>
+    <button class="btn-secundario" style="background-color: #f39c12;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia</button>
     <button class="btn-secundario" style="background-color: #c0392b;" onclick="zerarFluxoCaixa()">⚠️ Zerar Caixa</button>
     <button class="btn-secundario" style="background-color: #27ae60;" onclick="window.sincronizarTotaisDoDia()">🔄 Sincronizar Painel</button>
     <button id="btnDesfazerSinc" class="btn-secundario" style="background-color: #7f8c8d; color: #fff; display: none;" onclick="window.desfazerSincronizacao()">⏪ Desfazer Sincronização</button>
 </div>
 
-           <div class="table-responsive">
+<div class="toolbar" style="margin-top: 15px;">
+    <input type="text" id="buscaCaixa" class="search-bar" placeholder="Buscar por cliente ou Nº Doc..." onkeyup="filtrarCaixa()">
+    <div class="pagination">
+        <button onclick="mudarPaginaCaixa(-1)">◀ Ant</button>
+        <span id="infoPaginaCaixa" style="color: #f1c40f; margin: 0 10px;">Pág 1</span>
+        <button onclick="mudarPaginaCaixa(1)">Próx ▶</button>
+    </div>
+</div>
+
+<div class="table-responsive">
                <table>
                    <thead>
                        <tr>
@@ -1204,6 +1213,19 @@ window.iniciarImportacao = async function(inputElement) {
         <button class="btn-secundario" style="background-color: #27ae60;" onclick="abrirModalBanco('ENTRADA')">➕ Lançar Entrada</button>
         <button class="btn-danger" onclick="abrirModalBanco('SAIDA')">➖ Lançar Saída</button>
     </div>
+
+    <div class="toolbar" style="margin-top: 15px;">
+        <input type="text" id="buscaBanco" class="search-bar" placeholder="Buscar no extrato..." onkeyup="filtrarBanco()">
+        <div class="pagination">
+            <button onclick="mudarPaginaBanco(-1)">◀ Ant</button>
+            <span id="infoPaginaBanco" style="color: #3498db; margin: 0 10px;">Pág 1</span>
+            <button onclick="mudarPaginaBanco(1)">Próx ▶</button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
 
     <div class="table-responsive">
         <table>
@@ -4600,17 +4622,59 @@ window.excluirLancamentoBanco = function(id) {
     }
 };
 
+// ================================================================
+// LÓGICA DE PAGINAÇÃO E FILTRO PARA O CAIXA DO BANCO
+// ================================================================
+window.paginaAtualBanco = 1;
+window.itensPorPaginaBanco = 15;
+window.termoBuscaBanco = "";
+
+window.filtrarBanco = function() {
+    window.termoBuscaBanco = document.getElementById('buscaBanco').value.toLowerCase();
+    window.paginaAtualBanco = 1;
+    window.renderizarTabelaBanco();
+};
+
+window.mudarPaginaBanco = function(direcao) {
+    let filtrados = window.extratoBanco.filter(v => 
+        (v.descricao || '').toLowerCase().includes(window.termoBuscaBanco)
+    );
+
+    const max = Math.ceil(filtrados.length / window.itensPorPaginaBanco);
+    if (window.paginaAtualBanco + direcao >= 1 && window.paginaAtualBanco + direcao <= Math.max(1, max)) {
+        window.paginaAtualBanco += direcao;
+        window.renderizarTabelaBanco();
+    }
+};
+
+// SUBSTITUA A FUNÇÃO RENDERIZAR ANTIGA POR ESTA:
 window.renderizarTabelaBanco = function() {
     const tabela = document.getElementById('tabelaCaixaBanco');
     if(!tabela) return;
     tabela.innerHTML = '';
     
-    if (window.extratoBanco.length === 0) {
-        tabela.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhum movimento bancário registrado.</td></tr>';
+    // 1. Filtra pela busca
+    let dadosFiltrados = window.extratoBanco.filter(v => 
+        (v.descricao || '').toLowerCase().includes(window.termoBuscaBanco)
+    );
+
+    if (dadosFiltrados.length === 0) {
+        tabela.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhum movimento bancário encontrado.</td></tr>';
+        if(document.getElementById('infoPaginaBanco')) document.getElementById('infoPaginaBanco').innerText = "Pág 1 de 1";
         return;
     }
 
-    window.extratoBanco.forEach(v => {
+    // 2. Lógica de Paginação (15 por página)
+    const inicio = (window.paginaAtualBanco - 1) * window.itensPorPaginaBanco;
+    const fim = inicio + window.itensPorPaginaBanco;
+    const itensDaPagina = dadosFiltrados.slice(inicio, fim);
+    
+    if(document.getElementById('infoPaginaBanco')) {
+        document.getElementById('infoPaginaBanco').innerText = `Pág ${window.paginaAtualBanco} de ${Math.ceil(dadosFiltrados.length / window.itensPorPaginaBanco)}`;
+    }
+
+    // 3. Renderiza apenas os itens da página atual
+    itensDaPagina.forEach(v => {
         let cor = v.tipo === 'ENTRADA' ? '#2ecc71' : '#e74c3c';
         let sinal = v.tipo === 'ENTRADA' ? '+' : '-';
         
@@ -4628,26 +4692,127 @@ window.renderizarTabelaBanco = function() {
     });
 };
 
-window.atualizarPainelBanco = function() {
-    if(!document.getElementById('dashIniBanco')) return;
-    
-    let ent = 0;
-    let sai = 0;
-    
-    // Filtra para pegar tudo que tá no extrato ou apenas o do dia (nesse caso está pegando o saldo global de tudo)
-    // Se quiser restringir para pegar apenas do dia, adicione a lógica de "hoje" parecida com a do caixa presencial.
-    window.extratoBanco.forEach(v => {
-        if(v.tipo === 'ENTRADA') ent += v.valor;
-        if(v.tipo === 'SAIDA') sai += v.valor;
+// ================================================================
+// LÓGICA DE PAGINAÇÃO PARA A TABELA PRINCIPAL DE VENDAS/CAIXA
+// ================================================================
+window.paginaAtualCaixa = 1;
+window.itensPorPaginaCaixa = 20; // Limite de 20 itens por página
+window.termoBuscaCaixa = "";
+
+window.filtrarCaixa = function() {
+    window.termoBuscaCaixa = document.getElementById('buscaCaixa').value.toLowerCase();
+    window.paginaAtualCaixa = 1;
+    window.renderizarTabelaCaixa();
+};
+
+window.mudarPaginaCaixa = function(direcao) {
+    let filtrados = caixaGlobal.filter(v => {
+        let busca = (v.clienteNome || '').toLowerCase().includes(window.termoBuscaCaixa) || 
+                    (v.os || '').toString().includes(window.termoBuscaCaixa);
+        return busca;
     });
+
+    const max = Math.ceil(filtrados.length / window.itensPorPaginaCaixa);
+    if (window.paginaAtualCaixa + direcao >= 1 && window.paginaAtualCaixa + direcao <= Math.max(1, max)) {
+        window.paginaAtualCaixa += direcao;
+        window.renderizarTabelaCaixa();
+    }
+};
+
+window.renderizarTabelaCaixa = function() {
+    const tabela = document.getElementById('tabelaCaixa'); 
+    if(!tabela) return;
+    tabela.innerHTML = '';
     
-    let inicial = window.saldoInicialBanco;
-    let saldoFinal = inicial + ent - sai;
+    if (caixaGlobal.length === 0) { 
+        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum documento registrado.</td></tr>'; 
+        if(window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
+        if(document.getElementById('infoPaginaCaixa')) document.getElementById('infoPaginaCaixa').innerText = "Pág 1 de 1";
+        return; 
+    }
+
+    // Filtro de Busca
+    let dadosFiltrados = caixaGlobal.filter(v => {
+        return (v.clienteNome || '').toLowerCase().includes(window.termoBuscaCaixa) || 
+               (v.os || '').toString().includes(window.termoBuscaCaixa);
+    });
+
+    if (dadosFiltrados.length === 0) {
+        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhuma venda/documento encontrado na busca.</td></tr>'; 
+        if(document.getElementById('infoPaginaCaixa')) document.getElementById('infoPaginaCaixa').innerText = "Pág 1 de 1";
+        return;
+    }
+
+    // Paginação de 20 em 20
+    const inicio = (window.paginaAtualCaixa - 1) * window.itensPorPaginaCaixa;
+    const fim = inicio + window.itensPorPaginaCaixa;
+    const itensDaPagina = dadosFiltrados.slice(inicio, fim);
     
-    document.getElementById('dashIniBanco').innerText = `R$ ${inicial.toFixed(2)}`;
-    document.getElementById('dashEntBanco').innerText = `R$ ${ent.toFixed(2)}`;
-    document.getElementById('dashSaiBanco').innerText = `R$ ${sai.toFixed(2)}`;
-    document.getElementById('dashSaldoBanco').innerText = `R$ ${saldoFinal.toFixed(2)}`;
+    if(document.getElementById('infoPaginaCaixa')) {
+        document.getElementById('infoPaginaCaixa').innerText = `Pág ${window.paginaAtualCaixa} de ${Math.ceil(dadosFiltrados.length / window.itensPorPaginaCaixa)}`;
+    }
+
+    // Renderiza apenas os 20 itens
+    itensDaPagina.forEach(v => {
+        const tr = document.createElement('tr'); 
+        const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
+        let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
+
+        let statusStr = v.statusPagamento || 'PAGO'; 
+        let txtBadge = '';
+
+        let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
+        let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
+
+        if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+            txtBadge = '-';
+        } else if (statusStr === 'PAGO') {
+            txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO${detalhePgto}</span>`;
+        } else {
+            txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE${detalhePgto}</span>`;
+        }
+
+        let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#ffffff;">✏️ Ed</button>`;
+        acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
+        
+        if (!v.assinaturaBase64) {
+            acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
+        }
+        acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
+        acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
+        acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
+        acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
+        
+        if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PENDENTE') {
+            acoesHtml += `<button class="btn-acao receber" style="border-color:#27ae60; color:#27ae60;" onclick="marcarComoPago('${v.id}')" title="Registrar Pagamento">💰 Receber</button>`;
+        } else if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PAGO') {
+            acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${v.id}')" title="Desfazer Pagamento">🔄 Estornar</button>`;
+        }
+
+        acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
+
+        let corTipo = v.tipo === 'VENDA' ? '#3498db' : (v.tipo === 'ORCAMENTO' ? '#9b59b6' : (v.tipo === 'DESPESA' ? '#e74c3c' : '#f39c12'));
+        let sigla = v.tipo === 'VENDA' ? 'VENDA' : (v.tipo === 'ORCAMENTO' ? 'ORCAMENTO' : (v.tipo === 'DESPESA' ? 'DESPESAS' : (v.tipo === 'FECHAMENTO' ? 'FECH.CAIXA' : 'ORDEM.SERV.')));
+
+        if(v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+            acoesHtml = `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Registro">🗑️</button>`;
+        }
+
+        tr.innerHTML = `
+            <td style="font-weight: bold; color: #ffffff;">${v.os || '-'}</td>
+            <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
+            <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
+            <td style="font-weight: bold;">${v.clienteNome}</td>
+            <td style="font-weight: bold;">${vencForm}</td>
+            <td style="color:${v.tipo==='DESPESA'?'#e74c3c':'#2ecc71'}; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
+            <td style="text-align: center;">${txtBadge}</td>
+            <td style="font-size: 11px; font-weight: bold;">${(v.tipo==='DESPESA'||v.tipo==='FECHAMENTO')?'-':temAss}</td>
+            <td class="acoes-flex">${acoesHtml}</td>
+        `; 
+        tabela.appendChild(tr);
+    });
+
+    if(window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
 };
 
 </script>
