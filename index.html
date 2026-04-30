@@ -2364,14 +2364,118 @@ window.marcarComoPago = async function(id) {
             await update(ref(db, 'caixa/' + id), { statusPagamento: 'PAGO' });
             
             let formaLow = (doc.formaPagamento || '').toLowerCase();
-            let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito');
+            let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
             
-            // Só cai na Gaveta se for dinheiro!
+            // Só soma no Caixa Balcão se for dinheiro físico
             if (!isDigital) {
                 window.registrarMovimentoCaixa('entrada', doc.total);
             }
             alert('Pagamento recebido com sucesso!');
         } catch(e) { alert("Erro ao atualizar: " + e); }
+    }
+};
+
+window.cancelarVenda = async function(id) {
+    if (!confirm("ATENÇÃO: Deseja CANCELAR este documento?\nEle será apagado permanentemente e os valores estornados.")) return;
+    try {
+        const snap = await get(ref(db, 'caixa/' + id)); 
+        const vCanc = snap.val();
+        
+        if (vCanc) {
+            // 1. Devolve pro estoque
+            if (vCanc.tipo !== 'DESPESA' && vCanc.tipo !== 'FECHAMENTO' && vCanc.itens) {
+                let itensGarantidos = Array.isArray(vCanc.itens) ? vCanc.itens : Object.values(vCanc.itens);
+                for (let item of itensGarantidos) {
+                    if (item.ehEstoque && item.idProd && (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO')) {
+                        const snapP = await get(ref(db, 'produtos/' + item.idProd)); 
+                        let pDb = snapP.val();
+                        if (pDb) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: (pDb.quantidade || 0) + item.qtdBaixa }); }
+                    }
+                }
+            }
+            
+            // 2. Estorna o valor financeiro (protegendo a gaveta)
+            let status = vCanc.statusPagamento || 'PAGO';
+            if (status === 'PAGO') {
+                let formaLow = (vCanc.formaPagamento || '').toLowerCase();
+                let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
+
+                if (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO' || vCanc.tipo === 'ORCAMENTO') {
+                    if (!isDigital) window.registrarMovimentoCaixa('entrada', -vCanc.total);
+                } 
+                else if (vCanc.tipo === 'DESPESA') {
+                    window.registrarMovimentoCaixa('saida', -vCanc.total);
+                }
+            }
+        }
+        
+        // 3. Apaga do banco
+        await remove(ref(db, 'caixa/' + id)); 
+        alert("Documento cancelado e Caixa estornado com sucesso!");
+    } catch(erro) { 
+        alert("Erro ao cancelar: " + erro); 
+    }
+};
+
+window.estornarPagamento = async function(id) {
+    const doc = caixaGlobal.find(x => x.id === id);
+    if (!doc) return;
+    if(confirm(`🔄 ESTORNAR PAGAMENTO\n\nDeseja desfazer este recebimento?\nO valor será marcado como PENDENTE novamente.`)) {
+        try {
+            await update(ref(db, 'caixa/' + id), { statusPagamento: 'PENDENTE' });
+            
+            let formaLow = (doc.formaPagamento || '').toLowerCase();
+            let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
+
+            // Só tira do Caixa Balcão se o que foi estornado era dinheiro físico
+            if (!isDigital) {
+                window.registrarMovimentoCaixa('entrada', -doc.total); 
+            }
+            
+            alert('Pagamento estornado com sucesso.');
+        } catch(e) { alert("Erro ao atualizar: " + e); }
+    }
+};
+
+window.cancelarVenda = async function(id) {
+    if (!confirm("ATENÇÃO: Deseja CANCELAR este documento?\nEle será apagado permanentemente e os valores estornados.")) return;
+    try {
+        const snap = await get(ref(db, 'caixa/' + id)); 
+        const vCanc = snap.val();
+        
+        if (vCanc) {
+            // 1. Devolve pro estoque
+            if (vCanc.tipo !== 'DESPESA' && vCanc.tipo !== 'FECHAMENTO' && vCanc.itens) {
+                let itensGarantidos = Array.isArray(vCanc.itens) ? vCanc.itens : Object.values(vCanc.itens);
+                for (let item of itensGarantidos) {
+                    if (item.ehEstoque && item.idProd && (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO')) {
+                        const snapP = await get(ref(db, 'produtos/' + item.idProd)); 
+                        let pDb = snapP.val();
+                        if (pDb) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: (pDb.quantidade || 0) + item.qtdBaixa }); }
+                    }
+                }
+            }
+            
+            // 2. Estorna o valor financeiro (protegendo a gaveta)
+            let status = vCanc.statusPagamento || 'PAGO';
+            if (status === 'PAGO') {
+                let formaLow = (vCanc.formaPagamento || '').toLowerCase();
+                let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
+
+                if (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO' || vCanc.tipo === 'ORCAMENTO') {
+                    if (!isDigital) window.registrarMovimentoCaixa('entrada', -vCanc.total);
+                } 
+                else if (vCanc.tipo === 'DESPESA') {
+                    window.registrarMovimentoCaixa('saida', -vCanc.total);
+                }
+            }
+        }
+        
+        // 3. Apaga do banco
+        await remove(ref(db, 'caixa/' + id)); 
+        alert("Documento cancelado e Caixa estornado com sucesso!");
+    } catch(erro) { 
+        alert("Erro ao cancelar: " + erro); 
     }
 };
 
@@ -2386,12 +2490,13 @@ window.sincronizarTotaisDoDia = async function() {
             let valor = parseFloat(doc.total) || 0;
             let status = doc.statusPagamento || 'PAGO';
             let formaLow = (doc.formaPagamento || '').toLowerCase();
-            let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito');
+            let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
 
-            // Só soma na GAVETA se NÃO for digital
-            if (status === 'PAGO' && !isDigital && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO' || doc.tipo === 'VD')) {
+            // MÁGICA: Só soma na GAVETA se for uma venda/OS paga e NÃO for digital (Pix/Cartão/Boleto)
+            if (status === 'PAGO' && !isDigital && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO' || doc.tipo === 'VD' || doc.tipo === 'RECIBO')) {
                 totalEntradasGaveta += valor;
             }
+            // Soma as saídas/despesas normalmente
             if (doc.tipo === 'DESPESA') {
                 totalSaidas += valor;
             }
@@ -2399,14 +2504,29 @@ window.sincronizarTotaisDoDia = async function() {
     });
 
     try {
-        window.backupCaixaStatus = { entradas: window.caixaFinanceiro.entradas || 0, saidas: window.caixaFinanceiro.saidas || 0, caixaInicial: window.caixaFinanceiro.caixaInicial || 0 };
-        const { getDatabase, ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+        // Salva o valor antigo num backup (caso você queira desfazer)
+        window.backupCaixaStatus = { 
+            entradas: window.caixaFinanceiro.entradas || 0, 
+            saidas: window.caixaFinanceiro.saidas || 0, 
+            caixaInicial: window.caixaFinanceiro.caixaInicial || 0 
+        };
         
-        await set(ref(window.meuBanco, 'caixaStatus'), { entradas: totalEntradasGaveta, saidas: totalSaidas, caixaInicial: window.caixaFinanceiro.caixaInicial || 0 });
-        let btnDesfazer = document.getElementById('btnDesfazerSinc'); if(btnDesfazer) btnDesfazer.style.display = 'inline-block';
+        const { ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+        
+        // Empurra os valores corretos (limpos) para o painel
+        await set(ref(window.meuBanco, 'caixaStatus'), { 
+            entradas: totalEntradasGaveta, 
+            saidas: totalSaidas, 
+            caixaInicial: window.caixaFinanceiro.caixaInicial || 0 
+        });
+        
+        let btnDesfazer = document.getElementById('btnDesfazerSinc'); 
+        if(btnDesfazer) btnDesfazer.style.display = 'inline-block';
 
-        alert(`✅ Sincronização da Gaveta Concluída!\n\nEntradas em Dinheiro: R$ ${totalEntradasGaveta.toFixed(2)}\nSaídas: R$ ${totalSaidas.toFixed(2)}`);
-    } catch (e) { alert("Erro ao sincronizar: " + e.message); }
+        alert(`✅ PAINEL RECALCULADO COM SUCESSO!\n\nO sistema varreu todos os registros de hoje e corrigiu a gaveta.\n\nEntradas em Dinheiro Físico: R$ ${totalEntradasGaveta.toFixed(2)}\nSaídas: R$ ${totalSaidas.toFixed(2)}`);
+    } catch (e) { 
+        alert("Erro ao sincronizar: " + e.message); 
+    }
 };
 
        // --- 4. MÓDULO ORDEM DE SERVIÇO (OS) ---
@@ -2749,11 +2869,14 @@ window.sincronizarTotaisDoDia = async function() {
        // ================================================================
        
        onValue(ref(db, 'caixa'), function(snapshot) {
-           caixaGlobal = []; const dados = snapshot.val();
-           if (dados) { Object.keys(dados).forEach(key => caixaGlobal.push({ id: key, ...dados[key] })); }
-           caixaGlobal.sort((a, b) => b.timestamp - a.timestamp); 
-           renderizarTabelaCaixa();
-       });
+    caixaGlobal = []; const dados = snapshot.val();
+    if (dados) { Object.keys(dados).forEach(key => caixaGlobal.push({ id: key, ...dados[key] })); }
+    caixaGlobal.sort((a, b) => b.timestamp - a.timestamp); 
+    
+    if(window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
+    if(window.renderizarTabelaBanco) window.renderizarTabelaBanco();
+    if(window.atualizarPainelBanco) window.atualizarPainelBanco();
+});
        
        window.renderizarTabelaCaixa = function() {
     const tabela = document.getElementById('tabelaCaixa'); 
@@ -4622,7 +4745,6 @@ window.mudarPaginaBanco = function(direcao) {
     }
 };
 
-// SUBSTITUA A FUNÇÃO RENDERIZAR ANTIGA POR ESTA:
 window.renderizarTabelaBanco = function() {
     const tabela = document.getElementById('tabelaCaixaBanco');
     if(!tabela) return;
@@ -4791,14 +4913,17 @@ window.renderizarTabelaBanco = function() {
     if(!tabela) return;
     tabela.innerHTML = '';
     
+    // Pega os lançamentos manuais do banco
     let manuais = window.extratoBanco.map(e => ({...e, isManual: true}));
 
+    // Pega TODAS as Vendas/OS de Pix, Cartão ou Boleto
     let digitais = caixaGlobal.filter(v => {
         let formaLow = (v.formaPagamento || '').toLowerCase();
         let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
         return isDigital;
     }).map(v => ({...v, isManual: false}));
 
+    // Junta tudo
     let dadosUnidos = [...manuais, ...digitais].sort((a, b) => b.timestamp - a.timestamp);
 
     let dadosFiltrados = dadosUnidos.filter(v => {
@@ -4837,6 +4962,7 @@ window.renderizarTabelaBanco = function() {
                 <td class="acoes-flex"><button class="btn-acao del" onclick="excluirLancamentoBanco('${v.id}')" title="Excluir">🗑️ Excluir</button></td>
             `;
         } else {
+            // Renderiza com TODOS os botões para Vendas Digitais
             const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
             let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
             let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
@@ -4852,6 +4978,11 @@ window.renderizarTabelaBanco = function() {
             let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento">✏️ Ed</button>`;
             acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')">📱 Whats</button>`;
             if (!v.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')">🔗 Link</button>`; }
+            
+            // --- BOTÕES DE NOTA FISCAL ADICIONADOS AQUI ---
+            acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
+            acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
+            
             acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')">📄 PDF</button>`;
             acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')">🧾 Cupom</button>`;
             
@@ -4861,6 +4992,9 @@ window.renderizarTabelaBanco = function() {
                 acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${v.id}')">🔄 Estornar</button>`;
             }
             
+            // --- BOTÃO DE EXCLUIR/CANCELAR VENDA ADICIONADO AQUI ---
+            acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
+
             let corTipo = v.tipo === 'VENDA' ? '#3498db' : '#f39c12';
             let sigla = v.tipo === 'VENDA' ? 'VENDA' : 'ORDEM.SERV.';
 
