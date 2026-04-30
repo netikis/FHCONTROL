@@ -1205,10 +1205,11 @@ window.iniciarImportacao = async function(inputElement) {
                 </div>
             </div>
 
-            <div class="caixa-actions-header">
+           <div class="caixa-actions-header">
                 <button class="btn-secundario" style="border-color: #3498db; border-width: 2px; border-style: solid;" onclick="definirSaldoInicialBanco()">🏦 Inf. Saldo Inicial</button>
                 <button class="btn-secundario" style="background-color: #27ae60;" onclick="abrirModalBanco('ENTRADA')">➕ Lançar Entrada</button>
                 <button class="btn-danger" onclick="abrirModalBanco('SAIDA')">➖ Lançar Saída</button>
+                <button class="btn-secundario" style="background-color: #8e44ad;" onclick="window.fecharCaixaBanco()">🔒 Fechar Caixa do Banco</button>
             </div>
 
             <div class="toolbar" style="margin-top: 15px;">
@@ -5140,6 +5141,71 @@ window.atualizarPainelBanco = function() {
         document.getElementById('dashEntBanco').innerText = `R$ ${totalEntradas.toFixed(2)}`;
         document.getElementById('dashSaiBanco').innerText = `R$ ${totalSaidas.toFixed(2)}`;
         document.getElementById('dashSaldoBanco').innerText = `R$ ${saldoAtual.toFixed(2)}`;
+    }
+};
+
+window.fecharCaixaBanco = async function() {
+    let hoje = new Date().toLocaleDateString('pt-BR');
+    let totalEntradas = 0;
+    let totalSaidas = 0;
+
+    // 1. Pega todas as VENDAS DIGITAIS (Pix, Cartão, Boleto) de HOJE
+    let baseGlobal = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
+    let vendasDigitaisHoje = baseGlobal.filter(v => {
+        let formaLow = (v.formaPagamento || '').toLowerCase();
+        let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
+        return isDigital && v.dataStr && v.dataStr.includes(hoje) && (v.statusPagamento === 'PAGO' || !v.statusPagamento);
+    });
+
+    // Soma as vendas digitais
+    vendasDigitaisHoje.forEach(v => {
+        totalEntradas += parseFloat(v.total) || 0;
+    });
+
+    // 2. Pega os LANÇAMENTOS MANUAIS DO BANCO de HOJE
+    let manuaisHoje = (typeof extratoBanco !== 'undefined' ? window.extratoBanco : []).filter(e => e.dataStr && e.dataStr.includes(hoje));
+
+    // Soma os lançamentos manuais
+    manuaisHoje.forEach(e => {
+        if (e.tipo === 'ENTRADA') totalEntradas += parseFloat(e.valor) || 0;
+        if (e.tipo === 'SAIDA') totalSaidas += parseFloat(e.valor) || 0;
+    });
+
+    let saldoDoDia = totalEntradas - totalSaidas;
+
+    // 3. Monta o resumo na tela
+    let msg = `📊 FECHAMENTO DO BANCO - HOJE (${hoje}):\n\n` +
+              `➕ Total Entradas (Pix/Cartão/Manuais): R$ ${totalEntradas.toFixed(2)}\n` +
+              `➖ Total Saídas/Taxas: R$ ${totalSaidas.toFixed(2)}\n` +
+              `=========================\n` +
+              `💰 SALDO LÍQUIDO DO DIA: R$ ${saldoDoDia.toFixed(2)}\n\n` +
+              `Deseja gravar este fechamento no extrato bancário?`;
+
+    if (!confirm(msg)) return;
+
+    // 4. Salva o fechamento no banco de dados
+    try {
+        const { ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+        
+        let idUnico = Date.now().toString();
+        let registroFechamento = {
+            id: idUnico,
+            dataStr: new Date().toLocaleString('pt-BR'),
+            timestamp: Date.now(),
+            descricao: `🔒 FECHAMENTO DO DIA (Entrou: R$ ${totalEntradas.toFixed(2)} | Saiu: R$ ${totalSaidas.toFixed(2)})`,
+            valor: Math.abs(saldoDoDia),
+            tipo: saldoDoDia >= 0 ? 'ENTRADA' : 'SAIDA' // Se sobrou dinheiro fica verde, se ficou negativo fica vermelho
+        };
+
+        // Salva direto no extrato do banco
+        await set(ref(window.meuBanco, 'extratoBanco/' + idUnico), registroFechamento);
+        
+        alert("✅ Fechamento do Banco registrado com sucesso!");
+        
+        // Se houver uma função para recarregar ou limpar a tela, você pode chamar aqui. 
+        // Normalmente o sistema atualiza sozinho por causa do Firebase.
+    } catch(e) {
+        alert("Erro ao registrar o fechamento do banco: " + e.message);
     }
 };
 
