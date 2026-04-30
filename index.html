@@ -862,6 +862,12 @@
             <div class="row" style="align-items: center;">
                 <div class="col"><label>Desconto R$</label><input type="number" id="vendaDescontoReais" step="0.01" value="0" oninput="calcularTotalComDesconto()"></div>
                 <div class="col"><label>Desconto %</label><input type="number" id="vendaDescontoPerc" step="0.1" value="0" oninput="calcularTotalComDesconto()"></div>
+                <div class="col"><label style="color: #f1c40f;">Valor Recebido (R$)</label><input type="number" id="vendaValorRecebido" step="0.01" placeholder="Dinheiro dado pelo cliente..." oninput="calcularTotalComDesconto()"></div>
+            </div>
+            <div class="row" style="align-items: center; margin-top: 10px;">
+                <div class="col" style="text-align: left;">
+                    <div style="font-size: 16px; color: #f1c40f; font-weight: bold;" id="vendaTrocoTxt">Troco: R$ 0,00</div>
+                </div>
                 <div class="col" style="text-align: right;">
                     <div style="font-size: 12px; color: #bdc3c7;">Subtotal: <span id="vendaSubtotalTxt">R$ 0,00</span></div>
                     <div style="font-size: 22px; color: #2ecc71; font-weight: bold;" id="vendaTotalFinalTxt">TOTAL: R$ 0,00</div>
@@ -2308,19 +2314,29 @@ window.addAoCarrinhoVenda_Estoque = function() {
        }
 
        window.calcularTotalComDesconto = function() {
-           const subtotalTxt = document.getElementById('vendaSubtotalTxt').innerText.replace('R$ ', '');
-           const subtotal = parseFloat(subtotalTxt) || 0;
-           const descReais = parseFloat(document.getElementById('vendaDescontoReais').value) || 0;
-           const descPerc = parseFloat(document.getElementById('vendaDescontoPerc').value) || 0;
-           
-           let totalDesconto = descReais + (subtotal * (descPerc / 100));
-           let totalFinal = subtotal - totalDesconto;
-           document.getElementById('vendaTotalFinalTxt').innerText = `TOTAL: R$ ${Math.max(0, totalFinal).toFixed(2)}`;
-       }
+    const subtotalTxt = document.getElementById('vendaSubtotalTxt').innerText.replace('R$ ', '');
+    const subtotal = parseFloat(subtotalTxt) || 0;
+    const descReais = parseFloat(document.getElementById('vendaDescontoReais').value) || 0;
+    const descPerc = parseFloat(document.getElementById('vendaDescontoPerc').value) || 0;
+    
+    let totalDesconto = descReais + (subtotal * (descPerc / 100));
+    let totalFinal = Math.max(0, subtotal - totalDesconto);
+    document.getElementById('vendaTotalFinalTxt').innerText = `TOTAL: R$ ${totalFinal.toFixed(2)}`;
+
+    // --- MÁGICA DO TROCO ---
+    const recebido = parseFloat(document.getElementById('vendaValorRecebido').value) || 0;
+    let troco = recebido - totalFinal;
+    
+    if (recebido > 0 && troco > 0) {
+        document.getElementById('vendaTrocoTxt').innerText = `Troco: R$ ${troco.toFixed(2)}`;
+    } else {
+        document.getElementById('vendaTrocoTxt').innerText = `Troco: R$ 0,00`;
+    }
+};
        
        window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); window.atualizarCarrinhoVenda(); }
        
-      window.finalizarVenda = async function() {
+ window.finalizarVenda = async function() {
     const os = parseInt(document.getElementById('vendaOS').value);
     const v = document.getElementById('vendaVencimento').value;
     const n = document.getElementById('vendaClienteBusca').value;
@@ -2336,6 +2352,11 @@ window.addAoCarrinhoVenda_Estoque = function() {
 
     const totalText = document.getElementById('vendaTotalFinalTxt').innerText.replace('TOTAL: R$ ', '');
     const total = parseFloat(totalText) || 0;
+
+    // --- NOVO: CAPTURA DO VALOR RECEBIDO E CALCULA O TROCO PARA SALVAR ---
+    const valorRecebido = parseFloat(document.getElementById('vendaValorRecebido').value) || 0;
+    let troco = valorRecebido - total;
+    troco = troco > 0 ? troco : 0;
 
     let originalDoc = null;
     if (editandoDocId) {
@@ -2357,6 +2378,7 @@ window.addAoCarrinhoVenda_Estoque = function() {
         dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'),
         timestamp: originalDoc ? originalDoc.timestamp : Date.now(),
         clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total,
+        valorRecebido: valorRecebido, troco: troco, // <-- SALVANDO TROCO NO BANCO AQUI
         assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,
         vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
         observacao: document.getElementById('vendaObservacao').value
@@ -2394,6 +2416,11 @@ window.addAoCarrinhoVenda_Estoque = function() {
         document.getElementById('vendaObservacao').value = '';
         document.getElementById('vendaStatusPag').value = 'PAGO';
         document.getElementById('vendaPagamento').value = 'Dinheiro';
+        
+        // Limpa os campos de troco para a próxima venda
+        if(document.getElementById('vendaValorRecebido')) document.getElementById('vendaValorRecebido').value = ''; 
+        if(document.getElementById('vendaTrocoTxt')) document.getElementById('vendaTrocoTxt').innerText = 'Troco: R$ 0,00'; 
+        
         window.carregarSelectsGerais(); window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
 
         editandoDocId = null;
@@ -3482,116 +3509,104 @@ window.atualizarResumoPagamentosHoje = function() {
        }
 
        // --- IMPRIMIR CUPOM TÉRMICO (80mm) COM DADOS DA EMPRESA ---
-       window.imprimirCupom = function(id) {
-           const doc = caixaGlobal.find(x => x.id === id);
-           if(!doc) return;
+    window.imprimirCupom = function(id) {
+    const doc = caixaGlobal.find(x => x.id === id);
+    if(!doc) return;
 
-           let itensHtml = '';
-           let itensGarantidos = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
+    let itensHtml = '';
+    let itensGarantidos = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
 
-           if(doc.tipo === 'ORDEM DE SERVIÇO') {
-               let mats = itensGarantidos.filter(i => i.categoriaOS !== 'servico');
-               let servs = itensGarantidos.filter(i => i.categoriaOS === 'servico');
-               
-               if (mats.length > 0) {
-                   itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MATERIAIS --</td></tr>`;
-                   mats.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
-               }
+    if(doc.tipo === 'ORDEM DE SERVIÇO') {
+        let mats = itensGarantidos.filter(i => i.categoriaOS !== 'servico');
+        let servs = itensGarantidos.filter(i => i.categoriaOS === 'servico');
+        
+        if (mats.length > 0) {
+            itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MATERIAIS --</td></tr>`;
+            mats.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+        }
 
-               if (servs.length > 0) {
-                   itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MAO DE OBRA --</td></tr>`;
-                   servs.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
-               }
+        if (servs.length > 0) {
+            itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MAO DE OBRA --</td></tr>`;
+            servs.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+        }
 
-               if(doc.kmCusto > 0) {
-                   itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- DESLOCAMENTO --</td></tr>`;
-                   itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${doc.kmTotal} km rodados</td><td style="text-align:right;">R$ ${doc.kmCusto.toFixed(2)}</td></tr>`;
-               }
+        if(doc.kmCusto > 0) {
+            itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- DESLOCAMENTO --</td></tr>`;
+            itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${doc.kmTotal} km rodados</td><td style="text-align:right;">R$ ${doc.kmCusto.toFixed(2)}</td></tr>`;
+        }
 
-           } else { 
-               if(itensGarantidos) itensGarantidos.forEach(i => { itensHtml += `<tr><td style="padding-bottom:5px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
-           }
-           
-           if(doc.observacao) {
-               itensHtml += `<tr><td colspan="2" style="padding-top:10px; padding-bottom:5px; font-size:11px; border-top:1px dashed #000;"><b>OBS:</b> ${doc.observacao}</td></tr>`;
-           }
+    } else { 
+        if(itensGarantidos) itensGarantidos.forEach(i => { itensHtml += `<tr><td style="padding-bottom:5px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+    }
+    
+    if(doc.observacao) {
+        itensHtml += `<tr><td colspan="2" style="padding-top:10px; padding-bottom:5px; font-size:11px; border-top:1px dashed #000;"><b>OBS:</b> ${doc.observacao}</td></tr>`;
+    }
 
-           // Cabeçalho da Empresa Dinâmico no Cupom
-           let logoCupom = empresaGlobal.logo ? `<div class="center"><img src="${empresaGlobal.logo}" style="max-height: 60px; margin-bottom: 5px;"></div>` : '';
-           let contatoCupom = [];
-           if(empresaGlobal.cnpj) contatoCupom.push(`CNPJ: ${empresaGlobal.cnpj}`);
-           if(empresaGlobal.telefone) contatoCupom.push(`Tel: ${empresaGlobal.telefone}`);
-           let cTxt = contatoCupom.length > 0 ? `<div class="center" style="font-size: 10px;">${contatoCupom.join(' | ')}</div>` : '';
-           let endCupom = empresaGlobal.endereco ? `<div class="center" style="font-size: 10px;">${empresaGlobal.endereco}</div>` : '';
+    // --- LÓGICA DE EXIBIÇÃO DO TROCO NO CUPOM ---
+    let htmlTroco = '';
+    if (doc.valorRecebido && doc.troco > 0) {
+        htmlTroco = `
+            <div style="text-align:right; font-size:12px; margin-top: 5px;">Valor Recebido: R$ ${doc.valorRecebido.toFixed(2)}</div>
+            <div style="text-align:right; font-size:12px; color: #333; font-weight: bold;">Troco: R$ ${doc.troco.toFixed(2)}</div>
+        `;
+    }
 
-           let htmlCupom = `
-               <html>
-                <head>
-                   <title></title>
-                    <style>
-                        @page { margin: 0; } 
-                        body { font-family: 'Courier New', Courier, monospace; width: 300px; margin: 0 auto; padding: 15px; color: #000; font-size: 12px; }
-                        .center { text-align: center; }
-                        .bold { font-weight: bold; }
-                        .line { border-bottom: 1px dashed #000; margin: 10px 0; }
-                        table { width: 100%; font-size: 12px; border-collapse: collapse; }
-                        td { vertical-align: top; }
-                        
-                        @media print {
-                            .btn-imprimir-flutuante { display: none !important; }
-                        }
-                        .btn-imprimir-flutuante {
-                            position: fixed;
-                            bottom: 20px;
-                            right: 20px;
-                            background-color: #27ae60;
-                            color: white;
-                            border: none;
-                            padding: 10px 15px;
-                            font-size: 13px;
-                            font-weight: bold;
-                            border-radius: 6px;
-                            cursor: pointer;
-                            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-                            z-index: 1000;
-                        }
-                        .btn-imprimir-flutuante:hover {
-                            background-color: #2ecc71;
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${logoCupom}
-                    <div class="center bold" style="font-size: 14px; text-transform: uppercase;">${empresaGlobal.nome}</div>
-                    ${cTxt}
-                    ${endCupom}
-                    <div class="line"></div>
-                    <div class="center">RECIBO / CUPOM NÃO FISCAL</div>
-                    <div class="line"></div>
-                    <div>Doc Nº: <span class="bold">${doc.os || 'S/N'}</span> (${doc.tipo})</div>
-                    <div>Data: ${doc.dataStr}</div>
-                    <div>Cliente: ${doc.clienteNome}</div>
-                    <div>Atendente: ${doc.vendedor || doc.funcionario || 'Sistema'}</div>
-                    <div class="line"></div>
-                   <table>${itensHtml}</table>
-                    <div class="line"></div>
-                    <div style="text-align:right; font-size:14px;" class="bold">TOTAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
-                    <div class="line"></div>
-                    <div class="center" style="font-size:11px;">
-                        ${doc.statusPagamento === 'PAGO' ? 'PAGAMENTO: RECEBIDO' : 'PAGAMENTO: PENDENTE'}<br>
-                        ${doc.assinaturaBase64 ? 'Documento com Assinatura Digital Verificada.' : ''}
-                    </div>
-                    
-                    <div class="center" style="font-size:10px; margin-top: 15px; margin-bottom: 50px;">Obrigado pela preferência!</div>
-                    
-                    <button class="btn-imprimir-flutuante" onclick="window.print()">🖨️ Imprimir Cupom</button>
-                </body>
-                </html>
-           `;
-           let janela = window.open('', '', 'width=400,height=600');
-           janela.document.write(htmlCupom);
-           janela.document.close();
-       }
+    let logoCupom = empresaGlobal.logo ? `<div class="center"><img src="${empresaGlobal.logo}" style="max-height: 60px; margin-bottom: 5px;"></div>` : '';
+    let contatoCupom = [];
+    if(empresaGlobal.cnpj) contatoCupom.push(`CNPJ: ${empresaGlobal.cnpj}`);
+    if(empresaGlobal.telefone) contatoCupom.push(`Tel: ${empresaGlobal.telefone}`);
+    let cTxt = contatoCupom.length > 0 ? `<div class="center" style="font-size: 10px;">${contatoCupom.join(' | ')}</div>` : '';
+    let endCupom = empresaGlobal.endereco ? `<div class="center" style="font-size: 10px;">${empresaGlobal.endereco}</div>` : '';
+
+    let htmlCupom = `
+        <html>
+        <head>
+            <title></title>
+            <style>
+                @page { margin: 0; } 
+                body { font-family: 'Courier New', Courier, monospace; width: 300px; margin: 0 auto; padding: 15px; color: #000; font-size: 12px; }
+                .center { text-align: center; }
+                .bold { font-weight: bold; }
+                .line { border-bottom: 1px dashed #000; margin: 10px 0; }
+                table { width: 100%; font-size: 12px; border-collapse: collapse; }
+                td { vertical-align: top; }
+                @media print { .btn-imprimir-flutuante { display: none !important; } }
+                .btn-imprimir-flutuante { position: fixed; bottom: 20px; right: 20px; background-color: #27ae60; color: white; border: none; padding: 10px 15px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; }
+                .btn-imprimir-flutuante:hover { background-color: #2ecc71; }
+            </style>
+        </head>
+        <body>
+            ${logoCupom}
+            <div class="center bold" style="font-size: 14px; text-transform: uppercase;">${empresaGlobal.nome}</div>
+            ${cTxt}
+            ${endCupom}
+            <div class="line"></div>
+            <div class="center">RECIBO / CUPOM NÃO FISCAL</div>
+            <div class="line"></div>
+            <div>Doc Nº: <span class="bold">${doc.os || 'S/N'}</span> (${doc.tipo})</div>
+            <div>Data: ${doc.dataStr}</div>
+            <div>Cliente: ${doc.clienteNome}</div>
+            <div>Atendente: ${doc.vendedor || doc.funcionario || 'Sistema'}</div>
+            <div class="line"></div>
+            <table>${itensHtml}</table>
+            <div class="line"></div>
+            <div style="text-align:right; font-size:14px;" class="bold">TOTAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
+            ${htmlTroco}
+            <div class="line"></div>
+            <div class="center" style="font-size:11px;">
+                ${doc.statusPagamento === 'PAGO' ? 'PAGAMENTO: RECEBIDO' : 'PAGAMENTO: PENDENTE'}<br>
+                ${doc.assinaturaBase64 ? 'Documento com Assinatura Digital Verificada.' : ''}
+            </div>
+            <div class="center" style="font-size:10px; margin-top: 15px; margin-bottom: 50px;">Obrigado pela preferência!</div>
+            <button class="btn-imprimir-flutuante" onclick="window.print()">🖨️ Imprimir Cupom</button>
+        </body>
+        </html>
+    `;
+    let janela = window.open('', '', 'width=400,height=600');
+    janela.document.write(htmlCupom);
+    janela.document.close();
+};
 
       // --- CANCELAR E ESTORNAR ---
        window.cancelarVenda = async function(id) {
@@ -4598,8 +4613,18 @@ window.calcularTotalComDesconto = function() {
     const descPerc = parseFloat(document.getElementById('vendaDescontoPerc').value) || 0;
     
     let totalDesconto = descReais + (subtotal * (descPerc / 100));
-    let totalFinal = subtotal - totalDesconto;
-    document.getElementById('vendaTotalFinalTxt').innerText = `TOTAL: R$ ${Math.max(0, totalFinal).toFixed(2)}`;
+    let totalFinal = Math.max(0, subtotal - totalDesconto);
+    document.getElementById('vendaTotalFinalTxt').innerText = `TOTAL: R$ ${totalFinal.toFixed(2)}`;
+
+    // --- MÁGICA DO TROCO ---
+    const recebido = parseFloat(document.getElementById('vendaValorRecebido').value) || 0;
+    let troco = recebido - totalFinal;
+    
+    if (recebido > 0 && troco > 0) {
+        document.getElementById('vendaTrocoTxt').innerText = `Troco: R$ ${troco.toFixed(2)}`;
+    } else {
+        document.getElementById('vendaTrocoTxt').innerText = `Troco: R$ 0,00`;
+    }
 };
 
 window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); window.atualizarCarrinhoVenda(); };
@@ -5183,27 +5208,28 @@ window.fecharCaixaBanco = async function() {
 
     if (!confirm(msg)) return;
 
-    // 4. Salva o fechamento no banco de dados
+    // 4. Salva o fechamento no banco de dados (COM O ENDEREÇO CORRETO AGORA)
     try {
-        const { ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
-        
-        let idUnico = Date.now().toString();
-        let registroFechamento = {
-            id: idUnico,
-            dataStr: new Date().toLocaleString('pt-BR'),
-            timestamp: Date.now(),
+        let docFechamento = {
+            tipo: saldoDoDia >= 0 ? 'ENTRADA' : 'SAIDA',
             descricao: `🔒 FECHAMENTO DO DIA (Entrou: R$ ${totalEntradas.toFixed(2)} | Saiu: R$ ${totalSaidas.toFixed(2)})`,
             valor: Math.abs(saldoDoDia),
-            tipo: saldoDoDia >= 0 ? 'ENTRADA' : 'SAIDA' // Se sobrou dinheiro fica verde, se ficou negativo fica vermelho
+            dataStr: new Date().toLocaleString('pt-BR'),
+            timestamp: Date.now(),
+            usuario: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema'
         };
 
-        // Salva direto no extrato do banco
-        await set(ref(window.meuBanco, 'extratoBanco/' + idUnico), registroFechamento);
+        // Usa as chaves do Firebase que já estão carregadas no seu sistema
+        if (typeof window.meuSet === 'function') {
+            await window.meuSet(window.meuPush(window.meuRef(window.meuBanco, 'caixaBancoExtrato')), docFechamento);
+        } else {
+            // Plano B caso a variável global falhe
+            const { ref, push, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+            await set(push(ref(window.meuBanco, 'caixaBancoExtrato')), docFechamento);
+        }
         
         alert("✅ Fechamento do Banco registrado com sucesso!");
         
-        // Se houver uma função para recarregar ou limpar a tela, você pode chamar aqui. 
-        // Normalmente o sistema atualiza sozinho por causa do Firebase.
     } catch(e) {
         alert("Erro ao registrar o fechamento do banco: " + e.message);
     }
