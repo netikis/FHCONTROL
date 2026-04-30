@@ -1109,7 +1109,7 @@ window.iniciarImportacao = async function(inputElement) {
        <div class="container">
            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
                <div>
-                   <h2 style="border: none; padding: 0; margin: 0; color: #ffffff;">Caixa / Histórico</h2>
+                   <h2 style="border: none; padding: 0; margin: 0; color: #ffffff;">Caixa / Balcão</h2>
                </div>
            </div>
 
@@ -1224,11 +1224,15 @@ window.iniciarImportacao = async function(inputElement) {
                 <table>
                     <thead>
                         <tr>
-                            <th>Data</th>
+                            <th>Nº Doc</th>
                             <th>Tipo</th>
-                            <th>Descrição</th>
-                            <th style="text-align: right;">Valor (R$)</th>
-                            <th style="text-align: center;">Ações</th>
+                            <th>Data Lanc.</th>
+                            <th>Cliente / Descrição</th>
+                            <th>Vencimento</th>
+                            <th>Total</th>
+                            <th>Status Pgto</th>
+                            <th>Assinatura</th>
+                            <th style="min-width: 380px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tabelaCaixaBanco">
@@ -1869,20 +1873,28 @@ window.mudarPaginaProd = function(direcao) {
        }
 
        document.getElementById('formProduto').addEventListener('submit', e => {
-           e.preventDefault(); 
-           const d = { 
-               nome: document.getElementById('prodNome').value, 
-               codigo: document.getElementById('prodCodigo').value, 
-               ncm: document.getElementById('prodNcm').value, 
-               categoria: document.getElementById('prodCategoria').value, 
-               custo: parseFloat(document.getElementById('prodCusto').value) || 0, 
-               margem: parseFloat(document.getElementById('prodMargem').value) || 0, 
-               venda: parseFloat(document.getElementById('prodVenda').value) || 0, 
-               quantidade: parseInt(document.getElementById('prodQtd').value) || 0, 
-               foto: fotoBase64Atual 
-           };
-           if (editandoProdId) { update(ref(db, 'produtos/' + editandoProdId), d).then(() => window.cancelarEdicaoProd()); } else { set(push(ref(db, 'produtos')), d).then(() => { document.getElementById('formProduto').reset(); fotoBase64Atual = ""; document.getElementById('prodVenda').value = ""; }); }
-       });
+    e.preventDefault(); 
+    const d = { 
+        nome: document.getElementById('prodNome').value, 
+        codigo: document.getElementById('prodCodigo').value, 
+        ncm: document.getElementById('prodNcm').value, 
+        categoria: document.getElementById('prodCategoria').value, 
+        custo: window.parseMoedaBr(document.getElementById('prodCusto').value), 
+        margem: window.parseMoedaBr(document.getElementById('prodMargem').value), 
+        venda: window.parseMoedaBr(document.getElementById('prodVenda').value), 
+        quantidade: parseInt(document.getElementById('prodQtd').value) || 0, 
+        foto: fotoBase64Atual 
+    };
+    if (editandoProdId) { 
+        update(ref(db, 'produtos/' + editandoProdId), d).then(() => window.cancelarEdicaoProd()); 
+    } else { 
+        set(push(ref(db, 'produtos')), d).then(() => { 
+            document.getElementById('formProduto').reset(); 
+            fotoBase64Atual = ""; 
+            document.getElementById('prodVenda').value = ""; 
+        }); 
+    }
+});
 
        window.editarProd = function(id) { 
            const p = produtosGlobais.find(x => x.id === id); 
@@ -2169,28 +2181,27 @@ window.imprimirEtiquetasEstoque = function() {
            }
        }
 
-       window.addAoCarrinhoVenda_Estoque = function() {
-           const busca = document.getElementById('vendaProdutoEstoqueBusca').value;
-           const qtd = parseInt(document.getElementById('vendaProdutoQtd').value) || 1;
-           const precoUn = parseFloat(document.getElementById('vendaProdutoPrecoFinal').value);
-           const custoUn = parseFloat(document.getElementById('vendaProdutoCusto').value);
-           const margem = parseFloat(document.getElementById('vendaProdutoMargem').value);
+window.addAoCarrinhoVenda_Estoque = function() {
+    const busca = document.getElementById('vendaProdutoEstoqueBusca').value;
+    const qtd = parseInt(document.getElementById('vendaProdutoQtd').value) || 1;
+    const precoUn = parseFloat(document.getElementById('vendaProdutoPrecoFinal').value);
+    const custoUn = parseFloat(document.getElementById('vendaProdutoCusto').value);
+    const margem = parseFloat(document.getElementById('vendaProdutoMargem').value);
 
-           if (!busca || isNaN(precoUn)) return alert("Selecione um produto e confira os valores.");
+    if (!busca || isNaN(precoUn)) return alert("Selecione um produto e confira os valores.");
 
-           const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === busca.trim().toLowerCase() || String(x.codigo).trim() === busca.trim());
-           const nomeExibir = p ? `${p.nome} (Cód: ${p.codigo || '-'}) (Qtd: ${qtd})` : `${busca} (Qtd: ${qtd})`;
+    const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === busca.trim().toLowerCase() || String(x.codigo).trim() === busca.trim());
+    const nomeExibir = p ? `${p.nome} (Cód: ${p.codigo || '-'}) (Qtd: ${qtd})` : `${busca} (Qtd: ${qtd})`;
 
-           carrinhoVenda.push({
-               idProd: p ? p.id : null, nome: nomeExibir, valor: precoUn * qtd, valorOriginal: precoUn, 
-               custoOriginal: custoUn, margemOriginal: margem, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material'
-           });
+    carrinhoVenda.push({
+        idProd: p ? p.id : null, nome: nomeExibir, valor: precoUn * qtd, valorOriginal: precoUn, 
+        custoOriginal: custoUn, margemOriginal: margem, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material'
+    });
 
-           ['vendaProdutoEstoqueBusca','vendaProdutoCusto','vendaProdutoMargem','vendaProdutoPrecoFinal'].forEach(id => document.getElementById(id).value = '');
-           document.getElementById('vendaProdutoQtd').value = 1;
-           window.atualizarCarrinhoVenda();
-       }
-
+    ['vendaProdutoEstoqueBusca','vendaProdutoCusto','vendaProdutoMargem','vendaProdutoPrecoFinal'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('vendaProdutoQtd').value = 1;
+    window.atualizarCarrinhoVenda();
+};
        window.addAoCarrinhoVenda_Avulso = function() {
            const n = document.getElementById('vendaAvulsoNome').value; 
            const v = parseFloat(document.getElementById('vendaAvulsoValor').value); 
@@ -2263,104 +2274,140 @@ window.imprimirEtiquetasEstoque = function() {
        
        window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); window.atualizarCarrinhoVenda(); }
        
-       window.finalizarVenda = async function() {
-           const os = parseInt(document.getElementById('vendaOS').value); 
-           const v = document.getElementById('vendaVencimento').value; 
-           const n = document.getElementById('vendaClienteBusca').value; 
-           const statusPag = document.getElementById('vendaStatusPag').value;
-           const formaPag = document.getElementById('vendaPagamento').value; 
-           const tipoDocSelecionado = document.getElementById('vendaTipoDoc').value;
+      window.finalizarVenda = async function() {
+    const os = parseInt(document.getElementById('vendaOS').value);
+    const v = document.getElementById('vendaVencimento').value;
+    const n = document.getElementById('vendaClienteBusca').value;
+    const statusPag = document.getElementById('vendaStatusPag').value;
+    const formaPag = document.getElementById('vendaPagamento').value;
+    const tipoDocSelecionado = document.getElementById('vendaTipoDoc').value;
 
-           if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
-           
-           let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
-           let cId = cli ? cli.id : 'avulso';
-           let cNome = cli ? cli.nome : n;
+    if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho.");
 
-           const totalText = document.getElementById('vendaTotalFinalTxt').innerText.replace('TOTAL: R$ ', '');
-           const total = parseFloat(totalText) || 0;
+    let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
+    let cId = cli ? cli.id : 'avulso';
+    let cNome = cli ? cli.nome : n;
 
-           let originalDoc = null;
-           if (editandoDocId) {
-               const snapAntigo = await get(ref(db, 'caixa/' + editandoDocId));
-               originalDoc = snapAntigo.val();
-               
-               if (originalDoc && originalDoc.itens) {
-                   let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
-                   for (let oldItem of antigosItens) {
-                       if (oldItem.ehEstoque && oldItem.idProd) {
-                           const snapP = await get(ref(db, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
-                           if (pDb) { await update(ref(db, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); }
-                       }
-                   }
-               }
-           }
+    const totalText = document.getElementById('vendaTotalFinalTxt').innerText.replace('TOTAL: R$ ', '');
+    const total = parseFloat(totalText) || 0;
 
-            const doc = { 
-                tipo: tipoDocSelecionado, 
-                os: os, 
-                vencimento: v, 
-                statusPagamento: statusPag,
-                formaPagamento: formaPag,
-                dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
-                timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
-                clienteId: cId, 
-                clienteNome: cNome, 
-                itens: carrinhoVenda, 
-                total: total, 
-                assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,                
-                vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
-                observacao: document.getElementById('vendaObservacao').value
-            };
-
-           try {
-                if (editandoDocId) {
-                    await update(ref(db, 'caixa/' + editandoDocId), doc);
-                } else {
-                    await set(push(ref(db, 'caixa')), doc); 
+    let originalDoc = null;
+    if (editandoDocId) {
+        const snapAntigo = await get(ref(db, 'caixa/' + editandoDocId));
+        originalDoc = snapAntigo.val();
+        if (originalDoc && originalDoc.itens) {
+            let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
+            for (let oldItem of antigosItens) {
+                if (oldItem.ehEstoque && oldItem.idProd) {
+                    const snapP = await get(ref(db, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
+                    if (pDb) { await update(ref(db, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); }
                 }
-
-// --- INÍCIO DA AUTOMAÇÃO DO BANCO ---
-        if (!editandoDocId) {
-            let formaLow = formaPag.toLowerCase();
-            if (statusPag === 'PAGO' && (formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito'))) {
-                window.lancarNoBancoAutomatico(`Venda Nº ${os} - ${cNome} (${formaPag})`, total);
             }
         }
-        // --- FIM DA AUTOMAÇÃO DO BANCO ---
-                
-                if (tipoDocSelecionado === 'VENDA') {
-                    if (editandoDocId && originalDoc) {
-                        let statusAntigo = originalDoc.statusPagamento || 'PAGO';
-                        let valorAntigo = originalDoc.total || 0;
-                        if (statusAntigo === 'PAGO') window.registrarMovimentoCaixa('entrada', -valorAntigo);
-                        if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
-                    } else {
-                        if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
-                    }
+    }
 
-                    for (let item of carrinhoVenda) {
-                        if (item.ehEstoque && item.idProd) {
-                            const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
-                            if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
-                        }
-                    }
+    const doc = {
+        tipo: tipoDocSelecionado, os: os, vencimento: v, statusPagamento: statusPag, formaPagamento: formaPag,
+        dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'),
+        timestamp: originalDoc ? originalDoc.timestamp : Date.now(),
+        clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total,
+        assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,
+        vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
+        observacao: document.getElementById('vendaObservacao').value
+    };
+
+    try {
+        if (editandoDocId) { await update(ref(db, 'caixa/' + editandoDocId), doc); } else { await set(push(ref(db, 'caixa')), doc); }
+
+        if (tipoDocSelecionado === 'VENDA') {
+            let isDigital = formaPag.toLowerCase().includes('pix') || formaPag.toLowerCase().includes('cartão') || formaPag.toLowerCase().includes('cartao') || formaPag.toLowerCase().includes('débito') || formaPag.toLowerCase().includes('crédito');
+            
+            // SÓ SOMA NO PAINEL DO CAIXA FÍSICO (GAVETA) SE NÃO FOR DIGITAL!
+            if (!isDigital) {
+                if (editandoDocId && originalDoc) {
+                    let statusAntigo = originalDoc.statusPagamento || 'PAGO';
+                    let valorAntigo = originalDoc.total || 0;
+                    if (statusAntigo === 'PAGO') window.registrarMovimentoCaixa('entrada', -valorAntigo);
+                    if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
+                } else {
+                    if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
                 }
+            }
 
-               alert(editandoDocId ? "Venda Atualizada com Sucesso!" : "Venda Registrada!"); 
-               carrinhoVenda = []; window.atualizarCarrinhoVenda(); 
-               document.getElementById('vendaClienteBusca').value = ''; 
-               document.getElementById('vendaObservacao').value = '';
-               document.getElementById('vendaStatusPag').value = 'PAGO';
-               document.getElementById('vendaPagamento').value = 'Dinheiro';
-               window.carregarSelectsGerais(); 
-               window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
-               
-               editandoDocId = null;
-               document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
+            for (let item of carrinhoVenda) {
+                if (item.ehEstoque && item.idProd) {
+                    const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
+                    if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
+                }
+            }
+        }
 
-           } catch(e) { alert("Erro: " + e); }
-       }
+        alert(editandoDocId ? "Venda Atualizada com Sucesso!" : "Venda Registrada!");
+        carrinhoVenda = []; window.atualizarCarrinhoVenda();
+        document.getElementById('vendaClienteBusca').value = '';
+        document.getElementById('vendaObservacao').value = '';
+        document.getElementById('vendaStatusPag').value = 'PAGO';
+        document.getElementById('vendaPagamento').value = 'Dinheiro';
+        window.carregarSelectsGerais(); window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
+
+        editandoDocId = null;
+        document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
+
+    } catch(e) { alert("Erro: " + e); }
+};
+
+window.marcarComoPago = async function(id) {
+    const doc = caixaGlobal.find(x => x.id === id);
+    if (!doc) return;
+    if(confirm(`💰 CONFIRMAR RECEBIMENTO\n\nDeseja confirmar o recebimento de R$ ${doc.total.toFixed(2)} do(a) cliente ${doc.clienteNome}?`)) {
+        try {
+            await update(ref(db, 'caixa/' + id), { statusPagamento: 'PAGO' });
+            
+            let formaLow = (doc.formaPagamento || '').toLowerCase();
+            let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito');
+            
+            // Só cai na Gaveta se for dinheiro!
+            if (!isDigital) {
+                window.registrarMovimentoCaixa('entrada', doc.total);
+            }
+            alert('Pagamento recebido com sucesso!');
+        } catch(e) { alert("Erro ao atualizar: " + e); }
+    }
+};
+
+window.sincronizarTotaisDoDia = async function() {
+    let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
+    let totalEntradasGaveta = 0;
+    let totalSaidas = 0;
+    let hoje = new Date().toLocaleDateString('pt-BR');
+
+    baseDados.forEach(doc => {
+        if (doc.dataStr && doc.dataStr.includes(hoje)) {
+            let valor = parseFloat(doc.total) || 0;
+            let status = doc.statusPagamento || 'PAGO';
+            let formaLow = (doc.formaPagamento || '').toLowerCase();
+            let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito');
+
+            // Só soma na GAVETA se NÃO for digital
+            if (status === 'PAGO' && !isDigital && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO' || doc.tipo === 'VD')) {
+                totalEntradasGaveta += valor;
+            }
+            if (doc.tipo === 'DESPESA') {
+                totalSaidas += valor;
+            }
+        }
+    });
+
+    try {
+        window.backupCaixaStatus = { entradas: window.caixaFinanceiro.entradas || 0, saidas: window.caixaFinanceiro.saidas || 0, caixaInicial: window.caixaFinanceiro.caixaInicial || 0 };
+        const { getDatabase, ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+        
+        await set(ref(window.meuBanco, 'caixaStatus'), { entradas: totalEntradasGaveta, saidas: totalSaidas, caixaInicial: window.caixaFinanceiro.caixaInicial || 0 });
+        let btnDesfazer = document.getElementById('btnDesfazerSinc'); if(btnDesfazer) btnDesfazer.style.display = 'inline-block';
+
+        alert(`✅ Sincronização da Gaveta Concluída!\n\nEntradas em Dinheiro: R$ ${totalEntradasGaveta.toFixed(2)}\nSaídas: R$ ${totalSaidas.toFixed(2)}`);
+    } catch (e) { alert("Erro ao sincronizar: " + e.message); }
+};
 
        // --- 4. MÓDULO ORDEM DE SERVIÇO (OS) ---
        document.getElementById('osFotoUpload').addEventListener('change', e => { 
@@ -2708,148 +2755,169 @@ window.imprimirEtiquetasEstoque = function() {
            renderizarTabelaCaixa();
        });
        
-       function renderizarTabelaCaixa() {
-           const tabela = document.getElementById('tabelaCaixa'); 
-           if(!tabela) return;
-           tabela.innerHTML = '';
-           
-           if (caixaGlobal.length === 0) { 
-               tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum documento registrado.</td></tr>'; 
-               if(window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
-               return; 
-           }
+       window.renderizarTabelaCaixa = function() {
+    const tabela = document.getElementById('tabelaCaixa'); 
+    if(!tabela) return;
+    tabela.innerHTML = '';
+    
+    // FILTRO MÁGICO: Esconde TUDO que for PIX, Cartão ou Boleto do Caixa de Balcão.
+    let dadosBalcao = caixaGlobal.filter(v => {
+        let formaLow = (v.formaPagamento || '').toLowerCase();
+        let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
+        return !isDigital; 
+    });
 
-           caixaGlobal.forEach(v => {
-               const tr = document.createElement('tr'); 
-               const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
-               let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
+    if (dadosBalcao.length === 0) { 
+        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum documento físico registrado.</td></tr>'; 
+        if(window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
+        return; 
+    }
 
-               let statusStr = v.statusPagamento || 'PAGO'; 
-               let txtBadge = '';
+    let dadosFiltrados = dadosBalcao.filter(v => {
+        return (v.clienteNome || '').toLowerCase().includes(window.termoBuscaCaixa) || 
+               (v.os || '').toString().includes(window.termoBuscaCaixa);
+    });
 
-               let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
-               let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
+    if (dadosFiltrados.length === 0) {
+        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum registro encontrado na busca.</td></tr>'; 
+        return;
+    }
 
-               if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
-                   txtBadge = '-';
-               } else if (statusStr === 'PAGO') {
-                   txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO${detalhePgto}</span>`;
-               } else {
-                   txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE${detalhePgto}</span>`;
-               }
+    const inicio = (window.paginaAtualCaixa - 1) * window.itensPorPaginaCaixa;
+    const itensDaPagina = dadosFiltrados.slice(inicio, inicio + window.itensPorPaginaCaixa);
+    
+    if(document.getElementById('infoPaginaCaixa')) {
+        document.getElementById('infoPaginaCaixa').innerText = `Pág ${window.paginaAtualCaixa} de ${Math.ceil(dadosFiltrados.length / window.itensPorPaginaCaixa)}`;
+    }
 
-               let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#ffffff;">✏️ Ed</button>`;
-               acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
-               
-               if (!v.assinaturaBase64) {
-                   acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
-               }
-               acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
-               acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
-               acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
-               acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
-               
-               if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PENDENTE') {
-                   acoesHtml += `<button class="btn-acao receber" style="border-color:#27ae60; color:#27ae60;" onclick="marcarComoPago('${v.id}')" title="Registrar Pagamento">💰 Receber</button>`;
-               } else if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PAGO') {
-                   acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${v.id}')" title="Desfazer Pagamento">🔄 Estornar</button>`;
-               }
+    itensDaPagina.forEach(v => {
+        const tr = document.createElement('tr'); 
+        const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
+        let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
+        let statusStr = v.statusPagamento || 'PAGO'; 
+        let txtBadge = '';
+        let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
+        let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
 
-               acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
+        if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+            txtBadge = '-';
+        } else if (statusStr === 'PAGO') {
+            txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO${detalhePgto}</span>`;
+        } else {
+            txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE${detalhePgto}</span>`;
+        }
 
-               let corTipo = v.tipo === 'VENDA' ? '#3498db' : (v.tipo === 'ORCAMENTO' ? '#9b59b6' : (v.tipo === 'DESPESA' ? '#e74c3c' : '#f39c12'));
-               let sigla = v.tipo === 'VENDA' ? 'VENDA' : (v.tipo === 'ORCAMENTO' ? 'ORCAMENTO' : (v.tipo === 'DESPESA' ? 'DESPESAS' : (v.tipo === 'FECHAMENTO' ? 'FECH.CAIXA' : 'ORDEM.SERV.')));
+        let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#ffffff;">✏️ Ed</button>`;
+        acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
+        if (!v.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`; }
+        acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
+        acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
+        acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
+        acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
+        
+        if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PENDENTE') {
+            acoesHtml += `<button class="btn-acao receber" style="border-color:#27ae60; color:#27ae60;" onclick="marcarComoPago('${v.id}')" title="Registrar Pagamento">💰 Receber</button>`;
+        } else if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PAGO') {
+            acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${v.id}')" title="Desfazer Pagamento">🔄 Estornar</button>`;
+        }
 
-               if(v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
-                   acoesHtml = `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Registro">🗑️</button>`;
-               }
+        acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
 
-               tr.innerHTML = `
-                   <td style="font-weight: bold; color: #ffffff;">${v.os || '-'}</td>
-                   <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
-                   <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
-                   <td style="font-weight: bold;">${v.clienteNome}</td>
-                   <td style="font-weight: bold;">${vencForm}</td>
-                   <td style="color:${v.tipo==='DESPESA'?'#e74c3c':'#2ecc71'}; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
-                   <td style="text-align: center;">${txtBadge}</td>
-                   <td style="font-size: 11px; font-weight: bold;">${(v.tipo==='DESPESA'||v.tipo==='FECHAMENTO')?'-':temAss}</td>
-                   <td class="acoes-flex">${acoesHtml}</td>
-               `; 
-               tabela.appendChild(tr);
-           });
+        let corTipo = v.tipo === 'VENDA' ? '#3498db' : (v.tipo === 'ORCAMENTO' ? '#9b59b6' : (v.tipo === 'DESPESA' ? '#e74c3c' : '#f39c12'));
+        let sigla = v.tipo === 'VENDA' ? 'VENDA' : (v.tipo === 'ORCAMENTO' ? 'ORCAMENTO' : (v.tipo === 'DESPESA' ? 'DESPESAS' : (v.tipo === 'FECHAMENTO' ? 'FECH.CAIXA' : 'ORDEM.SERV.')));
 
-           if(window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
-       }
+        if(v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+            acoesHtml = `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Registro">🗑️</button>`;
+        }
+
+        tr.innerHTML = `
+            <td style="font-weight: bold; color: #ffffff;">${v.os || '-'}</td>
+            <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
+            <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
+            <td style="font-weight: bold;">${v.clienteNome}</td>
+            <td style="font-weight: bold;">${vencForm}</td>
+            <td style="color:${v.tipo==='DESPESA'?'#e74c3c':'#2ecc71'}; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
+            <td style="text-align: center;">${txtBadge}</td>
+            <td style="font-size: 11px; font-weight: bold;">${(v.tipo==='DESPESA'||v.tipo==='FECHAMENTO')?'-':temAss}</td>
+            <td class="acoes-flex">${acoesHtml}</td>
+        `; 
+        tabela.appendChild(tr);
+    });
+
+    if(window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
+};
 
        window.meuGraficoPgto = null;
 
        // --- NOVO MOTOR: RESUMO DE FORMAS DE PAGAMENTO DO DIA (FIXO) ---
-       window.atualizarResumoPagamentosHoje = function() {
-           let hoje = new Date().toLocaleDateString('pt-BR');
-           
-           let resumo = {
-               'Dinheiro': { qtd: 0, total: 0, icone: '💵' },
-               'PIX': { qtd: 0, total: 0, icone: '💠' },
-               'Cartão de Crédito': { qtd: 0, total: 0, icone: '💳' },
-               'Cartão de Débito': { qtd: 0, total: 0, icone: '💳' },
-               'Boleto': { qtd: 0, total: 0, icone: '📑' }
-           };
-           
-           let totalDespesas = 0;
-           let qtdDespesas = 0;
+window.atualizarResumoPagamentosHoje = function() {
+    let hoje = new Date().toLocaleDateString('pt-BR');
+    
+    // O resumo agora é restrito APENAS ao dinheiro
+    let resumo = {
+        'Dinheiro': { qtd: 0, total: 0, icone: '💵' }
+    };
+    
+    let totalDespesas = 0;
+    let qtdDespesas = 0;
 
-           caixaGlobal.forEach(doc => {
-               if (doc.dataStr && doc.dataStr.includes(hoje)) {
-                   let valor = parseFloat(doc.total) || 0;
-                   let status = doc.statusPagamento || 'PAGO';
-                   let tipo = doc.tipo || '';
+    caixaGlobal.forEach(doc => {
+        if (doc.dataStr && doc.dataStr.includes(hoje)) {
+            let valor = parseFloat(doc.total) || 0;
+            let status = doc.statusPagamento || 'PAGO';
+            let tipo = doc.tipo || '';
 
-                   if (status === 'PAGO' && (tipo === 'VENDA' || tipo === 'ORDEM DE SERVIÇO' || tipo === 'VD')) {
-                       let forma = doc.formaPagamento || 'Outros';
-                       if (resumo[forma]) {
-                           resumo[forma].qtd++;
-                           resumo[forma].total += valor;
-                       } else {
-                           resumo[forma] = { qtd: 1, total: valor, icone: '💰' };
-                       }
-                   }
-                   
-                   if (tipo === 'DESPESA') {
-                       qtdDespesas++;
-                       totalDespesas += valor;
-                   }
-               }
-           });
+            if (status === 'PAGO' && (tipo === 'VENDA' || tipo === 'ORDEM DE SERVIÇO' || tipo === 'VD')) {
+                let forma = doc.formaPagamento || 'Outros';
+                let formaLow = forma.toLowerCase();
+                let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
+                
+                // SÓ ENTRA AQUI SE FOR DINHEIRO FÍSICO!
+                if (!isDigital) {
+                    if (resumo[forma]) {
+                        resumo[forma].qtd++;
+                        resumo[forma].total += valor;
+                    } else {
+                        resumo[forma] = { qtd: 1, total: valor, icone: '💰' };
+                    }
+                }
+            }
+            
+            if (tipo === 'DESPESA') {
+                qtdDespesas++;
+                totalDespesas += valor;
+            }
+        }
+    });
 
-           window.dadosGraficoHoje = resumo; // Salva para o gráfico puxar
+    window.dadosGraficoHoje = resumo; 
 
-           let tbody = document.getElementById('tabelaResumoPgto');
-           if(!tbody) return;
+    let tbody = document.getElementById('tabelaResumoPgto');
+    if(!tbody) return;
 
-           let html = '';
-           
-           Object.keys(resumo).forEach(forma => {
-               let val = resumo[forma].total;
-               let q = resumo[forma].qtd;
-               let icone = resumo[forma].icone || '💰';
+    let html = '';
+    Object.keys(resumo).forEach(forma => {
+        let val = resumo[forma].total;
+        let q = resumo[forma].qtd;
+        let icone = resumo[forma].icone || '💰';
 
-               html += `<tr style="border-bottom: 1px solid #2c3e50;">
-                   <td style="font-weight: bold; color: #ecf0f1; padding: 10px;">${icone} ${forma}</td>
-                   <td style="text-align: center; color: #bdc3c7;">${q}</td>
-                   <td style="text-align: right; font-weight: bold; color: #2ecc71;">R$ ${val.toFixed(2)}</td>
-                   <td style="text-align: center;"><span style="background-color: #27ae60; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px;">ENTRADA</span></td>
-               </tr>`;
-           });
+        html += `<tr style="border-bottom: 1px solid #2c3e50;">
+            <td style="font-weight: bold; color: #ecf0f1; padding: 10px;">${icone} ${forma}</td>
+            <td style="text-align: center; color: #bdc3c7;">${q}</td>
+            <td style="text-align: right; font-weight: bold; color: #2ecc71;">R$ ${val.toFixed(2)}</td>
+            <td style="text-align: center;"><span style="background-color: #27ae60; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px;">ENTRADA</span></td>
+        </tr>`;
+    });
 
-           html += `<tr>
-               <td style="font-weight: bold; color: #e74c3c; padding: 10px;">🔻 Despesas / Saídas (Gastos)</td>
-               <td style="text-align: center; color: #e74c3c;">${qtdDespesas}</td>
-               <td style="text-align: right; font-weight: bold; color: #e74c3c;">- R$ ${totalDespesas.toFixed(2)}</td>
-               <td style="text-align: center;"><span style="background-color: #e74c3c; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px;">SAÍDA</span></td>
-           </tr>`;
+    html += `<tr>
+        <td style="font-weight: bold; color: #e74c3c; padding: 10px;">🔻 Despesas / Saídas (Gastos)</td>
+        <td style="text-align: center; color: #e74c3c;">${qtdDespesas}</td>
+        <td style="text-align: right; font-weight: bold; color: #e74c3c;">- R$ ${totalDespesas.toFixed(2)}</td>
+        <td style="text-align: center;"><span style="background-color: #e74c3c; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px;">SAÍDA</span></td>
+    </tr>`;
 
-           tbody.innerHTML = html;
-       };
+    tbody.innerHTML = html;
+};
 
        // --- LÓGICA DO GRÁFICO DE PIZZA ---
        window.abrirGraficoPagamentos = function() {
@@ -4238,28 +4306,6 @@ window.recalcularMargemVendaManual = function() {
     }
 };
 
-window.addAoCarrinhoVenda_Estoque = function() {
-    const busca = document.getElementById('vendaProdutoEstoqueBusca').value;
-    const qtd = parseInt(document.getElementById('vendaProdutoQtd').value) || 1;
-    const precoUn = parseFloat(document.getElementById('vendaProdutoPrecoFinal').value);
-    const custoUn = parseFloat(document.getElementById('vendaProdutoCusto').value);
-    const margem = parseFloat(document.getElementById('vendaProdutoMargem').value);
-
-    if (!busca || isNaN(precoUn)) return alert("Selecione um produto e confira os valores.");
-
-    const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === busca.trim().toLowerCase() || String(x.codigo).trim() === busca.trim());
-    const nomeExibir = p ? `${p.nome} (Cód: ${p.codigo || '-'}) (Qtd: ${qtd})` : `${busca} (Qtd: ${qtd})`;
-
-    carrinhoVenda.push({
-        idProd: p ? p.id : null, nome: nomeExibir, valor: precoUn * qtd, valorOriginal: precoUn, 
-        custoOriginal: custoUn, margemOriginal: margem, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material'
-    });
-
-    ['vendaProdutoEstoqueBusca','vendaProdutoCusto','vendaProdutoMargem','vendaProdutoPrecoFinal'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('vendaProdutoQtd').value = 1;
-    window.atualizarCarrinhoVenda();
-};
-
 window.addAoCarrinhoVenda_Avulso = function() {
     const n = document.getElementById('vendaAvulsoNome').value; 
     const v = parseFloat(document.getElementById('vendaAvulsoValor').value); 
@@ -4331,133 +4377,6 @@ window.calcularTotalComDesconto = function() {
 };
 
 window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); window.atualizarCarrinhoVenda(); };
-
-window.finalizarVenda = async function() {
-    const os = parseInt(document.getElementById('vendaOS').value); 
-    const v = document.getElementById('vendaVencimento').value; 
-    const n = document.getElementById('vendaClienteBusca').value; 
-    const statusPag = document.getElementById('vendaStatusPag').value;
-    const formaPag = document.getElementById('vendaPagamento').value; 
-    const tipoDocSelecionado = document.getElementById('vendaTipoDoc').value;
-
-    if (!n || carrinhoVenda.length === 0) return alert("Preencha o Cliente e coloque itens no carrinho."); 
-    
-    let cli = clientesGlobais.find(c => c.nome.toLowerCase() === n.toLowerCase());
-    let cId = cli ? cli.id : 'avulso';
-    let cNome = cli ? cli.nome : n;
-
-    const totalText = document.getElementById('vendaTotalFinalTxt').innerText.replace('TOTAL: R$ ', '');
-    const total = parseFloat(totalText) || 0;
-
-    let originalDoc = null;
-    if (editandoDocId) {
-        const snapAntigo = await get(ref(db, 'caixa/' + editandoDocId));
-        originalDoc = snapAntigo.val();
-        
-        if (originalDoc && originalDoc.itens) {
-            let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
-            for (let oldItem of antigosItens) {
-                if (oldItem.ehEstoque && oldItem.idProd) {
-                    const snapP = await get(ref(db, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
-                    if (pDb) { await update(ref(db, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); }
-                }
-            }
-        }
-    }
-
-    const doc = { 
-        tipo: tipoDocSelecionado, 
-        os: os, 
-        vencimento: v, 
-        statusPagamento: statusPag,
-        formaPagamento: formaPag,
-        dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
-        timestamp: originalDoc ? originalDoc.timestamp : Date.now(), 
-        clienteId: cId, 
-        clienteNome: cNome, 
-        itens: carrinhoVenda, 
-        total: total, 
-        assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,                
-        vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
-        observacao: document.getElementById('vendaObservacao').value
-    };
-
-    try {
-        if (editandoDocId) {
-            await update(ref(db, 'caixa/' + editandoDocId), doc);
-        } else {
-            await set(push(ref(db, 'caixa')), doc); 
-        }
-
-     
-        if (tipoDocSelecionado === 'VENDA') {
-            if (editandoDocId && originalDoc) {
-                let statusAntigo = originalDoc.statusPagamento || 'PAGO';
-                let valorAntigo = originalDoc.total || 0;
-                if (statusAntigo === 'PAGO') window.registrarMovimentoCaixa('entrada', -valorAntigo);
-                if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
-            } else {
-                if (statusPag === 'PAGO') window.registrarMovimentoCaixa('entrada', total);
-            }
-
-            for (let item of carrinhoVenda) {
-                if (item.ehEstoque && item.idProd) {
-                    const snap = await get(ref(db, 'produtos/' + item.idProd)); const pDb = snap.val();
-                    if (pDb && pDb.quantidade > 0) { await update(ref(db, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
-                }
-            }
-        }
-
-        alert(editandoDocId ? "Venda Atualizada com Sucesso!" : "Venda Registrada!"); 
-        carrinhoVenda = []; window.atualizarCarrinhoVenda(); 
-        document.getElementById('vendaClienteBusca').value = ''; 
-        document.getElementById('vendaObservacao').value = '';
-        document.getElementById('vendaStatusPag').value = 'PAGO';
-        document.getElementById('vendaPagamento').value = 'Dinheiro';
-        window.carregarSelectsGerais(); 
-        window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
-        
-        editandoDocId = null;
-        document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
-
-    } catch(e) { alert("Erro: " + e); }
-};
-
-window.sincronizarTotaisDoDia = async function() {
-    let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
-    let totalEntradas = 0;
-    let totalSaidas = 0;
-
-    let hoje = new Date().toLocaleDateString('pt-BR');
-
-    baseDados.forEach(doc => {
-        if (doc.dataStr && doc.dataStr.includes(hoje)) {
-            let valor = parseFloat(doc.total) || 0;
-            let status = doc.statusPagamento || 'PAGO';
-
-            if (status === 'PAGO' && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO' || doc.tipo === 'VD')) {
-                totalEntradas += valor;
-            }
-            if (doc.tipo === 'DESPESA') {
-                totalSaidas += valor;
-            }
-        }
-    });
-
-    try {
-        const { getDatabase, ref, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
-        
-        await set(ref(window.meuBanco, 'caixaStatus'), {
-            entradas: totalEntradas,
-            saidas: totalSaidas,
-            caixaInicial: window.caixaFinanceiro.caixaInicial || 0
-        });
-
-        alert(`✅ Sincronização Concluída!\n\nEntradas de hoje: R$ ${totalEntradas.toFixed(2)}\nSaídas de hoje: R$ ${totalSaidas.toFixed(2)}`);
-    } catch (e) {
-        alert("Erro ao sincronizar: " + e.message);
-    }
-};
 
 window.zerarFluxoCaixa = async function() {
     if (confirm("Deseja realmente ZERAR os totais do painel?")) {
@@ -4780,43 +4699,42 @@ window.renderizarTabelaCaixa = function() {
     if(!tabela) return;
     tabela.innerHTML = '';
     
-    if (caixaGlobal.length === 0) { 
-        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum documento registrado.</td></tr>'; 
+    // FILTRO DEFINITIVO: Esconde TUDO que for PIX, Cartão ou Boleto do Caixa Físico (Balcão), seja pago ou pendente.
+    let dadosBalcao = caixaGlobal.filter(v => {
+        let formaLow = (v.formaPagamento || '').toLowerCase();
+        let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
+        return !isDigital; 
+    });
+
+    if (dadosBalcao.length === 0) { 
+        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum documento físico registrado.</td></tr>'; 
         if(window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
-        if(document.getElementById('infoPaginaCaixa')) document.getElementById('infoPaginaCaixa').innerText = "Pág 1 de 1";
         return; 
     }
 
-    // Filtro de Busca
-    let dadosFiltrados = caixaGlobal.filter(v => {
+    let dadosFiltrados = dadosBalcao.filter(v => {
         return (v.clienteNome || '').toLowerCase().includes(window.termoBuscaCaixa) || 
                (v.os || '').toString().includes(window.termoBuscaCaixa);
     });
 
     if (dadosFiltrados.length === 0) {
-        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhuma venda/documento encontrado na busca.</td></tr>'; 
-        if(document.getElementById('infoPaginaCaixa')) document.getElementById('infoPaginaCaixa').innerText = "Pág 1 de 1";
+        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum registro encontrado na busca.</td></tr>'; 
         return;
     }
 
-    // Paginação de 20 em 20
     const inicio = (window.paginaAtualCaixa - 1) * window.itensPorPaginaCaixa;
-    const fim = inicio + window.itensPorPaginaCaixa;
-    const itensDaPagina = dadosFiltrados.slice(inicio, fim);
+    const itensDaPagina = dadosFiltrados.slice(inicio, inicio + window.itensPorPaginaCaixa);
     
     if(document.getElementById('infoPaginaCaixa')) {
         document.getElementById('infoPaginaCaixa').innerText = `Pág ${window.paginaAtualCaixa} de ${Math.ceil(dadosFiltrados.length / window.itensPorPaginaCaixa)}`;
     }
 
-    // Renderiza apenas os 20 itens
     itensDaPagina.forEach(v => {
         const tr = document.createElement('tr'); 
         const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
         let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
-
         let statusStr = v.statusPagamento || 'PAGO'; 
         let txtBadge = '';
-
         let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
         let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
 
@@ -4830,10 +4748,7 @@ window.renderizarTabelaCaixa = function() {
 
         let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento" style="border-color:#ffffff;">✏️ Ed</button>`;
         acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')" title="WhatsApp">📱 Whats</button>`;
-        
-        if (!v.assinaturaBase64) {
-            acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`;
-        }
+        if (!v.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`; }
         acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
         acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
         acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
@@ -4869,6 +4784,127 @@ window.renderizarTabelaCaixa = function() {
     });
 
     if(window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
+};
+
+window.renderizarTabelaBanco = function() {
+    const tabela = document.getElementById('tabelaCaixaBanco');
+    if(!tabela) return;
+    tabela.innerHTML = '';
+    
+    let manuais = window.extratoBanco.map(e => ({...e, isManual: true}));
+
+    let digitais = caixaGlobal.filter(v => {
+        let formaLow = (v.formaPagamento || '').toLowerCase();
+        let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
+        return isDigital;
+    }).map(v => ({...v, isManual: false}));
+
+    let dadosUnidos = [...manuais, ...digitais].sort((a, b) => b.timestamp - a.timestamp);
+
+    let dadosFiltrados = dadosUnidos.filter(v => {
+        let desc = (v.isManual ? (v.descricao||'') : (v.clienteNome||'')).toLowerCase();
+        let osBusca = v.isManual ? '' : (v.os||'').toString();
+        return desc.includes(window.termoBuscaBanco) || osBusca.includes(window.termoBuscaBanco);
+    });
+
+    if (dadosFiltrados.length === 0) {
+        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum movimento bancário encontrado.</td></tr>';
+        return;
+    }
+
+    const inicio = (window.paginaAtualBanco - 1) * window.itensPorPaginaBanco;
+    const itensDaPagina = dadosFiltrados.slice(inicio, inicio + window.itensPorPaginaBanco);
+    
+    if(document.getElementById('infoPaginaBanco')) {
+        document.getElementById('infoPaginaBanco').innerText = `Pág ${window.paginaAtualBanco} de ${Math.ceil(dadosFiltrados.length / window.itensPorPaginaBanco)}`;
+    }
+
+    itensDaPagina.forEach(v => {
+        const tr = document.createElement('tr'); 
+
+        if (v.isManual) {
+            let cor = v.tipo === 'ENTRADA' ? '#2ecc71' : '#e74c3c';
+            let sinal = v.tipo === 'ENTRADA' ? '+' : '-';
+            tr.innerHTML = `
+                <td style="font-weight: bold; color: #ffffff;">-</td>
+                <td><span style="background-color: ${cor}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${v.tipo}</span></td>
+                <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
+                <td style="font-weight: bold; color: #bdc3c7;">[MANUAL] ${v.descricao}</td>
+                <td>-</td>
+                <td style="color:${cor}; font-weight:bold;">${sinal} R$ ${parseFloat(v.valor).toFixed(2)}</td>
+                <td style="text-align: center;">-</td>
+                <td style="text-align: center;">-</td>
+                <td class="acoes-flex"><button class="btn-acao del" onclick="excluirLancamentoBanco('${v.id}')" title="Excluir">🗑️ Excluir</button></td>
+            `;
+        } else {
+            const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
+            let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
+            let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
+            let statusStr = v.statusPagamento || 'PAGO'; 
+            
+            let txtBadge = '';
+            if (statusStr === 'PAGO') {
+                txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ BANCO - ${formaPgto.toUpperCase()}</span>`;
+            } else {
+                txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE - ${formaPgto.toUpperCase()}</span>`;
+            }
+
+            let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento">✏️ Ed</button>`;
+            acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')">📱 Whats</button>`;
+            if (!v.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')">🔗 Link</button>`; }
+            acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')">📄 PDF</button>`;
+            acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')">🧾 Cupom</button>`;
+            
+            if (statusStr === 'PENDENTE') {
+                acoesHtml += `<button class="btn-acao receber" style="border-color:#27ae60; color:#27ae60;" onclick="marcarComoPago('${v.id}')">💰 Receber</button>`;
+            } else {
+                acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${v.id}')">🔄 Estornar</button>`;
+            }
+            
+            let corTipo = v.tipo === 'VENDA' ? '#3498db' : '#f39c12';
+            let sigla = v.tipo === 'VENDA' ? 'VENDA' : 'ORDEM.SERV.';
+
+            tr.innerHTML = `
+                <td style="font-weight: bold; color: #ffffff;">${v.os || '-'}</td>
+                <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
+                <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
+                <td style="font-weight: bold; color: #3498db;">${v.clienteNome}</td>
+                <td style="font-weight: bold;">${vencForm}</td>
+                <td style="color:#2ecc71; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
+                <td style="text-align: center;">${txtBadge}</td>
+                <td style="font-size: 11px; font-weight: bold;">${temAss}</td>
+                <td class="acoes-flex">${acoesHtml}</td>
+            `; 
+        }
+        tabela.appendChild(tr);
+    });
+};
+
+window.atualizarPainelBanco = function() {
+    let totalEntradas = 0;
+    let totalSaidas = 0;
+
+    window.extratoBanco.forEach(doc => {
+        if (doc.tipo === 'ENTRADA') totalEntradas += (parseFloat(doc.valor) || 0);
+        else if (doc.tipo === 'SAIDA') totalSaidas += (parseFloat(doc.valor) || 0);
+    });
+
+    caixaGlobal.forEach(v => {
+        let formaLow = (v.formaPagamento || '').toLowerCase();
+        if (v.statusPagamento === 'PAGO' && (formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto'))) {
+            totalEntradas += (parseFloat(v.total) || 0);
+        }
+    });
+
+    let saldoInicial = window.saldoInicialBanco || 0;
+    let saldoAtual = saldoInicial + totalEntradas - totalSaidas;
+
+    if(document.getElementById('dashIniBanco')) {
+        document.getElementById('dashIniBanco').innerText = `R$ ${saldoInicial.toFixed(2)}`;
+        document.getElementById('dashEntBanco').innerText = `R$ ${totalEntradas.toFixed(2)}`;
+        document.getElementById('dashSaiBanco').innerText = `R$ ${totalSaidas.toFixed(2)}`;
+        document.getElementById('dashSaldoBanco').innerText = `R$ ${saldoAtual.toFixed(2)}`;
+    }
 };
 
 </script>
