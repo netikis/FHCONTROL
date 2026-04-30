@@ -3830,105 +3830,190 @@ window.atualizarResumoPagamentosHoje = function() {
         };
 
         // --- RELATÓRIO MENSAL EM PDF ---
-        window.gerarRelatorioMensal = function() {
-            let mesPadrao = new Date().toLocaleDateString('pt-BR').substring(3); // Pega MM/AAAA
-            let mesAno = prompt("Digite o mês e ano para gerar o relatório (Ex: 04/2026):", mesPadrao);
-            if(!mesAno) return;
-            
-            let relatorio = caixaGlobal.filter(doc => {
-                if(!doc.dataStr) return false;
-                return doc.dataStr.includes(mesAno);
-            });
-            
-            if(relatorio.length === 0) return alert("Nenhum registro de Caixa encontrado para o período: " + mesAno);
-            
-            let totEntradas = 0;
-            let totSaidas = 0;
-            let linhasHtml = '';
-            
-            // Inverte para ficar cronológico (do dia 1 ao dia 31)
-            [...relatorio].reverse().forEach(v => {
-                let status = v.statusPagamento || 'PAGO';
-                let isEntrada = ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && status === 'PAGO');
-                let isSaida = (v.tipo === 'DESPESA');
-                
-                if(isEntrada) totEntradas += parseFloat(v.total) || 0;
-                if(isSaida) totSaidas += parseFloat(v.total) || 0;
-                
-                if(isEntrada || isSaida) {
-                    let cor = isEntrada ? '#27ae60' : '#e74c3c';
-                    let sinal = isEntrada ? '+' : '-';
-                    linhasHtml += `
-                        <tr>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${v.dataStr.split(' ')[0]}</td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${v.os || '-'}</td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${v.tipo}</td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd;">${v.clienteNome}</td>
-                            <td style="padding: 8px; border-bottom: 1px solid #ddd; color: ${cor}; font-weight: bold; text-align: right;">${sinal} R$ ${parseFloat(v.total).toFixed(2)}</td>
-                        </tr>
-                    `;
-                }
-            });
-            
-            let saldoMes = totEntradas - totSaidas;
-            let corSaldo = saldoMes >= 0 ? '#2980b9' : '#e74c3c';
-            
-            let htmlPDF = `
-                <html>
-                <head>
-                    <title>Relatório Mensal - ${mesAno}</title>
-                    <style>
-                        @page { size: A4; margin: 15mm; }
-                        body { font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #333; }
-                        h2 { text-align: center; color: #2c3e50; margin-bottom: 5px; }
-                        h3 { text-align: center; color: #7f8c8d; margin-top: 0; font-size: 14px; }
-                        .resumo { display: flex; justify-content: space-between; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #ddd; }
-                        .resumo div { text-align: center; font-size: 14px; text-transform: uppercase; }
-                        .resumo div span { display: block; font-size: 22px; font-weight: bold; margin-top: 5px; }
-                        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-                        th { background: #2c3e50; color: #fff; padding: 10px; text-align: left; text-transform: uppercase; }
-                        @media print { .btn-print { display: none; } }
-                        .btn-print { display: block; width: 100%; max-width: 300px; margin: 30px auto; padding: 15px; background: #27ae60; color: #fff; text-align: center; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; border: none; cursor: pointer; }
-                    </style>
-                </head>
-                <body>
-                    <h2>BALANÇO FINANCEIRO - ${mesAno}</h2>
-                    <h3>${empresaGlobal.nome || 'Minha Empresa'}</h3>
-                    
-                    <div class="resumo">
-                        <div style="color: #27ae60;">Entradas (Pagas)<span>R$ ${totEntradas.toFixed(2)}</span></div>
-                        <div style="color: #e74c3c;">Total de Saídas<span>R$ ${totSaidas.toFixed(2)}</span></div>
-                        <div style="color: ${corSaldo};">Balanço do Mês<span>R$ ${saldoMes.toFixed(2)}</span></div>
-                    </div>
-                    
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Nº Doc</th>
-                                <th>Tipo</th>
-                                <th>Descrição / Cliente</th>
-                                <th style="text-align: right;">Valor (R$)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${linhasHtml}
-                        </tbody>
-                    </table>
-                    
-                    <div style="text-align: center; margin-top: 40px; font-size: 11px; color: #7f8c8d;">
-                        Atenção: Os valores pendentes não aparecem neste relatório.<br>
-                        Documento gerado automaticamente pelo sistema Workman.
-                    </div>
-                    
-                    <button class="btn-print" onclick="window.print()">🖨️ Imprimir PDF</button>
-                </body>
-                </html>
+window.gerarRelatorioMensal = function() {
+    let mesPadrao = new Date().toLocaleDateString('pt-BR').substring(3); // Pega MM/AAAA
+    let mesAno = prompt("Digite o mês e ano para o EXTRATO COMPLETO (Ex: 04/2026):", mesPadrao);
+    if(!mesAno) return;
+    
+    // 1. Coleta dados do Caixa Geral (Balcão + Vendas Digitais)
+    let dadosCaixa = caixaGlobal.filter(doc => doc.dataStr && doc.dataStr.includes(mesAno));
+    
+    // 2. Coleta dados do Extrato do Banco (Lançamentos Manuais)
+    let dadosBancoManual = window.extratoBanco.filter(doc => doc.dataStr && doc.dataStr.includes(mesAno));
+
+    // 3. Unifica tudo em uma lista para o relatório
+    let extratoUnificado = [];
+    
+    // Processa vendas e despesas do caixa geral
+    dadosCaixa.forEach(v => {
+        let status = v.statusPagamento || 'PAGO';
+        if (v.tipo === 'ORCAMENTO' || v.tipo === 'FECHAMENTO') return; // Ignora simulações e fechamentos de tela
+
+        extratoUnificado.push({
+            data: v.dataStr.split(' ')[0],
+            doc: v.os || '-',
+            tipo: v.tipo,
+            descricao: v.clienteNome,
+            forma: v.formaPagamento || 'Dinheiro',
+            valor: parseFloat(v.total) || 0,
+            natureza: (v.tipo === 'DESPESA') ? 'SAIDA' : (status === 'PAGO' ? 'ENTRADA' : 'PENDENTE')
+        });
+    });
+
+    // Processa lançamentos manuais do banco
+    dadosBancoManual.forEach(b => {
+        extratoUnificado.push({
+            data: b.dataStr.split(' ')[0],
+            doc: 'BANCO',
+            tipo: 'LANÇ. BANCO',
+            descricao: `[BANCO] ${b.descricao}`,
+            forma: 'Transferência/Taxa',
+            valor: parseFloat(b.valor) || 0,
+            natureza: b.tipo // 'ENTRADA' ou 'SAIDA'
+        });
+    });
+
+    if(extratoUnificado.length === 0) return alert("Nenhum registro encontrado para o período: " + mesAno);
+    
+    // Ordena por data (mais antigos primeiro)
+    extratoUnificado.sort((a, b) => {
+        let dataA = a.data.split('/').reverse().join('');
+        let dataB = b.data.split('/').reverse().join('');
+        return dataA.localeCompare(dataB);
+    });
+
+    let totEntradas = 0;
+    let totSaidas = 0;
+    let totPendentes = 0;
+    
+    let linhasEntradas = '';
+    let linhasSaidas = '';
+    let linhasPendentes = '';
+    
+    extratoUnificado.forEach(item => {
+        if (item.natureza === 'PENDENTE') {
+            totPendentes += item.valor;
+            linhasPendentes += `
+                <tr>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; width: 70px;">${item.data}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; width: 60px;">${item.doc}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 9px; width: 80px;">${item.tipo}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd;">${item.descricao}<br><small style="color:#777">${item.forma}</small></td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; color: #d35400; font-weight: bold; text-align: right;">R$ ${item.valor.toFixed(2)}</td>
+                </tr>
             `;
-            let j = window.open('', '', 'width=900,height=700');
-            j.document.write(htmlPDF);
-            j.document.close();
+        } else if (item.natureza === 'ENTRADA') {
+            totEntradas += item.valor;
+            linhasEntradas += `
+                <tr>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; width: 70px;">${item.data}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; width: 60px;">${item.doc}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 9px; width: 80px;">${item.tipo}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd;">${item.descricao}<br><small style="color:#777">${item.forma}</small></td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; color: #27ae60; font-weight: bold; text-align: right;">+ R$ ${item.valor.toFixed(2)}</td>
+                </tr>
+            `;
+        } else if (item.natureza === 'SAIDA') {
+            totSaidas += item.valor;
+            linhasSaidas += `
+                <tr>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; width: 70px;">${item.data}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; width: 60px;">${item.doc}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 9px; width: 80px;">${item.tipo}</td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd;">${item.descricao}<br><small style="color:#777">${item.forma}</small></td>
+                    <td style="padding: 6px; border-bottom: 1px solid #ddd; color: #e74c3c; font-weight: bold; text-align: right;">- R$ ${item.valor.toFixed(2)}</td>
+                </tr>
+            `;
         }
+    });
+    
+    let saldoMes = totEntradas - totSaidas;
+
+    if (linhasEntradas === '') linhasEntradas = `<tr><td colspan="5" style="padding: 10px; text-align: center; color: #777;">Nenhuma entrada/recebimento neste período.</td></tr>`;
+    if (linhasSaidas === '') linhasSaidas = `<tr><td colspan="5" style="padding: 10px; text-align: center; color: #777;">Nenhuma saída/despesa neste período.</td></tr>`;
+    if (linhasPendentes === '') linhasPendentes = `<tr><td colspan="5" style="padding: 10px; text-align: center; color: #777;">Nenhum pagamento pendente neste período.</td></tr>`;
+    
+    let htmlPDF = `
+        <html>
+        <head>
+            <title>Extrato Mensal Unificado - ${mesAno}</title>
+            <style>
+                @page { size: A4; margin: 10mm; }
+                body { font-family: sans-serif; font-size: 11px; color: #333; }
+                .header { text-align: center; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px; }
+                .resumo { display: flex; justify-content: space-around; background: #f4f4f4; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ccc; }
+                .resumo-box { text-align: center; }
+                .resumo-box b { display: block; font-size: 14px; margin-top: 5px; }
+                
+                .section-title { padding: 8px 10px; font-size: 11px; font-weight: bold; margin-top: 25px; text-transform: uppercase; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; align-items: center;}
+                .section-title.entrada { background-color: #27ae60; color: white; }
+                .section-title.saida { background-color: #e74c3c; color: white; }
+                .section-title.pendente { background-color: #f39c12; color: white; }
+                
+                table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+                th { background: #ecf0f1; color: #2c3e50; padding: 8px; text-align: left; text-transform: uppercase; font-size: 10px; border-bottom: 2px solid #bdc3c7;}
+                @media print { .btn-print { display: none; } }
+                .btn-print { display: block; width: 200px; margin: 20px auto; padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none;}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2 style="margin:0;">RELATÓRIO MENSAL UNIFICADO (BALCÃO + BANCO)</h2>
+                <h3 style="margin:5px 0; color: #7f8c8d;">${empresaGlobal.nome} - Competência: ${mesAno}</h3>
+            </div>
+            
+            <div class="resumo">
+                <div class="resumo-box" style="color: #27ae60;">RECEBIMENTOS TOTAL<b>R$ ${totEntradas.toFixed(2)}</b></div>
+                <div class="resumo-box" style="color: #e74c3c;">PAGAMENTOS/SAÍDAS<b>R$ ${totSaidas.toFixed(2)}</b></div>
+                <div class="resumo-box" style="color: #2980b9;">SALDO LÍQUIDO DO MÊS<b>R$ ${saldoMes.toFixed(2)}</b></div>
+            </div>
+            
+            <div class="section-title entrada">
+                <span>✅ ENTRADAS (RECEBIMENTOS REALIZADOS)</span>
+                <span>TOTAL: R$ ${totEntradas.toFixed(2)}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Descrição / Forma Pgto</th><th style="text-align: right;">Valor</th></tr>
+                </thead>
+                <tbody>${linhasEntradas}</tbody>
+            </table>
+
+            <div class="section-title saida">
+                <span>🔻 SAÍDAS E DESPESAS (PAGAMENTOS REALIZADOS)</span>
+                <span>TOTAL: R$ ${totSaidas.toFixed(2)}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Descrição / Motivo</th><th style="text-align: right;">Valor</th></tr>
+                </thead>
+                <tbody>${linhasSaidas}</tbody>
+            </table>
+
+            <div class="section-title pendente">
+                <span>⏳ PAGAMENTOS PENDENTES (A RECEBER)</span>
+                <span>TOTAL: R$ ${totPendentes.toFixed(2)}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Cliente / Forma Pgto Prevista</th><th style="text-align: right;">Valor</th></tr>
+                </thead>
+                <tbody>${linhasPendentes}</tbody>
+            </table>
+
+            <div style="text-align: center; margin-top: 30px; font-size: 9px; color: #999;">
+                Este relatório contempla todas as entradas (Dinheiro, PIX, Cartões) e despesas lançadas no período.<br>
+                Documento gerado pelo sistema Workman em ${new Date().toLocaleString()}.
+            </div>
+
+            <button class="btn-print" onclick="window.print()">🖨️ IMPRIMIR RELATÓRIO</button>
+        </body>
+        </html>
+    `;
+    let j = window.open('', '', 'width=900,height=750');
+    j.document.write(htmlPDF);
+    j.document.close();
+};
 
       // --- IMPORTAÇÃO DIRETA (COM PROTEÇÃO CONTRA ERRO SILENCIOSO E TYPEERROR) ---
 window.importarJSON = async function() {
