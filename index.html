@@ -1858,7 +1858,7 @@ window.mudarPaginaProd = function(direcao) {
                 <td style="text-align: center; padding: 5px;"><input type="checkbox" class="check-etiqueta" data-nome="${p.nome}" data-codigo="${p.codigo || ''}" data-venda="${p.venda}"></td>
                 <td style="font-weight:bold; color:#f1c40f; font-size:11px; overflow:hidden; text-overflow:ellipsis; padding: 5px;">${p.codigo || '-'}</td>
                 <td style="font-weight:bold; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding: 5px;" title="${p.nome}">${p.nome}</td>
-                <td style="padding: 5px;"><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px;">${p.categoria || 'Geral'}</span></td>
+                <td style="padding: 5px;" title="${p.categoria || 'Geral'}"><span style="background-color:#f1c40f;color:#2c3e50;padding:2px 4px;border-radius:4px;font-size:10px; display:inline-block; max-width:75px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; vertical-align:middle;">${p.categoria || 'Geral'}</span></td>
                 <td style="font-weight:bold; font-size:14px; text-align:center; padding: 5px;">${p.quantidade || 0}</td>
                 <td style="font-weight:bold; padding: 5px;">R$ ${(parseFloat(String(p.custo).replace(',', '.')) || 0).toFixed(2)}</td>
                 <td style="color:#2ecc71; font-weight:bold; padding: 5px;">R$ ${(parseFloat(String(p.venda).replace(',', '.')) || 0).toFixed(2)}</td>
