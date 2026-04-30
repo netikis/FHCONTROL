@@ -2113,58 +2113,103 @@ window.imprimirEtiquetasEstoque = function() {
            if(document.getElementById('osVencimento')) document.getElementById('osVencimento').valueAsDate = new Date(); 
        }
 
-       window.carregarSelectsGerais = function() {
-    // Listas do Venda/OS
+    window.carregarSelectsGerais = function() {
+    // 1. Carrega os Clientes na memória (como são poucos, não tem problema)
     const dCliVenda = document.getElementById('listaClientesNomesVenda'); 
     const dCliOS = document.getElementById('listaClientesNomesOS'); 
     
-    // Constrói HTML do Cliente na memória (Ultra rápido)
     let optCli = '';
     clientesGlobais.forEach(c => { optCli += `<option value="${c.nome || ''}">`; });
     if(dCliVenda) dCliVenda.innerHTML = optCli; 
     if(dCliOS) dCliOS.innerHTML = optCli; 
     
-    // Listas de Produto
+    // 2. LIMPAMOS a lista de produtos! Não joga mais o estoque inteiro na tela de uma vez.
     const dProdVenda = document.getElementById('listaProdutosEstoqueVenda'); 
+    if(dProdVenda) dProdVenda.innerHTML = ''; 
     const dProdOS = document.getElementById('listaProdutosEstoqueOS'); 
+    if(dProdOS) dProdOS.innerHTML = ''; 
+};
+
+// 3. NOVA FUNÇÃO: Busca inteligente (só filtra o estoque quando você digita ou bipa)
+window.filtrarDatalistProdutosDinamicamente = function(termo, datalistId) {
+    const datalist = document.getElementById(datalistId);
+    if(!datalist) return;
+
+    termo = termo.trim().toLowerCase();
     
-    // Constrói HTML do Produto na memória (Evita o congelamento da tela)
+    // Se tiver menos de 2 letras (ou vazio), deixa a lista escondida
+    if (termo.length < 2) {
+        datalist.innerHTML = '';
+        return;
+    }
+
     let optProd = '';
-    produtosGlobais.forEach(p => { 
+    // Procura no estoque e limita a 30 opções para a tela não travar e ser instantâneo
+    let resultados = produtosGlobais.filter(p => 
+        (p.nome && p.nome.toLowerCase().includes(termo)) || 
+        (p.codigo && String(p.codigo).toLowerCase().includes(termo))
+    ).slice(0, 30); 
+
+    resultados.forEach(p => { 
         let codTxt = p.codigo ? `[${p.codigo}] ` : '';
         optProd += `<option value="${p.nome || ''}">${codTxt}R$ ${parseFloat(p.venda || 0).toFixed(2)} (Estoque: ${p.quantidade || 0})</option>`;
     });
     
-    // Joga na tela tudo de uma vez
-    if(dProdVenda) dProdVenda.innerHTML = optProd; 
-    if(dProdOS) dProdOS.innerHTML = optProd; 
-}
+    datalist.innerHTML = optProd;
+};
+
+// 4. Conecta os campos de Venda e OS à Busca Inteligente
+setTimeout(() => {
+    let campoVenda = document.getElementById('vendaProdutoEstoqueBusca');
+    if (campoVenda) {
+        campoVenda.addEventListener('input', function() {
+            window.filtrarDatalistProdutosDinamicamente(this.value, 'listaProdutosEstoqueVenda');
+        });
+    }
+
+    let campoOS = document.getElementById('osProdutoEstoqueBusca');
+    if (campoOS) {
+        campoOS.addEventListener('input', function() {
+            window.filtrarDatalistProdutosDinamicamente(this.value, 'listaProdutosEstoqueOS');
+        });
+    }
+}, 1000); // Aguarda o sistema carregar antes de conectar
 
 
        // --- 3. VENDAS NORMAIS ---
        
        window.preencherCamposVendaEstoque = function() {
-           const termoBusca = document.getElementById('vendaProdutoEstoqueBusca').value.trim();
-           const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || String(x.codigo).trim() === termoBusca);
+    const campoBusca = document.getElementById('vendaProdutoEstoqueBusca');
+    const termoBusca = campoBusca.value.trim();
+    
+    if(!termoBusca) return;
 
-           if (p) {
-               let custo = window.parseMoedaBr(p.custo);
-               let venda = window.parseMoedaBr(p.venda);
-               let margem = window.parseMoedaBr(p.margem);
+    const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || String(x.codigo).trim() === termoBusca);
 
-               if(custo > 0 && venda > 0 && margem === 0) {
-                   margem = ((venda - custo) / custo) * 100;
-               }
+    if (p) {
+        // MÁGICA DO LEITOR: Substitui o número pelo Nome do produto na tela!
+        campoBusca.value = p.nome;
 
-               document.getElementById('vendaProdutoCusto').value = custo.toFixed(2);
-               document.getElementById('vendaProdutoMargem').value = margem.toFixed(2);
-               document.getElementById('vendaProdutoPrecoFinal').value = venda.toFixed(2);
-           } else {
-               document.getElementById('vendaProdutoCusto').value = '';
-               document.getElementById('vendaProdutoMargem').value = '';
-               document.getElementById('vendaProdutoPrecoFinal').value = '';
-           }
-       };
+        let custo = window.parseMoedaBr(p.custo);
+        let venda = window.parseMoedaBr(p.venda);
+        let margem = window.parseMoedaBr(p.margem);
+
+        if(custo > 0 && venda > 0 && margem === 0) {
+            margem = ((venda - custo) / custo) * 100;
+        }
+
+        document.getElementById('vendaProdutoCusto').value = custo.toFixed(2);
+        document.getElementById('vendaProdutoMargem').value = margem.toFixed(2);
+        document.getElementById('vendaProdutoPrecoFinal').value = venda.toFixed(2);
+        
+        // Já pula o cursor para o campo de Quantidade para agilizar a venda
+        document.getElementById('vendaProdutoQtd').focus();
+    } else {
+        document.getElementById('vendaProdutoCusto').value = '';
+        document.getElementById('vendaProdutoMargem').value = '';
+        document.getElementById('vendaProdutoPrecoFinal').value = '';
+    }
+};
 
        window.recalcularPrecoVendaManual = function() {
            const custo = parseFloat(document.getElementById('vendaProdutoCusto').value) || 0;
@@ -2549,29 +2594,39 @@ window.sincronizarTotaisDoDia = async function() {
        document.getElementById('osKmFinal').addEventListener('input', window.calcularDeslocamentoOS);
        document.getElementById('osValorKm').addEventListener('input', window.calcularDeslocamentoOS);
 
-       window.preencherValorEstoqueOS = function() {
-           const n = document.getElementById('osProdutoEstoqueBusca').value.trim();
-           const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === n.toLowerCase() || String(x.codigo).trim() === n);
-           if(p) {
-               let custo = window.parseMoedaBr(p.custo);
-               let venda = window.parseMoedaBr(p.venda);
-               let margem = window.parseMoedaBr(p.margem);
+      window.preencherValorEstoqueOS = function() {
+    const campoBusca = document.getElementById('osProdutoEstoqueBusca');
+    const n = campoBusca.value.trim();
+    
+    if(!n) return;
 
-               if(custo > 0 && venda > 0 && margem === 0) {
-                   margem = ((venda - custo) / custo) * 100;
-               }
+    const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === n.toLowerCase() || String(x.codigo).trim() === n);
+    if(p) {
+        // MÁGICA DO LEITOR PARA A OS: Troca o código bipado pelo Nome do Produto na tela!
+        campoBusca.value = p.nome;
 
-               document.getElementById('osEstoqueCusto').value = custo.toFixed(2);
-               document.getElementById('osEstoqueMargem').value = margem.toFixed(2);
-               document.getElementById('osEstoqueValUn').value = venda.toFixed(2);
-               window.calcTotalEstoqueOS();
-           } else {
-               document.getElementById('osEstoqueCusto').value = '';
-               document.getElementById('osEstoqueMargem').value = '';
-               document.getElementById('osEstoqueValUn').value = '';
-               document.getElementById('osEstoqueTotal').value = '';
-           }
-       }
+        let custo = window.parseMoedaBr(p.custo);
+        let venda = window.parseMoedaBr(p.venda);
+        let margem = window.parseMoedaBr(p.margem);
+
+        if(custo > 0 && venda > 0 && margem === 0) {
+            margem = ((venda - custo) / custo) * 100;
+        }
+
+        document.getElementById('osEstoqueCusto').value = custo.toFixed(2);
+        document.getElementById('osEstoqueMargem').value = margem.toFixed(2);
+        document.getElementById('osEstoqueValUn').value = venda.toFixed(2);
+        window.calcTotalEstoqueOS();
+        
+        // Pula o cursor direto para a quantidade para você não precisar usar o mouse
+        document.getElementById('osEstoqueQtd').focus();
+    } else {
+        document.getElementById('osEstoqueCusto').value = '';
+        document.getElementById('osEstoqueMargem').value = '';
+        document.getElementById('osEstoqueValUn').value = '';
+        document.getElementById('osEstoqueTotal').value = '';
+    }
+};
 
        window.recalcularPrecoOSEstoque = function() {
            let custo = parseFloat(document.getElementById('osEstoqueCusto').value) || 0;
@@ -4428,10 +4483,17 @@ window.importarJSON = async function() {
        };
 
 window.preencherCamposVendaEstoque = function() {
-    const termoBusca = document.getElementById('vendaProdutoEstoqueBusca').value.trim();
+    const campoBusca = document.getElementById('vendaProdutoEstoqueBusca');
+    const termoBusca = campoBusca.value.trim();
+    
+    if(!termoBusca) return;
+
     const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || String(x.codigo).trim() === termoBusca);
 
     if (p) {
+        // MÁGICA DO LEITOR: Substitui o número pelo Nome do produto na tela!
+        campoBusca.value = p.nome;
+
         let custo = window.parseMoedaBr(p.custo);
         let venda = window.parseMoedaBr(p.venda);
         let margem = window.parseMoedaBr(p.margem);
@@ -4443,6 +4505,9 @@ window.preencherCamposVendaEstoque = function() {
         document.getElementById('vendaProdutoCusto').value = custo.toFixed(2);
         document.getElementById('vendaProdutoMargem').value = margem.toFixed(2);
         document.getElementById('vendaProdutoPrecoFinal').value = venda.toFixed(2);
+        
+        // Já pula o cursor para o campo de Quantidade para agilizar a venda
+        document.getElementById('vendaProdutoQtd').focus();
     } else {
         document.getElementById('vendaProdutoCusto').value = '';
         document.getElementById('vendaProdutoMargem').value = '';
