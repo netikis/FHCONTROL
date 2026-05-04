@@ -2185,16 +2185,22 @@ setTimeout(() => {
 
        // --- 3. VENDAS NORMAIS ---
        
-       window.preencherCamposVendaEstoque = function() {
+    window.preencherCamposVendaEstoque = function() {
     const campoBusca = document.getElementById('vendaProdutoEstoqueBusca');
     const termoBusca = campoBusca.value.trim();
     
     if(!termoBusca) return;
 
-    const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || String(x.codigo).trim() === termoBusca);
+    // 1. Tenta achar o produto pelo nome EXATO ou código EXATO
+    let p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || String(x.codigo).trim() === termoBusca);
+
+    // 2. BUSCA INTELIGENTE: Se não achou exato, procura por parte do nome!
+    if (!p) {
+        p = produtosGlobais.find(x => String(x.nome).toLowerCase().includes(termoBusca.toLowerCase()) || String(x.codigo).toLowerCase().includes(termoBusca.toLowerCase()));
+    }
 
     if (p) {
-        // MÁGICA DO LEITOR: Substitui o número pelo Nome do produto na tela!
+        // MÁGICA: Auto-completa o nome correto na caixinha para você ver qual ele escolheu
         campoBusca.value = p.nome;
 
         let custo = window.parseMoedaBr(p.custo);
@@ -2209,7 +2215,6 @@ setTimeout(() => {
         document.getElementById('vendaProdutoMargem').value = margem.toFixed(2);
         document.getElementById('vendaProdutoPrecoFinal').value = venda.toFixed(2);
         
-        // Já pula o cursor para o campo de Quantidade para agilizar a venda
         document.getElementById('vendaProdutoQtd').focus();
     } else {
         document.getElementById('vendaProdutoCusto').value = '';
@@ -2622,15 +2627,21 @@ window.sincronizarTotaisDoDia = async function() {
        document.getElementById('osKmFinal').addEventListener('input', window.calcularDeslocamentoOS);
        document.getElementById('osValorKm').addEventListener('input', window.calcularDeslocamentoOS);
 
-      window.preencherValorEstoqueOS = function() {
+     window.preencherValorEstoqueOS = function() {
     const campoBusca = document.getElementById('osProdutoEstoqueBusca');
     const n = campoBusca.value.trim();
     
     if(!n) return;
 
-    const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === n.toLowerCase() || String(x.codigo).trim() === n);
+    // 1. Tenta achar exato
+    let p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === n.toLowerCase() || String(x.codigo).trim() === n);
+    
+    // 2. BUSCA INTELIGENTE: Tenta achar parcial
+    if (!p) {
+        p = produtosGlobais.find(x => String(x.nome).toLowerCase().includes(n.toLowerCase()) || String(x.codigo).toLowerCase().includes(n.toLowerCase()));
+    }
+
     if(p) {
-        // MÁGICA DO LEITOR PARA A OS: Troca o código bipado pelo Nome do Produto na tela!
         campoBusca.value = p.nome;
 
         let custo = window.parseMoedaBr(p.custo);
@@ -2646,7 +2657,6 @@ window.sincronizarTotaisDoDia = async function() {
         document.getElementById('osEstoqueValUn').value = venda.toFixed(2);
         window.calcTotalEstoqueOS();
         
-        // Pula o cursor direto para a quantidade para você não precisar usar o mouse
         document.getElementById('osEstoqueQtd').focus();
     } else {
         document.getElementById('osEstoqueCusto').value = '';
@@ -4504,10 +4514,16 @@ window.preencherCamposVendaEstoque = function() {
     
     if(!termoBusca) return;
 
-    const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || String(x.codigo).trim() === termoBusca);
+    // 1. Tenta achar o produto pelo nome EXATO ou código EXATO
+    let p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === termoBusca.toLowerCase() || String(x.codigo).trim() === termoBusca);
+
+    // 2. BUSCA INTELIGENTE: Se não achou exato, procura por parte do nome!
+    if (!p) {
+        p = produtosGlobais.find(x => String(x.nome).toLowerCase().includes(termoBusca.toLowerCase()) || String(x.codigo).toLowerCase().includes(termoBusca.toLowerCase()));
+    }
 
     if (p) {
-        // MÁGICA DO LEITOR: Substitui o número pelo Nome do produto na tela!
+        // MÁGICA: Auto-completa o nome correto na caixinha para você ver qual ele escolheu
         campoBusca.value = p.nome;
 
         let custo = window.parseMoedaBr(p.custo);
@@ -4522,7 +4538,6 @@ window.preencherCamposVendaEstoque = function() {
         document.getElementById('vendaProdutoMargem').value = margem.toFixed(2);
         document.getElementById('vendaProdutoPrecoFinal').value = venda.toFixed(2);
         
-        // Já pula o cursor para o campo de Quantidade para agilizar a venda
         document.getElementById('vendaProdutoQtd').focus();
     } else {
         document.getElementById('vendaProdutoCusto').value = '';
