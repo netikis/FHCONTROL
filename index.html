@@ -5041,17 +5041,14 @@ window.renderizarTabelaBanco = function() {
     if(!tabela) return;
     tabela.innerHTML = '';
     
-    // Pega os lançamentos manuais do banco
     let manuais = window.extratoBanco.map(e => ({...e, isManual: true}));
 
-    // Pega TODAS as Vendas/OS de Pix, Cartão ou Boleto
     let digitais = caixaGlobal.filter(v => {
         let formaLow = (v.formaPagamento || '').toLowerCase();
         let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
         return isDigital;
     }).map(v => ({...v, isManual: false}));
 
-    // Junta tudo
     let dadosUnidos = [...manuais, ...digitais].sort((a, b) => b.timestamp - a.timestamp);
 
     let dadosFiltrados = dadosUnidos.filter(v => {
@@ -5066,7 +5063,8 @@ window.renderizarTabelaBanco = function() {
     }
 
     const inicio = (window.paginaAtualBanco - 1) * window.itensPorPaginaBanco;
-    const itensDaPagina = dadosFiltrados.slice(inicio, inicio + window.itensPorPaginaBanco);
+    const fim = inicio + window.itensPorPaginaBanco;
+    const itensDaPagina = dadosFiltrados.slice(inicio, fim);
     
     if(document.getElementById('infoPaginaBanco')) {
         document.getElementById('infoPaginaBanco').innerText = `Pág ${window.paginaAtualBanco} de ${Math.ceil(dadosFiltrados.length / window.itensPorPaginaBanco)}`;
@@ -5076,11 +5074,14 @@ window.renderizarTabelaBanco = function() {
         const tr = document.createElement('tr'); 
 
         if (v.isManual) {
-            let cor = v.tipo === 'ENTRADA' ? '#2ecc71' : '#e74c3c';
-            let sinal = v.tipo === 'ENTRADA' ? '+' : '-';
+            let isFechamento = v.tipo === 'FECHAMENTO_BANCO';
+            let cor = isFechamento ? '#8e44ad' : (v.tipo === 'ENTRADA' ? '#2ecc71' : '#e74c3c');
+            let sinal = isFechamento ? '' : (v.tipo === 'ENTRADA' ? '+' : '-');
+            let tipoBadge = isFechamento ? 'FECHAMENTO' : v.tipo;
+            
             tr.innerHTML = `
                 <td style="font-weight: bold; color: #ffffff;">-</td>
-                <td><span style="background-color: ${cor}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${v.tipo}</span></td>
+                <td><span style="background-color: ${cor}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${tipoBadge}</span></td>
                 <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
                 <td style="font-weight: bold; color: #bdc3c7;">[MANUAL] ${v.descricao}</td>
                 <td>-</td>
@@ -5090,7 +5091,6 @@ window.renderizarTabelaBanco = function() {
                 <td class="acoes-flex"><button class="btn-acao del" onclick="excluirLancamentoBanco('${v.id}')" title="Excluir">🗑️ Excluir</button></td>
             `;
         } else {
-            // Renderiza com TODOS os botões para Vendas Digitais
             const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
             let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
             let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
@@ -5106,11 +5106,8 @@ window.renderizarTabelaBanco = function() {
             let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento">✏️ Ed</button>`;
             acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')">📱 Whats</button>`;
             if (!v.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')">🔗 Link</button>`; }
-            
-            // --- BOTÕES DE NOTA FISCAL ADICIONADOS AQUI ---
             acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
             acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
-            
             acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')">📄 PDF</button>`;
             acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')">🧾 Cupom</button>`;
             
@@ -5120,7 +5117,6 @@ window.renderizarTabelaBanco = function() {
                 acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${v.id}')">🔄 Estornar</button>`;
             }
             
-            // --- BOTÃO DE EXCLUIR/CANCELAR VENDA ADICIONADO AQUI ---
             acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
 
             let corTipo = v.tipo === 'VENDA' ? '#3498db' : '#f39c12';
@@ -5142,16 +5138,35 @@ window.renderizarTabelaBanco = function() {
     });
 };
 
+// NOVA FUNÇÃO: Calcula e atualiza o painel do banco (BLINDADA CONTRA DADOS ANTIGOS)
 window.atualizarPainelBanco = function() {
+    let lastFechamentoTime = 0;
+    
+    // 1. Acha o momento do último fechamento
+    (window.extratoBanco || []).forEach(d => {
+        let ts = d.timestamp || 0; // Proteção contra registros antigos
+        if((d.tipo === 'FECHAMENTO_BANCO' || d.tipo === 'FECHAMENTO') && ts > lastFechamentoTime) {
+            lastFechamentoTime = ts;
+        }
+    });
+
     let totalEntradas = 0;
     let totalSaidas = 0;
 
-    window.extratoBanco.forEach(doc => {
+    // 2. Soma Extrato Manual (Pós-fechamento)
+    (window.extratoBanco || []).forEach(doc => {
+        let ts = doc.timestamp || 0;
+        if(ts <= lastFechamentoTime) return; // Se for velho, ignora e não soma!
+        
         if (doc.tipo === 'ENTRADA') totalEntradas += (parseFloat(doc.valor) || 0);
         else if (doc.tipo === 'SAIDA') totalSaidas += (parseFloat(doc.valor) || 0);
     });
 
-    caixaGlobal.forEach(v => {
+    // 3. Soma Vendas Digitais (Pós-fechamento)
+    (window.caixaGlobal || []).forEach(v => {
+        let ts = v.timestamp || 0;
+        if(ts <= lastFechamentoTime) return; // Se for velho, ignora e não soma!
+        
         let formaLow = (v.formaPagamento || '').toLowerCase();
         if (v.statusPagamento === 'PAGO' && (formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto'))) {
             totalEntradas += (parseFloat(v.total) || 0);
@@ -5170,66 +5185,52 @@ window.atualizarPainelBanco = function() {
 };
 
 window.fecharCaixaBanco = async function() {
-    let hoje = new Date().toLocaleDateString('pt-BR');
+    let lastFechamentoTime = 0;
+    (window.extratoBanco || []).forEach(d => {
+        let ts = d.timestamp || 0;
+        if((d.tipo === 'FECHAMENTO_BANCO' || d.tipo === 'FECHAMENTO') && ts > lastFechamentoTime) lastFechamentoTime = ts;
+    });
+
     let totalEntradas = 0;
     let totalSaidas = 0;
 
-    // 1. Pega todas as VENDAS DIGITAIS (Pix, Cartão, Boleto) de HOJE
-    let baseGlobal = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
-    let vendasDigitaisHoje = baseGlobal.filter(v => {
+    (window.extratoBanco || []).forEach(doc => {
+        let ts = doc.timestamp || 0;
+        if(ts <= lastFechamentoTime) return;
+        if (doc.tipo === 'ENTRADA') totalEntradas += (parseFloat(doc.valor) || 0);
+        else if (doc.tipo === 'SAIDA') totalSaidas += (parseFloat(doc.valor) || 0);
+    });
+
+    (window.caixaGlobal || []).forEach(v => {
+        let ts = v.timestamp || 0;
+        if(ts <= lastFechamentoTime) return;
         let formaLow = (v.formaPagamento || '').toLowerCase();
-        let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
-        return isDigital && v.dataStr && v.dataStr.includes(hoje) && (v.statusPagamento === 'PAGO' || !v.statusPagamento);
+        if (v.statusPagamento === 'PAGO' && (formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto'))) {
+            totalEntradas += (parseFloat(v.total) || 0);
+        }
     });
 
-    // Soma as vendas digitais
-    vendasDigitaisHoje.forEach(v => {
-        totalEntradas += parseFloat(v.total) || 0;
-    });
+    let saldoInicial = window.saldoInicialBanco || 0;
+    let saldoAtual = saldoInicial + totalEntradas - totalSaidas;
 
-    // 2. Pega os LANÇAMENTOS MANUAIS DO BANCO de HOJE
-    let manuaisHoje = (typeof extratoBanco !== 'undefined' ? window.extratoBanco : []).filter(e => e.dataStr && e.dataStr.includes(hoje));
-
-    // Soma os lançamentos manuais
-    manuaisHoje.forEach(e => {
-        if (e.tipo === 'ENTRADA') totalEntradas += parseFloat(e.valor) || 0;
-        if (e.tipo === 'SAIDA') totalSaidas += parseFloat(e.valor) || 0;
-    });
-
-    let saldoDoDia = totalEntradas - totalSaidas;
-
-    // 3. Monta o resumo na tela
-    let msg = `📊 FECHAMENTO DO BANCO - HOJE (${hoje}):\n\n` +
-              `➕ Total Entradas (Pix/Cartão/Manuais): R$ ${totalEntradas.toFixed(2)}\n` +
-              `➖ Total Saídas/Taxas: R$ ${totalSaidas.toFixed(2)}\n` +
-              `=========================\n` +
-              `💰 SALDO LÍQUIDO DO DIA: R$ ${saldoDoDia.toFixed(2)}\n\n` +
-              `Deseja gravar este fechamento no extrato bancário?`;
+    let msg = `FECHAMENTO DO BANCO\n\nSaldo Inicial: R$ ${saldoInicial.toFixed(2)}\nTotal de Entradas: R$ ${totalEntradas.toFixed(2)}\nTotal de Saídas: R$ ${totalSaidas.toFixed(2)}\n\nSaldo Atual no Banco: R$ ${saldoAtual.toFixed(2)}\n\nDeseja realizar o Fechamento?\nO painel será TOTALMENTE ZERADO (R$ 0,00) para o próximo turno.`;
 
     if (!confirm(msg)) return;
 
-    // 4. Salva o fechamento no banco de dados (COM O ENDEREÇO CORRETO AGORA)
     try {
         let docFechamento = {
-            tipo: saldoDoDia >= 0 ? 'ENTRADA' : 'SAIDA',
-            descricao: `🔒 FECHAMENTO DO DIA (Entrou: R$ ${totalEntradas.toFixed(2)} | Saiu: R$ ${totalSaidas.toFixed(2)})`,
-            valor: Math.abs(saldoDoDia),
+            tipo: 'FECHAMENTO_BANCO',
+            descricao: `🔒 FECHAMENTO DE CAIXA (Saldo Conferido: R$ ${saldoAtual.toFixed(2)})`,
+            valor: saldoAtual,
             dataStr: new Date().toLocaleString('pt-BR'),
             timestamp: Date.now(),
             usuario: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema'
         };
+        
+        await window.meuSet(window.meuPush(window.meuRef(window.meuBanco, 'caixaBancoExtrato')), docFechamento);
+        await window.meuSet(window.meuRef(window.meuBanco, 'caixaBancoStatus'), { saldoInicial: 0 });
 
-        // Usa as chaves do Firebase que já estão carregadas no seu sistema
-        if (typeof window.meuSet === 'function') {
-            await window.meuSet(window.meuPush(window.meuRef(window.meuBanco, 'caixaBancoExtrato')), docFechamento);
-        } else {
-            // Plano B caso a variável global falhe
-            const { ref, push, set } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
-            await set(push(ref(window.meuBanco, 'caixaBancoExtrato')), docFechamento);
-        }
-        
-        alert("✅ Fechamento do Banco registrado com sucesso!");
-        
+        alert("✅ Banco fechado com sucesso! Painel totalmente zerado.");
     } catch(e) {
         alert("Erro ao registrar o fechamento do banco: " + e.message);
     }
