@@ -1966,20 +1966,20 @@ window.imprimirEtiquetasEstoque = function() {
         return;
     }
 
-    let qtdCopias = prompt("Quantas cópias de cada etiqueta selecionada você deseja imprimir?", "1");
+    let qtdCopias = prompt("Quantas cópias de CADA ETIQUETA você deseja imprimir?", "1");
     if (!qtdCopias || isNaN(qtdCopias) || qtdCopias <= 0) return;
 
     let htmlEtiquetas = `
         <html>
         <head>
-            <title>Impressão de Etiquetas - FH Control</title>
+            <title>Impressão Elgin L42 Pro - Dupla (Código Gigante)</title>
             <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
             <style>
-                /* RESET GERAL E CONFIGURAÇÃO DA PÁGINA (ROLO 104x30mm) */
+                /* CONFIGURAÇÃO EXATA PARA ELGIN L42 PRO - ROLO DUPLO (104x30mm) */
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 
                 @page {
-                    size: 104mm 30mm; /* Largura total do rolo de 2 colunas x Altura */
+                    size: 104mm 30mm;
                     margin: 0mm; 
                 }
                 
@@ -1987,47 +1987,46 @@ window.imprimirEtiquetasEstoque = function() {
                     font-family: Arial, sans-serif; 
                     background: #fff; 
                     width: 104mm;
-                    -webkit-print-color-adjust: exact;
+                    height: 30mm;
                     color: #000;
+                    overflow: hidden; 
                 }
                 
-                /* LINHA QUE SEGURA AS DUAS ETIQUETAS JUNTAS */
                 .linha-etiquetas {
                     display: flex;
                     flex-direction: row;
                     width: 104mm;
                     height: 30mm;
-                    page-break-after: always; /* Pula para a próxima linha do rolo após 2 etiquetas */
-                    overflow: hidden;
-                    justify-content: center;
+                    page-break-inside: avoid;
+                    page-break-after: always; 
+                    justify-content: flex-start;
                     align-items: center;
-                    gap: 2mm; /* O espaço exato de 2mm a 3mm entre uma etiqueta e outra no rolo */
+                    gap: 2mm; 
+                    padding-left: 1mm; 
                 }
                 
-                /* CADA ETIQUETA INDIVIDUAL (50x30mm) */
                 .etiqueta {
                     width: 50mm; 
                     height: 30mm;
-                    padding: 1.5mm 2mm; /* Respiro interno para não colar na borda */
+                    padding: 1.5mm; 
                     display: flex;
                     flex-direction: column;
                     justify-content: flex-start;
                     overflow: hidden;
-                    background: #fff;
                 }
                 
-                .etq-topo { font-size: 6pt; margin-bottom: 1px; font-weight: bold;}
-                .etq-nome { font-size: 7pt; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; width: 100%; line-height: 1.1; margin-bottom: 1px;}
-                .etq-cod { font-size: 6pt; margin-bottom: 1px; }
-                .etq-preco { font-size: 11pt; font-weight: 900; margin-bottom: 1px;}
+                /* Textos mais compactos para dar ESPAÇO MÁXIMO ao Código de Barras */
+                .etq-nome { font-size: 7.5pt; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; width: 100%; line-height: 1; margin-bottom: 2px; text-align: center;}
+                .etq-preco { font-size: 12pt; font-weight: 900; margin-bottom: 2px; text-align: center;}
                 
+                /* CÓDIGO DE BARRAS GIGANTE */
                 .etq-barcode-container { width: 100%; text-align: center; margin-top: auto; }
-                .etq-barcode-container svg { max-width: 100%; height: 23px !important; } 
+                .etq-barcode-container svg { max-width: 100%; height: 45px !important; } 
                 
-                /* VISUALIZAÇÃO APENAS NA TELA DO PC ANTES DE IMPRIMIR */
+                /* VISUALIZAÇÃO NA TELA */
                 @media screen {
-                    body { background: #555; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;}
-                    .linha-etiquetas { background: #fff; border: 1px solid #ccc; box-shadow: 0 4px 6px rgba(0,0,0,0.3);}
+                    body { background: #555; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; height: auto; overflow: auto;}
+                    .linha-etiquetas { background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.3);}
                     .etiqueta { border: 1px dashed #ccc; }
                 }
                 
@@ -2046,10 +2045,9 @@ window.imprimirEtiquetasEstoque = function() {
             </style>
         </head>
         <body>
-            <button class="btn-imprimir" onclick="window.print()">🖨️ IMPRIMIR AGORA</button>
+            <button class="btn-imprimir" onclick="window.print()">🖨️ IMPRIMIR NA ELGIN</button>
     `;
 
-    // 1. Gera todas as etiquetas individuais num Array
     let arrayEtiquetas = [];
     checkboxes.forEach(chk => {
         let nome = chk.getAttribute('data-nome');
@@ -2059,18 +2057,16 @@ window.imprimirEtiquetasEstoque = function() {
         for (let i = 0; i < qtdCopias; i++) {
             arrayEtiquetas.push(`
                 <div class="etiqueta">
-                    <div class="etq-topo">VALOR UNIT.</div>
                     <div class="etq-nome">${nome}</div>
-                    <div class="etq-cod">Cod: ${cod}</div>
                     <div class="etq-preco">R$ ${parseFloat(preco).toFixed(2)}</div>
                     <div class="etq-barcode-container">
                         <svg class="barcode"
                             jsbarcode-value="${cod}"
                             jsbarcode-displayvalue="true"
-                            jsbarcode-width="1.3"
-                            jsbarcode-height="23"
-                            jsbarcode-fontSize="10"
-                            jsbarcode-textmargin="0"
+                            jsbarcode-width="2"
+                            jsbarcode-height="45"
+                            jsbarcode-fontSize="11"
+                            jsbarcode-textmargin="1"
                             jsbarcode-margin="0">
                         </svg>
                     </div>
@@ -2079,10 +2075,10 @@ window.imprimirEtiquetasEstoque = function() {
         }
     });
 
-    // 2. Agrupa as etiquetas de 2 em 2 dentro da mesma linha (page-break)
+    // Agrupa de 2 em 2 (Lado a lado)
     for (let i = 0; i < arrayEtiquetas.length; i += 2) {
         let etq1 = arrayEtiquetas[i];
-        let etq2 = arrayEtiquetas[i + 1] ? arrayEtiquetas[i + 1] : '<div class="etiqueta" style="border:none;"></div>'; // Se for ímpar, põe caixa vazia do lado direito
+        let etq2 = arrayEtiquetas[i + 1] ? arrayEtiquetas[i + 1] : '<div class="etiqueta" style="border:none; visibility: hidden;"></div>';
 
         htmlEtiquetas += `
             <div class="linha-etiquetas">
