@@ -1538,8 +1538,12 @@ window.mudarPaginaProd = function(direcao) {
    });
 
    // Função universal para cancelar a edição de um documento
+  // Função universal para cancelar a edição de um documento
    window.cancelarEdicaoDocumento = function() {
        if(!confirm("Deseja cancelar a edição? As alterações não serão salvas.")) return;
+       
+       // MÁGICA: Limpa o ID da memória global corretamente
+       window.editandoDocId = null;
        editandoDocId = null;
        
        carrinhoVenda = []; window.atualizarCarrinhoVenda();
@@ -1563,9 +1567,9 @@ window.mudarPaginaProd = function(direcao) {
        window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
        window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO');
        
-       document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
-       document.getElementById('btnCancelarEdicaoOS').style.display = 'none';
-       document.getElementById('colCancelarEdicaoOS').style.display = 'none';
+       if(document.getElementById('btnCancelarEdicaoVenda')) document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
+       if(document.getElementById('btnCancelarEdicaoOS')) document.getElementById('btnCancelarEdicaoOS').style.display = 'none';
+       if(document.getElementById('colCancelarEdicaoOS')) document.getElementById('colCancelarEdicaoOS').style.display = 'none';
        
        alert("Edição cancelada. Você está criando um novo documento.");
    }
@@ -2242,16 +2246,23 @@ window.addAoCarrinhoVenda_Estoque = function() {
     const busca = document.getElementById('vendaProdutoEstoqueBusca').value;
     const qtd = parseInt(document.getElementById('vendaProdutoQtd').value) || 1;
     const precoUn = parseFloat(document.getElementById('vendaProdutoPrecoFinal').value);
-    const custoUn = parseFloat(document.getElementById('vendaProdutoCusto').value);
-    const margem = parseFloat(document.getElementById('vendaProdutoMargem').value);
+    const custoUn = parseFloat(document.getElementById('vendaProdutoCusto').value) || 0;
+    const margem = parseFloat(document.getElementById('vendaProdutoMargem').value) || 0;
 
     if (!busca || isNaN(precoUn)) return alert("Selecione um produto e confira os valores.");
 
     const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === busca.trim().toLowerCase() || String(x.codigo).trim() === busca.trim());
-    const nomeExibir = p ? `${p.nome} (Cód: ${p.codigo || '-'}) (Qtd: ${qtd})` : `${busca} (Qtd: ${qtd})`;
+    
+    // MÁGICA 2: Proteção para NUNCA deixar adicionar um item invisível pro estoque!
+    if (!p) {
+        alert("⚠️ Produto não encontrado no estoque!\nSe for um item sem cadastro, use a opção '3. Adicionar Item Avulso'.");
+        return;
+    }
+
+    const nomeExibir = `${p.nome} (Cód: ${p.codigo || '-'}) (Qtd: ${qtd})`;
 
     carrinhoVenda.push({
-        idProd: p ? p.id : null, nome: nomeExibir, valor: precoUn * qtd, valorOriginal: precoUn, 
+        idProd: p.id, nome: nomeExibir, valor: precoUn * qtd, valorOriginal: precoUn, 
         custoOriginal: custoUn, margemOriginal: margem, qtdBaixa: qtd, ehEstoque: true, categoriaOS: 'material'
     });
 
@@ -2274,29 +2285,32 @@ window.addAoCarrinhoVenda_Estoque = function() {
            window.atualizarCarrinhoVenda();
        }
 
-       window.editarItemCarrinhoVenda = function(idx) {
-           const item = carrinhoVenda[idx];
-           carrinhoVenda.splice(idx, 1);
-           window.atualizarCarrinhoVenda();
-           
-           if (item.ehEstoque) {
-               let nomePuro = item.nome.split(' (Qtd:');
-               document.getElementById('vendaProdutoEstoqueBusca').value = nomePuro[0].trim();
-               document.getElementById('vendaProdutoQtd').value = item.qtdBaixa || 1;
-               window.preencherCamposVendaEstoque();
+      window.editarItemCarrinhoVenda = function(idx) {
+    const item = carrinhoVenda[idx];
+    carrinhoVenda.splice(idx, 1);
+    window.atualizarCarrinhoVenda();
+    
+    if (item.ehEstoque) {
+        // MÁGICA 1: Limpa qualquer "(Cód:" ou "(Qtd:" que esteja no nome para a busca achar o produto de primeira!
+        let nomePuro = item.nome.split(' (Qtd:')[0];
+        nomePuro = nomePuro.split(' (Cód:')[0].trim();
+        
+        document.getElementById('vendaProdutoEstoqueBusca').value = nomePuro;
+        document.getElementById('vendaProdutoQtd').value = item.qtdBaixa || 1;
+        window.preencherCamposVendaEstoque();
 
-               if (item.custoOriginal !== undefined) document.getElementById('vendaProdutoCusto').value = item.custoOriginal.toFixed(2);
-               if (item.margemOriginal !== undefined) document.getElementById('vendaProdutoMargem').value = item.margemOriginal.toFixed(2);
-               if (item.valorOriginal !== undefined) document.getElementById('vendaProdutoPrecoFinal').value = item.valorOriginal.toFixed(2);
+        if (item.custoOriginal !== undefined) document.getElementById('vendaProdutoCusto').value = item.custoOriginal.toFixed(2);
+        if (item.margemOriginal !== undefined) document.getElementById('vendaProdutoMargem').value = item.margemOriginal.toFixed(2);
+        if (item.valorOriginal !== undefined) document.getElementById('vendaProdutoPrecoFinal').value = item.valorOriginal.toFixed(2);
 
-               document.getElementById('vendaProdutoQtd').focus();
-           } else {
-               document.getElementById('vendaAvulsoNome').value = item.nome;
-               document.getElementById('vendaAvulsoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
-               document.getElementById('vendaAvulsoPerc').value = item.percOriginal || 0;
-               document.getElementById('vendaAvulsoValor').focus();
-           }
-       }
+        document.getElementById('vendaProdutoQtd').focus();
+    } else {
+        document.getElementById('vendaAvulsoNome').value = item.nome;
+        document.getElementById('vendaAvulsoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
+        document.getElementById('vendaAvulsoPerc').value = item.percOriginal || 0;
+        document.getElementById('vendaAvulsoValor').focus();
+    }
+};
        
        window.atualizarCarrinhoVenda = function() {
            const div = document.getElementById('listaCarrinho'); div.innerHTML = ''; 
@@ -2370,12 +2384,17 @@ window.finalizarVenda = async function() {
         if (window.editandoDocId) {
             const snapAntigo = await get(ref(dbBanco, 'caixa/' + window.editandoDocId));
             originalDoc = snapAntigo.val();
+            
+            // 1. DEVOLVE OS ITENS ANTIGOS PARA O ESTOQUE
             if (originalDoc && originalDoc.itens) {
                 let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
                 for (let oldItem of antigosItens) {
                     if (oldItem.ehEstoque && oldItem.idProd) {
-                        const snapP = await get(ref(dbBanco, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
-                        if (pDb) { await update(ref(dbBanco, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); }
+                        const snapP = await get(ref(dbBanco, 'produtos/' + oldItem.idProd)); 
+                        let pDb = snapP.val();
+                        if (pDb) { 
+                            await update(ref(dbBanco, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); 
+                        }
                     }
                 }
             }
@@ -2399,11 +2418,9 @@ window.finalizarVenda = async function() {
         }
 
         if (tipoDocSelecionado === 'VENDA') {
-            // MÁGICA: Tira acentos e não erra nunca mais o que é cartão
             let formaLow = formaPag.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             let isDigital = formaLow.includes('pix') || formaLow.includes('cartao') || formaLow.includes('debito') || formaLow.includes('credito') || formaLow.includes('boleto');
             
-            // Só lança na Gaveta Física se NÃO for digital
             if (!isDigital) {
                 if (window.editandoDocId && originalDoc) {
                     let statusAntigo = originalDoc.statusPagamento || 'PAGO';
@@ -2415,10 +2432,14 @@ window.finalizarVenda = async function() {
                 }
             }
 
+            // 2. DESCONTA OS NOVOS ITENS DO ESTOQUE (MÁGICA: Agora garante a baixa incondicional)
             for (let item of carrinhoVenda) {
                 if (item.ehEstoque && item.idProd) {
-                    const snap = await get(ref(dbBanco, 'produtos/' + item.idProd)); const pDb = snap.val();
-                    if (pDb && pDb.quantidade > 0) { await update(ref(dbBanco, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
+                    const snap = await get(ref(dbBanco, 'produtos/' + item.idProd)); 
+                    const pDb = snap.val();
+                    if (pDb) { 
+                        await update(ref(dbBanco, 'produtos/' + item.idProd), { quantidade: Math.max(0, (pDb.quantidade || 0) - item.qtdBaixa) }); 
+                    }
                 }
             }
         }
@@ -2435,6 +2456,7 @@ window.finalizarVenda = async function() {
         window.carregarSelectsGerais(); window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
 
         window.editandoDocId = null;
+        editandoDocId = null;
         if(document.getElementById('btnCancelarEdicaoVenda')) document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
 
     } catch(e) { alert("Erro ao salvar Venda: " + e.message); }
@@ -3228,12 +3250,15 @@ window.atualizarResumoPagamentosHoje = function() {
        }
        
        // --- FUNÇÃO PARA EDITAR DOCUMENTOS ---
+ // --- FUNÇÃO PARA EDITAR DOCUMENTOS ---
        window.editarDocumentoCaixa = function(id) {
            try {
                const doc = caixaGlobal.find(x => x.id === id);
                if (!doc) return alert("Documento não encontrado no sistema.");
 
-               editandoDocId = id;
+               // MÁGICA: Trava o ID na memória global para a hora de salvar!
+               window.editandoDocId = id;
+               editandoDocId = id; 
                
                let tipoDoc = (doc.tipo || '').toUpperCase();
                let isVenda = tipoDoc.includes('VENDA') || tipoDoc.includes('RECIBO') || tipoDoc.includes('ORCAMENTO');
@@ -3252,7 +3277,7 @@ window.atualizarResumoPagamentosHoje = function() {
                    carrinhoVenda = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
                    window.atualizarCarrinhoVenda();
                    
-                   document.getElementById('btnCancelarEdicaoVenda').style.display = 'block';
+                   if(document.getElementById('btnCancelarEdicaoVenda')) document.getElementById('btnCancelarEdicaoVenda').style.display = 'block';
                    alert(`MODO DE EDIÇÃO ATIVADO!\nVocê está editando o Documento Nº ${doc.os || 'S/N'}.`);
                    window.scrollTo(0,0);
                    
@@ -3286,8 +3311,8 @@ window.atualizarResumoPagamentosHoje = function() {
                    window.calcularDeslocamentoOS();
                    window.atualizarCarrinhoOS();
                    
-                   document.getElementById('btnCancelarEdicaoOS').style.display = 'block';
-                   document.getElementById('colCancelarEdicaoOS').style.display = 'block';
+                   if(document.getElementById('btnCancelarEdicaoOS')) document.getElementById('btnCancelarEdicaoOS').style.display = 'block';
+                   if(document.getElementById('colCancelarEdicaoOS')) document.getElementById('colCancelarEdicaoOS').style.display = 'block';
                    
                    alert(`MODO DE EDIÇÃO ATIVADO!\nVocê está editando a OS Nº ${doc.os || 'S/N'}.`);
                    window.scrollTo(0,0);
@@ -3297,7 +3322,7 @@ window.atualizarResumoPagamentosHoje = function() {
            } catch (erro) {
                alert("Ocorreu um erro ao carregar os dados para edição: " + erro.message);
            }
-       }
+       };
 
        // --- CONSTRUÇÃO DO PDF (DOCUMENTOS) ---
        window.gerarPDF_Historico = function(id) {
