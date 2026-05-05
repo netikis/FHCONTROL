@@ -1972,15 +1972,15 @@ window.imprimirEtiquetasEstoque = function() {
     let htmlEtiquetas = `
         <html>
         <head>
-            <title>Impressão Elgin L42 Pro - Dupla (Código Gigante)</title>
+            <title>Impressão Elgin L42 Pro - Alinhamento Perfeito</title>
             <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
             <style>
-                /* CONFIGURAÇÃO EXATA PARA ELGIN L42 PRO - ROLO DUPLO (104x30mm) */
+                /* ZERANDO QUALQUER ESPAÇO EXTRA */
                 * { margin: 0; padding: 0; box-sizing: border-box; }
                 
                 @page {
                     size: 104mm 30mm;
-                    margin: 0mm; 
+                    margin: 0mm !important; 
                 }
                 
                 body { 
@@ -1988,6 +1988,8 @@ window.imprimirEtiquetasEstoque = function() {
                     background: #fff; 
                     width: 104mm;
                     height: 30mm;
+                    margin: 0;
+                    padding: 0;
                     color: #000;
                     overflow: hidden; 
                 }
@@ -1999,10 +2001,8 @@ window.imprimirEtiquetasEstoque = function() {
                     height: 30mm;
                     page-break-inside: avoid;
                     page-break-after: always; 
-                    justify-content: flex-start;
+                    justify-content: space-between; 
                     align-items: center;
-                    gap: 2mm; 
-                    padding-left: 1mm; 
                 }
                 
                 .etiqueta {
@@ -2011,24 +2011,31 @@ window.imprimirEtiquetasEstoque = function() {
                     padding: 1.5mm; 
                     display: flex;
                     flex-direction: column;
-                    justify-content: flex-start;
+                    justify-content: center;
+                    align-items: center;
                     overflow: hidden;
                 }
                 
-                /* Textos mais compactos para dar ESPAÇO MÁXIMO ao Código de Barras */
-                .etq-nome { font-size: 7.5pt; font-weight: bold; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; width: 100%; line-height: 1; margin-bottom: 2px; text-align: center;}
+                /* MÁGICA AQUI: Fonte menor (7pt), máximo 2 linhas e corta com '...' se for muito grande */
+                .etq-nome { 
+                    font-size: 7pt; 
+                    font-weight: bold; 
+                    line-height: 1.1; 
+                    margin-bottom: 2px; 
+                    text-align: center; 
+                    width: 100%; 
+                    display: -webkit-box; 
+                    -webkit-line-clamp: 2; 
+                    -webkit-box-orient: vertical; 
+                    overflow: hidden; 
+                    text-overflow: ellipsis;
+                }
+                
                 .etq-preco { font-size: 12pt; font-weight: 900; margin-bottom: 2px; text-align: center;}
                 
-                /* CÓDIGO DE BARRAS GIGANTE */
-                .etq-barcode-container { width: 100%; text-align: center; margin-top: auto; }
-                .etq-barcode-container svg { max-width: 100%; height: 45px !important; } 
-                
-                /* VISUALIZAÇÃO NA TELA */
-                @media screen {
-                    body { background: #555; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; height: auto; overflow: auto;}
-                    .linha-etiquetas { background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.3);}
-                    .etiqueta { border: 1px dashed #ccc; }
-                }
+                /* CÓDIGO DE BARRAS GIGANTE E CENTRALIZADO */
+                .etq-barcode-container { width: 100%; text-align: center; }
+                .etq-barcode-container svg { max-width: 48mm; height: 42px !important; } 
                 
                 @media print {
                     .btn-imprimir { display: none !important; }
@@ -2041,7 +2048,6 @@ window.imprimirEtiquetasEstoque = function() {
                     border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
                     z-index: 1000;
                 }
-                .btn-imprimir:hover { background: #2ecc71; }
             </style>
         </head>
         <body>
@@ -2050,7 +2056,13 @@ window.imprimirEtiquetasEstoque = function() {
 
     let arrayEtiquetas = [];
     checkboxes.forEach(chk => {
-        let nome = chk.getAttribute('data-nome');
+        let nome = chk.getAttribute('data-nome') || '';
+        
+        // MÁGICA 2: Corta o nome na força bruta se tiver mais de 45 caracteres!
+        if (nome.length > 45) {
+            nome = nome.substring(0, 45) + "...";
+        }
+        
         let cod = chk.getAttribute('data-codigo') || '00000000';
         let preco = chk.getAttribute('data-venda');
 
@@ -2064,9 +2076,9 @@ window.imprimirEtiquetasEstoque = function() {
                             jsbarcode-value="${cod}"
                             jsbarcode-displayvalue="true"
                             jsbarcode-width="2"
-                            jsbarcode-height="45"
+                            jsbarcode-height="42"
                             jsbarcode-fontSize="11"
-                            jsbarcode-textmargin="1"
+                            jsbarcode-textmargin="0"
                             jsbarcode-margin="0">
                         </svg>
                     </div>
@@ -2075,7 +2087,6 @@ window.imprimirEtiquetasEstoque = function() {
         }
     });
 
-    // Agrupa de 2 em 2 (Lado a lado)
     for (let i = 0; i < arrayEtiquetas.length; i += 2) {
         let etq1 = arrayEtiquetas[i];
         let etq2 = arrayEtiquetas[i + 1] ? arrayEtiquetas[i + 1] : '<div class="etiqueta" style="border:none; visibility: hidden;"></div>';
