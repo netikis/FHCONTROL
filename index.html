@@ -2366,10 +2366,13 @@ window.addAoCarrinhoVenda_Estoque = function() {
        
        window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); window.atualizarCarrinhoVenda(); }
        
-// --- FUNÇÃO PARA FINALIZAR VENDA (BLINDADA CONTRA DUPLICAÇÃO) ---
-window.isSalvandoVenda = false; // Trava global
+// ==========================================================
+// 2. FINALIZAR VENDA (BLINDADA MÁXIMA - PRESERVA TUDO)
+// ==========================================================
+window.isSalvandoVenda = false; 
 
-window.finalizarVenda = async function() {
+window.finalizarVenda = async function(event) {
+    if (event) event.preventDefault();
     if (window.isSalvandoVenda) return; 
 
     const os = parseInt(document.getElementById('vendaOS').value);
@@ -2387,54 +2390,60 @@ window.finalizarVenda = async function() {
 
     const totalText = document.getElementById('vendaTotalFinalTxt').innerText.replace('TOTAL: R$ ', '');
     const total = parseFloat(totalText) || 0;
-
     const valorRecebido = document.getElementById('vendaValorRecebido') ? (parseFloat(document.getElementById('vendaValorRecebido').value) || 0) : 0;
     let troco = valorRecebido - total;
     troco = troco > 0 ? troco : 0;
 
-    window.isSalvandoVenda = true; // Ativa a trava
+    const idNotaEditada = window.editandoDocId || sessionStorage.getItem('idNotaEditando');
+
+    window.isSalvandoVenda = true; 
 
     try {
         const { ref, get, update, set, push } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
         let dbBanco = window.meuBanco;
 
-        let originalDoc = null;
-        let atualizacoesEstoque = {}; // 🔥 O LOTE MÁGICO: Guarda as baixas e manda tudo de uma vez!
-
-        if (window.editandoDocId) {
-            const snapAntigo = await get(ref(dbBanco, 'caixa/' + window.editandoDocId));
-            originalDoc = snapAntigo.val();
+        let originalDoc = {};
+        if (idNotaEditada) {
+            const snapAntigo = await get(ref(dbBanco, 'caixa/' + idNotaEditada));
+            originalDoc = snapAntigo.val() || {};
             
-            // 1. DEVOLVE OS ITENS ANTIGOS NA MEMÓRIA
-            if (originalDoc && originalDoc.itens) {
+            if (originalDoc.itens) {
                 let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
                 for (let oldItem of antigosItens) {
                     if (oldItem.ehEstoque && oldItem.idProd) {
-                        let prodMemoria = produtosGlobais.find(p => p.id === oldItem.idProd);
-                        if (prodMemoria) { 
-                            let novaQtd = (Number(prodMemoria.quantidade) || 0) + (Number(oldItem.qtdBaixa) || 0);
-                            atualizacoesEstoque[`produtos/${oldItem.idProd}/quantidade`] = novaQtd;
-                            prodMemoria.quantidade = novaQtd; // Atualiza local para não bugar o passo 3
-                        }
+                        const snapP = await get(ref(dbBanco, 'produtos/' + oldItem.idProd)); 
+                        let pDb = snapP.val();
+                        if (pDb) await update(ref(dbBanco, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); 
                     }
                 }
             }
         }
 
+        const itensCongelados = JSON.parse(JSON.stringify(carrinhoVenda));
+
+        // MÁGICA DE PRESERVAÇÃO: O ...originalDoc garante que NENHUM campo antigo se perca
         const doc = {
-            tipo: tipoDocSelecionado, os: os, vencimento: v, statusPagamento: statusPag, formaPagamento: formaPag,
-            dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'),
-            timestamp: originalDoc ? originalDoc.timestamp : Date.now(),
-            clienteId: cId, clienteNome: cNome, itens: carrinhoVenda, total: total,
-            valorRecebido: valorRecebido, troco: troco,
-            assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,
+            ...originalDoc, 
+            tipo: tipoDocSelecionado, 
+            os: isNaN(os) ? (originalDoc.os || 0) : os,
+            vencimento: v, 
+            statusPagamento: statusPag, 
+            formaPagamento: formaPag,
+            dataStr: originalDoc.dataStr ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'),
+            timestamp: originalDoc.timestamp ? originalDoc.timestamp : Date.now(),
+            clienteId: cId, 
+            clienteNome: cNome, 
+            itens: itensCongelados, 
+            total: total,
+            valorRecebido: valorRecebido, 
+            troco: troco,
+            assinaturaBase64: originalDoc.assinaturaBase64 ? originalDoc.assinaturaBase64 : null,
             vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
             observacao: document.getElementById('vendaObservacao').value
         };
 
-        // 2. SALVA A NOTA DO CAIXA
-        if (window.editandoDocId) { 
-            await set(ref(dbBanco, 'caixa/' + window.editandoDocId), doc); 
+        if (idNotaEditada) { 
+            await set(ref(dbBanco, 'caixa/' + idNotaEditada), doc); 
         } else { 
             await set(push(ref(dbBanco, 'caixa')), doc); 
         }
@@ -2444,7 +2453,7 @@ window.finalizarVenda = async function() {
             let isDigital = formaLow.includes('pix') || formaLow.includes('cartao') || formaLow.includes('debito') || formaLow.includes('credito') || formaLow.includes('boleto');
             
             if (!isDigital) {
-                if (window.editandoDocId && originalDoc) {
+                if (idNotaEditada && originalDoc) {
                     let statusAntigo = originalDoc.statusPagamento || 'PAGO';
                     let valorAntigo = originalDoc.total || 0;
                     if (statusAntigo === 'PAGO') window.registrarMovimentoCaixa('entrada', -valorAntigo);
@@ -2454,25 +2463,17 @@ window.finalizarVenda = async function() {
                 }
             }
 
-            // 3. DESCONTA OS NOVOS ITENS NA MEMÓRIA
-            for (let item of carrinhoVenda) {
+            for (let item of itensCongelados) {
                 if (item.ehEstoque && item.idProd) {
-                    let prodMemoria = produtosGlobais.find(p => p.id === item.idProd);
-                    if (prodMemoria) { 
-                        let novaQtd = Math.max(0, (Number(prodMemoria.quantidade) || 0) - (Number(item.qtdBaixa) || 0));
-                        atualizacoesEstoque[`produtos/${item.idProd}/quantidade`] = novaQtd;
-                        prodMemoria.quantidade = novaQtd;
-                    }
+                    const snap = await get(ref(dbBanco, 'produtos/' + item.idProd)); 
+                    const pDb = snap.val();
+                    if (pDb) await update(ref(dbBanco, 'produtos/' + item.idProd), { quantidade: Math.max(0, (pDb.quantidade || 0) - item.qtdBaixa) }); 
                 }
             }
         }
 
-        // 4. 🔥 DISPARA O LOTE PRO FIREBASE EM 1 ÚNICA REQUISIÇÃO
-        if (Object.keys(atualizacoesEstoque).length > 0) {
-            await update(ref(dbBanco), atualizacoesEstoque);
-        }
-
-        alert(window.editandoDocId ? "Venda Atualizada com Sucesso!" : "Venda Registrada!");
+        alert(idNotaEditada ? "Venda Atualizada com Sucesso!" : "Venda Registrada!");
+        
         carrinhoVenda = []; window.atualizarCarrinhoVenda();
         document.getElementById('vendaClienteBusca').value = '';
         document.getElementById('vendaObservacao').value = '';
@@ -2480,17 +2481,16 @@ window.finalizarVenda = async function() {
         document.getElementById('vendaPagamento').value = 'Dinheiro';
         if(document.getElementById('vendaValorRecebido')) document.getElementById('vendaValorRecebido').value = '';
         if(document.getElementById('vendaTrocoTxt')) document.getElementById('vendaTrocoTxt').innerText = 'Troco: R$ 0,00';
-        
         window.carregarSelectsGerais(); window.gerarProximoNumeroDoc('vendaOS', 1000, 'VENDA');
 
         window.editandoDocId = null;
-        editandoDocId = null;
+        sessionStorage.removeItem('idNotaEditando');
         if(document.getElementById('btnCancelarEdicaoVenda')) document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
 
     } catch(e) { 
         alert("Erro ao salvar Venda: " + e.message); 
     } finally {
-        window.isSalvandoVenda = false; // Destrava no final
+        window.isSalvandoVenda = false; 
     }
 };
 
@@ -2894,11 +2894,14 @@ window.sincronizarTotaisDoDia = async function() {
            document.getElementById('osTotalGeral').innerText = `TOTAL OS: R$ ${(tItens + (km * valKm)).toFixed(2)}`;
        }
 
-  // --- FUNÇÃO PARA SALVAR OS (BLINDADA CONTRA DUPLICAÇÃO) ---
-window.isSalvandoOS = false; // Trava global
+// ==========================================================
+// 3. SALVAR ORDEM DE SERVIÇO (BLINDADA MÁXIMA - PRESERVA TUDO)
+// ==========================================================
+window.isSalvandoOS = false; 
 
-window.salvarOrdemDeServico = async function() {
-    if(window.isSalvandoOS) return; // Impede duplo clique
+window.salvarOrdemDeServico = async function(event) {
+    if(event) event.preventDefault();
+    if(window.isSalvandoOS) return;
 
     const numOS = parseInt(document.getElementById('osNumero').value); 
     const cliNome = document.getElementById('osClienteBusca').value; 
@@ -2913,60 +2916,66 @@ window.salvarOrdemDeServico = async function() {
     let cNome = cli ? cli.nome : cliNome;
 
     let tItens = carrinhoOS.reduce((acc, i) => acc + i.valor, 0);
-    
     let kmIni = parseFloat(document.getElementById('osKmInicial').value) || 0;
     let kmFin = parseFloat(document.getElementById('osKmFinal').value) || 0;
     let kTotal = kmFin > kmIni ? (kmFin - kmIni) : 0;
     let tKm = kTotal * (parseFloat(document.getElementById('osValorKm').value) || 0);
     let totalGeral = tItens + tKm;
 
-    window.isSalvandoOS = true; // Ativa a trava
+    const idNotaEditada = window.editandoDocId || sessionStorage.getItem('idNotaEditando');
+
+    window.isSalvandoOS = true; 
 
     try {
         const { ref, get, update, set, push } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
         let dbBanco = window.meuBanco;
 
-        let originalDoc = null;
-        let atualizacoesEstoque = {}; // 🔥 O LOTE MÁGICO AQUI TAMBÉM
-
-        if (window.editandoDocId) {
-            const snapAntigo = await get(ref(dbBanco, 'caixa/' + window.editandoDocId));
-            originalDoc = snapAntigo.val();
+        let originalDoc = {};
+        if (idNotaEditada) {
+            const snapAntigo = await get(ref(dbBanco, 'caixa/' + idNotaEditada));
+            originalDoc = snapAntigo.val() || {};
             
-            // 1. DEVOLVE OS ITENS ANTIGOS NA MEMÓRIA
-            if (originalDoc && originalDoc.itens) {
+            if (originalDoc.itens) {
                 let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
                 for (let oldItem of antigosItens) {
                     if (oldItem.ehEstoque && oldItem.idProd) {
-                        let prodMemoria = produtosGlobais.find(p => p.id === oldItem.idProd);
-                        if (prodMemoria) { 
-                            let novaQtd = (Number(prodMemoria.quantidade) || 0) + (Number(oldItem.qtdBaixa) || 0);
-                            atualizacoesEstoque[`produtos/${oldItem.idProd}/quantidade`] = novaQtd;
-                            prodMemoria.quantidade = novaQtd;
-                        }
+                        const snapP = await get(ref(dbBanco, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
+                        if (pDb) await update(ref(dbBanco, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); 
                     }
                 }
             }
         }
 
+        const itensOSCongelados = JSON.parse(JSON.stringify(carrinhoOS));
+
+        // MÁGICA DE PRESERVAÇÃO
         const docOS = {
-            tipo: 'ORDEM DE SERVIÇO', os: numOS, vencimento: venc, statusPagamento: statusPag,
+            ...originalDoc,
+            tipo: 'ORDEM DE SERVIÇO', 
+            os: isNaN(numOS) ? (originalDoc.os || 0) : numOS, 
+            vencimento: venc, 
+            statusPagamento: statusPag,
             formaPagamento: formaPag,
-            dataStr: originalDoc ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
-            timestamp: originalDoc ? originalDoc.timestamp : Date.now(),
-            clienteId: cId, clienteNome: cNome, 
-            equipe: document.getElementById('osEquipe').value || 'N/A', inicio: document.getElementById('osInicio').value || '',
-            fim: document.getElementById('osFim').value || '', pessoas: document.getElementById('osQtdPessoas').value || 1,
+            dataStr: originalDoc.dataStr ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'), 
+            timestamp: originalDoc.timestamp ? originalDoc.timestamp : Date.now(),
+            clienteId: cId, 
+            clienteNome: cNome, 
+            equipe: document.getElementById('osEquipe').value || 'N/A', 
+            inicio: document.getElementById('osInicio').value || '',
+            fim: document.getElementById('osFim').value || '', 
+            pessoas: document.getElementById('osQtdPessoas').value || 1,
             kmInicial: kmIni, kmFinal: kmFin, kmTotal: kTotal, kmValor: document.getElementById('osValorKm').value || 0,
-            kmCusto: tKm, itens: carrinhoOS, total: totalGeral, fotoAnexo: window.fotoAtualOS_Base64 || '', 
-            assinaturaBase64: (originalDoc && originalDoc.assinaturaBase64) ? originalDoc.assinaturaBase64 : null,
+            kmCusto: tKm, 
+            itens: itensOSCongelados, 
+            total: totalGeral, 
+            fotoAnexo: window.fotoAtualOS_Base64 || (originalDoc.fotoAnexo || ''), 
+            assinaturaBase64: originalDoc.assinaturaBase64 ? originalDoc.assinaturaBase64 : null,
             vendedor: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema',
             observacao: document.getElementById('osObservacao').value
         };
 
-        // 2. SALVA A OS NO CAIXA
-        if (window.editandoDocId) {
-            await set(ref(dbBanco, 'caixa/' + window.editandoDocId), docOS);
+        if (idNotaEditada) {
+            await set(ref(dbBanco, 'caixa/' + idNotaEditada), docOS);
         } else {
             await set(push(ref(dbBanco, 'caixa')), docOS); 
         }
@@ -2975,7 +2984,7 @@ window.salvarOrdemDeServico = async function() {
         let isDigital = formaLow.includes('pix') || formaLow.includes('cartao') || formaLow.includes('debito') || formaLow.includes('credito') || formaLow.includes('boleto');
 
         if (!isDigital) {
-            if (window.editandoDocId && originalDoc) {
+            if (idNotaEditada && originalDoc) {
                 let statusAntigo = originalDoc.statusPagamento || 'PAGO';
                 let valorAntigo = originalDoc.total || 0;
                 if (statusAntigo === 'PAGO') window.registrarMovimentoCaixa('entrada', -valorAntigo);
@@ -2985,24 +2994,15 @@ window.salvarOrdemDeServico = async function() {
             }
         }
         
-        // 3. DESCONTA OS NOVOS ITENS NA MEMÓRIA
-        for (let item of carrinhoOS) {
+        for (let item of itensOSCongelados) {
             if (item.ehEstoque && item.idProd) {
-                let prodMemoria = produtosGlobais.find(p => p.id === item.idProd);
-                if (prodMemoria) { 
-                    let novaQtd = Math.max(0, (Number(prodMemoria.quantidade) || 0) - (Number(item.qtdBaixa) || 0));
-                    atualizacoesEstoque[`produtos/${item.idProd}/quantidade`] = novaQtd;
-                    prodMemoria.quantidade = novaQtd;
-                }
+                const snap = await get(ref(dbBanco, 'produtos/' + item.idProd)); const pDb = snap.val();
+                if (pDb && pDb.quantidade > 0) { await update(ref(dbBanco, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
             }
         }
         
-        // 4. 🔥 DISPARA O LOTE DE ESTOQUE PRO FIREBASE EM 1 REQUISIÇÃO
-        if (Object.keys(atualizacoesEstoque).length > 0) {
-            await update(ref(dbBanco), atualizacoesEstoque);
-        }
-
-        alert(window.editandoDocId ? "Ordem de Serviço Atualizada!" : "OS Salva! Estoque atualizado.");
+        alert(idNotaEditada ? "Ordem de Serviço Atualizada!" : "OS Salva! Estoque atualizado.");
+        
         carrinhoOS = []; window.atualizarCarrinhoOS(); 
         ['osClienteBusca','osEquipe','osInicio','osFim','osObservacao'].forEach(id=> { if(document.getElementById(id)) document.getElementById(id).value=''; });
         if(document.getElementById('osKmInicial')) document.getElementById('osKmInicial').value='0'; 
@@ -3012,17 +3012,17 @@ window.salvarOrdemDeServico = async function() {
         window.fotoAtualOS_Base64=''; 
         if(document.getElementById('previewFotoOS')){ document.getElementById('previewFotoOS').src=''; document.getElementById('previewFotoOS').style.display='none'; }
         if(document.getElementById('osFotoUpload')) document.getElementById('osFotoUpload').value='';
-        
         window.carregarSelectsGerais(); window.gerarProximoNumeroDoc('osNumero', 10000, 'ORDEM DE SERVIÇO'); 
         
         window.editandoDocId = null;
+        sessionStorage.removeItem('idNotaEditando');
         if(document.getElementById('btnCancelarEdicaoOS')) document.getElementById('btnCancelarEdicaoOS').style.display = 'none';
         if(document.getElementById('colCancelarEdicaoOS')) document.getElementById('colCancelarEdicaoOS').style.display = 'none';
         
     } catch(e) { 
         alert("Erro ao salvar OS: " + e.message); 
     } finally {
-        window.isSalvandoOS = false; // Destrava
+        window.isSalvandoOS = false; 
     }
 };
 
@@ -3308,13 +3308,16 @@ window.atualizarResumoPagamentosHoje = function() {
            }
        }
        
-  // --- FUNÇÃO PARA EDITAR DOCUMENTOS (BLINDADA CONTRA MUTACÃO) ---
+  // ==========================================================
+// 1. FUNÇÃO PARA EDITAR DOCUMENTOS (BLINDADA CONTRA MUTACÃO)
+// ==========================================================
 window.editarDocumentoCaixa = function(id) {
     try {
         const doc = caixaGlobal.find(x => x.id === id);
         if (!doc) return alert("Documento não encontrado no sistema.");
 
-        // Trava o ID na memória global
+        // MÁGICA 1: Salva o ID no sessionStorage para ele NUNCA sumir durante a edição
+        sessionStorage.setItem('idNotaEditando', id);
         window.editandoDocId = id;
         editandoDocId = id; 
         
@@ -3322,7 +3325,7 @@ window.editarDocumentoCaixa = function(id) {
         let isVenda = tipoDoc.includes('VENDA') || tipoDoc.includes('RECIBO') || tipoDoc.includes('ORCAMENTO');
         let isOS = tipoDoc.includes('ORDEM') || tipoDoc.includes('OS');
 
-        // MÁGICA 1: Faz uma cópia profunda (Deep Copy) dos itens para não corromper a nota original na memória!
+        // MÁGICA 2: Faz uma cópia profunda (Clone) para não corromper a nota original
         let itensDoBanco = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
         let carrinhoClonado = JSON.parse(JSON.stringify(itensDoBanco));
 
@@ -3336,8 +3339,7 @@ window.editarDocumentoCaixa = function(id) {
             document.getElementById('vendaStatusPag').value = doc.statusPagamento || 'PAGO';
             document.getElementById('vendaObservacao').value = doc.observacao || '';
             
-            // Usa o clone no carrinho da tela
-            carrinhoVenda = carrinhoClonado;
+            carrinhoVenda = carrinhoClonado; // Recebe o clone
             window.atualizarCarrinhoVenda();
             
             if(document.getElementById('btnCancelarEdicaoVenda')) document.getElementById('btnCancelarEdicaoVenda').style.display = 'block';
@@ -3360,8 +3362,7 @@ window.editarDocumentoCaixa = function(id) {
             document.getElementById('osValorKm').value = doc.kmValor || 2.50;
             document.getElementById('osObservacao').value = doc.observacao || '';
             
-            // Usa o clone no carrinho da tela
-            carrinhoOS = carrinhoClonado;
+            carrinhoOS = carrinhoClonado; // Recebe o clone
             
             fotoAtualOS_Base64 = doc.fotoAnexo || '';
             if(fotoAtualOS_Base64) {
