@@ -2362,7 +2362,12 @@ window.addAoCarrinhoVenda_Estoque = function() {
        
        window.removerDoCarrinhoVenda = function(idx) { carrinhoVenda.splice(idx, 1); window.atualizarCarrinhoVenda(); }
        
+// --- FUNÇÃO PARA FINALIZAR VENDA (BLINDADA CONTRA DUPLICAÇÃO) ---
+window.isSalvandoVenda = false; // Trava global
+
 window.finalizarVenda = async function() {
+    if (window.isSalvandoVenda) return; 
+
     const os = parseInt(document.getElementById('vendaOS').value);
     const v = document.getElementById('vendaVencimento').value;
     const n = document.getElementById('vendaClienteBusca').value;
@@ -2383,24 +2388,29 @@ window.finalizarVenda = async function() {
     let troco = valorRecebido - total;
     troco = troco > 0 ? troco : 0;
 
+    window.isSalvandoVenda = true; // Ativa a trava
+
     try {
         const { ref, get, update, set, push } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
         let dbBanco = window.meuBanco;
 
         let originalDoc = null;
+        let atualizacoesEstoque = {}; // 🔥 O LOTE MÁGICO: Guarda as baixas e manda tudo de uma vez!
+
         if (window.editandoDocId) {
             const snapAntigo = await get(ref(dbBanco, 'caixa/' + window.editandoDocId));
             originalDoc = snapAntigo.val();
             
-            // 1. DEVOLVE OS ITENS ANTIGOS PARA O ESTOQUE
+            // 1. DEVOLVE OS ITENS ANTIGOS NA MEMÓRIA
             if (originalDoc && originalDoc.itens) {
                 let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
                 for (let oldItem of antigosItens) {
                     if (oldItem.ehEstoque && oldItem.idProd) {
-                        const snapP = await get(ref(dbBanco, 'produtos/' + oldItem.idProd)); 
-                        let pDb = snapP.val();
-                        if (pDb) { 
-                            await update(ref(dbBanco, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); 
+                        let prodMemoria = produtosGlobais.find(p => p.id === oldItem.idProd);
+                        if (prodMemoria) { 
+                            let novaQtd = (Number(prodMemoria.quantidade) || 0) + (Number(oldItem.qtdBaixa) || 0);
+                            atualizacoesEstoque[`produtos/${oldItem.idProd}/quantidade`] = novaQtd;
+                            prodMemoria.quantidade = novaQtd; // Atualiza local para não bugar o passo 3
                         }
                     }
                 }
@@ -2418,8 +2428,9 @@ window.finalizarVenda = async function() {
             observacao: document.getElementById('vendaObservacao').value
         };
 
+        // 2. SALVA A NOTA DO CAIXA
         if (window.editandoDocId) { 
-            await update(ref(dbBanco, 'caixa/' + window.editandoDocId), doc); 
+            await set(ref(dbBanco, 'caixa/' + window.editandoDocId), doc); 
         } else { 
             await set(push(ref(dbBanco, 'caixa')), doc); 
         }
@@ -2439,16 +2450,22 @@ window.finalizarVenda = async function() {
                 }
             }
 
-            // 2. DESCONTA OS NOVOS ITENS DO ESTOQUE (MÁGICA: Agora garante a baixa incondicional)
+            // 3. DESCONTA OS NOVOS ITENS NA MEMÓRIA
             for (let item of carrinhoVenda) {
                 if (item.ehEstoque && item.idProd) {
-                    const snap = await get(ref(dbBanco, 'produtos/' + item.idProd)); 
-                    const pDb = snap.val();
-                    if (pDb) { 
-                        await update(ref(dbBanco, 'produtos/' + item.idProd), { quantidade: Math.max(0, (pDb.quantidade || 0) - item.qtdBaixa) }); 
+                    let prodMemoria = produtosGlobais.find(p => p.id === item.idProd);
+                    if (prodMemoria) { 
+                        let novaQtd = Math.max(0, (Number(prodMemoria.quantidade) || 0) - (Number(item.qtdBaixa) || 0));
+                        atualizacoesEstoque[`produtos/${item.idProd}/quantidade`] = novaQtd;
+                        prodMemoria.quantidade = novaQtd;
                     }
                 }
             }
+        }
+
+        // 4. 🔥 DISPARA O LOTE PRO FIREBASE EM 1 ÚNICA REQUISIÇÃO
+        if (Object.keys(atualizacoesEstoque).length > 0) {
+            await update(ref(dbBanco), atualizacoesEstoque);
         }
 
         alert(window.editandoDocId ? "Venda Atualizada com Sucesso!" : "Venda Registrada!");
@@ -2466,7 +2483,11 @@ window.finalizarVenda = async function() {
         editandoDocId = null;
         if(document.getElementById('btnCancelarEdicaoVenda')) document.getElementById('btnCancelarEdicaoVenda').style.display = 'none';
 
-    } catch(e) { alert("Erro ao salvar Venda: " + e.message); }
+    } catch(e) { 
+        alert("Erro ao salvar Venda: " + e.message); 
+    } finally {
+        window.isSalvandoVenda = false; // Destrava no final
+    }
 };
 
 window.marcarComoPago = async function(id) {
@@ -2869,7 +2890,12 @@ window.sincronizarTotaisDoDia = async function() {
            document.getElementById('osTotalGeral').innerText = `TOTAL OS: R$ ${(tItens + (km * valKm)).toFixed(2)}`;
        }
 
-    window.salvarOrdemDeServico = async function() {
+  // --- FUNÇÃO PARA SALVAR OS (BLINDADA CONTRA DUPLICAÇÃO) ---
+window.isSalvandoOS = false; // Trava global
+
+window.salvarOrdemDeServico = async function() {
+    if(window.isSalvandoOS) return; // Impede duplo clique
+
     const numOS = parseInt(document.getElementById('osNumero').value); 
     const cliNome = document.getElementById('osClienteBusca').value; 
     const venc = document.getElementById('osVencimento').value;
@@ -2890,21 +2916,30 @@ window.sincronizarTotaisDoDia = async function() {
     let tKm = kTotal * (parseFloat(document.getElementById('osValorKm').value) || 0);
     let totalGeral = tItens + tKm;
 
+    window.isSalvandoOS = true; // Ativa a trava
+
     try {
         const { ref, get, update, set, push } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
         let dbBanco = window.meuBanco;
 
         let originalDoc = null;
+        let atualizacoesEstoque = {}; // 🔥 O LOTE MÁGICO AQUI TAMBÉM
+
         if (window.editandoDocId) {
             const snapAntigo = await get(ref(dbBanco, 'caixa/' + window.editandoDocId));
             originalDoc = snapAntigo.val();
             
+            // 1. DEVOLVE OS ITENS ANTIGOS NA MEMÓRIA
             if (originalDoc && originalDoc.itens) {
                 let antigosItens = Array.isArray(originalDoc.itens) ? originalDoc.itens : Object.values(originalDoc.itens);
                 for (let oldItem of antigosItens) {
                     if (oldItem.ehEstoque && oldItem.idProd) {
-                        const snapP = await get(ref(dbBanco, 'produtos/' + oldItem.idProd)); let pDb = snapP.val();
-                        if (pDb) { await update(ref(dbBanco, 'produtos/' + oldItem.idProd), { quantidade: (pDb.quantidade || 0) + oldItem.qtdBaixa }); }
+                        let prodMemoria = produtosGlobais.find(p => p.id === oldItem.idProd);
+                        if (prodMemoria) { 
+                            let novaQtd = (Number(prodMemoria.quantidade) || 0) + (Number(oldItem.qtdBaixa) || 0);
+                            atualizacoesEstoque[`produtos/${oldItem.idProd}/quantidade`] = novaQtd;
+                            prodMemoria.quantidade = novaQtd;
+                        }
                     }
                 }
             }
@@ -2925,17 +2960,16 @@ window.sincronizarTotaisDoDia = async function() {
             observacao: document.getElementById('osObservacao').value
         };
 
+        // 2. SALVA A OS NO CAIXA
         if (window.editandoDocId) {
-            await update(ref(dbBanco, 'caixa/' + window.editandoDocId), docOS);
+            await set(ref(dbBanco, 'caixa/' + window.editandoDocId), docOS);
         } else {
             await set(push(ref(dbBanco, 'caixa')), docOS); 
         }
 
-        // MÁGICA: Blindagem para não jogar cartão no balcão físico
         let formaLow = formaPag.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         let isDigital = formaLow.includes('pix') || formaLow.includes('cartao') || formaLow.includes('debito') || formaLow.includes('credito') || formaLow.includes('boleto');
 
-        // Só vai para a Gaveta se NÃO for digital
         if (!isDigital) {
             if (window.editandoDocId && originalDoc) {
                 let statusAntigo = originalDoc.statusPagamento || 'PAGO';
@@ -2947,13 +2981,23 @@ window.sincronizarTotaisDoDia = async function() {
             }
         }
         
+        // 3. DESCONTA OS NOVOS ITENS NA MEMÓRIA
         for (let item of carrinhoOS) {
             if (item.ehEstoque && item.idProd) {
-                const snap = await get(ref(dbBanco, 'produtos/' + item.idProd)); const pDb = snap.val();
-                if (pDb && pDb.quantidade > 0) { await update(ref(dbBanco, 'produtos/' + item.idProd), { quantidade: Math.max(0, pDb.quantidade - item.qtdBaixa) }); }
+                let prodMemoria = produtosGlobais.find(p => p.id === item.idProd);
+                if (prodMemoria) { 
+                    let novaQtd = Math.max(0, (Number(prodMemoria.quantidade) || 0) - (Number(item.qtdBaixa) || 0));
+                    atualizacoesEstoque[`produtos/${item.idProd}/quantidade`] = novaQtd;
+                    prodMemoria.quantidade = novaQtd;
+                }
             }
         }
         
+        // 4. 🔥 DISPARA O LOTE DE ESTOQUE PRO FIREBASE EM 1 REQUISIÇÃO
+        if (Object.keys(atualizacoesEstoque).length > 0) {
+            await update(ref(dbBanco), atualizacoesEstoque);
+        }
+
         alert(window.editandoDocId ? "Ordem de Serviço Atualizada!" : "OS Salva! Estoque atualizado.");
         carrinhoOS = []; window.atualizarCarrinhoOS(); 
         ['osClienteBusca','osEquipe','osInicio','osFim','osObservacao'].forEach(id=> { if(document.getElementById(id)) document.getElementById(id).value=''; });
@@ -2971,7 +3015,11 @@ window.sincronizarTotaisDoDia = async function() {
         if(document.getElementById('btnCancelarEdicaoOS')) document.getElementById('btnCancelarEdicaoOS').style.display = 'none';
         if(document.getElementById('colCancelarEdicaoOS')) document.getElementById('colCancelarEdicaoOS').style.display = 'none';
         
-    } catch(e) { alert("Erro ao salvar OS: " + e.message); }
+    } catch(e) { 
+        alert("Erro ao salvar OS: " + e.message); 
+    } finally {
+        window.isSalvandoOS = false; // Destrava
+    }
 };
 
        // --- GERADOR DE PDF ---
@@ -3256,80 +3304,85 @@ window.atualizarResumoPagamentosHoje = function() {
            }
        }
        
-       // --- FUNÇÃO PARA EDITAR DOCUMENTOS ---
- // --- FUNÇÃO PARA EDITAR DOCUMENTOS ---
-       window.editarDocumentoCaixa = function(id) {
-           try {
-               const doc = caixaGlobal.find(x => x.id === id);
-               if (!doc) return alert("Documento não encontrado no sistema.");
+  // --- FUNÇÃO PARA EDITAR DOCUMENTOS (BLINDADA CONTRA MUTACÃO) ---
+window.editarDocumentoCaixa = function(id) {
+    try {
+        const doc = caixaGlobal.find(x => x.id === id);
+        if (!doc) return alert("Documento não encontrado no sistema.");
 
-               // MÁGICA: Trava o ID na memória global para a hora de salvar!
-               window.editandoDocId = id;
-               editandoDocId = id; 
-               
-               let tipoDoc = (doc.tipo || '').toUpperCase();
-               let isVenda = tipoDoc.includes('VENDA') || tipoDoc.includes('RECIBO') || tipoDoc.includes('ORCAMENTO');
-               let isOS = tipoDoc.includes('ORDEM') || tipoDoc.includes('OS');
+        // Trava o ID na memória global
+        window.editandoDocId = id;
+        editandoDocId = id; 
+        
+        let tipoDoc = (doc.tipo || '').toUpperCase();
+        let isVenda = tipoDoc.includes('VENDA') || tipoDoc.includes('RECIBO') || tipoDoc.includes('ORCAMENTO');
+        let isOS = tipoDoc.includes('ORDEM') || tipoDoc.includes('OS');
 
-               if (isVenda) {
-                   window.abrirAba('tabVendas', document.getElementById('btnTabVendas'));
-                   
-                   document.getElementById('vendaTipoDoc').value = doc.tipo;
-                   document.getElementById('vendaOS').value = doc.os || '';
-                   document.getElementById('vendaVencimento').value = doc.vencimento || '';
-                   document.getElementById('vendaClienteBusca').value = doc.clienteNome || '';
-                   document.getElementById('vendaStatusPag').value = doc.statusPagamento || 'PAGO';
-                   document.getElementById('vendaObservacao').value = doc.observacao || '';
-                   
-                   carrinhoVenda = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
-                   window.atualizarCarrinhoVenda();
-                   
-                   if(document.getElementById('btnCancelarEdicaoVenda')) document.getElementById('btnCancelarEdicaoVenda').style.display = 'block';
-                   alert(`MODO DE EDIÇÃO ATIVADO!\nVocê está editando o Documento Nº ${doc.os || 'S/N'}.`);
-                   window.scrollTo(0,0);
-                   
-               } else if (isOS) {
-                   window.abrirAba('tabOS', document.getElementById('btnTabOS'));
-                   
-                   document.getElementById('osNumero').value = doc.os || '';
-                   document.getElementById('osStatusPag').value = doc.statusPagamento || 'PAGO';
-                   document.getElementById('osClienteBusca').value = doc.clienteNome || '';
-                   document.getElementById('osVencimento').value = doc.vencimento || '';
-                   document.getElementById('osEquipe').value = doc.equipe || '';
-                   document.getElementById('osInicio').value = doc.inicio || '';
-                   document.getElementById('osFim').value = doc.fim || '';
-                   document.getElementById('osQtdPessoas').value = doc.pessoas || 1;
-                   document.getElementById('osKmInicial').value = doc.kmInicial || 0;
-                   document.getElementById('osKmFinal').value = doc.kmFinal || 0;
-                   document.getElementById('osValorKm').value = doc.kmValor || 2.50;
-                   document.getElementById('osObservacao').value = doc.observacao || '';
-                   
-                   carrinhoOS = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
-                   
-                   fotoAtualOS_Base64 = doc.fotoAnexo || '';
-                   if(fotoAtualOS_Base64) {
-                       document.getElementById('previewFotoOS').src = fotoAtualOS_Base64;
-                       document.getElementById('previewFotoOS').style.display = 'block';
-                   } else {
-                       document.getElementById('previewFotoOS').src = '';
-                       document.getElementById('previewFotoOS').style.display = 'none';
-                   }
+        // MÁGICA 1: Faz uma cópia profunda (Deep Copy) dos itens para não corromper a nota original na memória!
+        let itensDoBanco = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
+        let carrinhoClonado = JSON.parse(JSON.stringify(itensDoBanco));
 
-                   window.calcularDeslocamentoOS();
-                   window.atualizarCarrinhoOS();
-                   
-                   if(document.getElementById('btnCancelarEdicaoOS')) document.getElementById('btnCancelarEdicaoOS').style.display = 'block';
-                   if(document.getElementById('colCancelarEdicaoOS')) document.getElementById('colCancelarEdicaoOS').style.display = 'block';
-                   
-                   alert(`MODO DE EDIÇÃO ATIVADO!\nVocê está editando a OS Nº ${doc.os || 'S/N'}.`);
-                   window.scrollTo(0,0);
-               } else {
-                   alert("Tipo de documento não suportado para edição: " + tipoDoc);
-               }
-           } catch (erro) {
-               alert("Ocorreu um erro ao carregar os dados para edição: " + erro.message);
-           }
-       };
+        if (isVenda) {
+            window.abrirAba('tabVendas', document.getElementById('btnTabVendas'));
+            
+            document.getElementById('vendaTipoDoc').value = doc.tipo;
+            document.getElementById('vendaOS').value = doc.os || '';
+            document.getElementById('vendaVencimento').value = doc.vencimento || '';
+            document.getElementById('vendaClienteBusca').value = doc.clienteNome || '';
+            document.getElementById('vendaStatusPag').value = doc.statusPagamento || 'PAGO';
+            document.getElementById('vendaObservacao').value = doc.observacao || '';
+            
+            // Usa o clone no carrinho da tela
+            carrinhoVenda = carrinhoClonado;
+            window.atualizarCarrinhoVenda();
+            
+            if(document.getElementById('btnCancelarEdicaoVenda')) document.getElementById('btnCancelarEdicaoVenda').style.display = 'block';
+            alert(`MODO DE EDIÇÃO ATIVADO!\nVocê está editando o Documento Nº ${doc.os || 'S/N'}.`);
+            window.scrollTo(0,0);
+            
+        } else if (isOS) {
+            window.abrirAba('tabOS', document.getElementById('btnTabOS'));
+            
+            document.getElementById('osNumero').value = doc.os || '';
+            document.getElementById('osStatusPag').value = doc.statusPagamento || 'PAGO';
+            document.getElementById('osClienteBusca').value = doc.clienteNome || '';
+            document.getElementById('osVencimento').value = doc.vencimento || '';
+            document.getElementById('osEquipe').value = doc.equipe || '';
+            document.getElementById('osInicio').value = doc.inicio || '';
+            document.getElementById('osFim').value = doc.fim || '';
+            document.getElementById('osQtdPessoas').value = doc.pessoas || 1;
+            document.getElementById('osKmInicial').value = doc.kmInicial || 0;
+            document.getElementById('osKmFinal').value = doc.kmFinal || 0;
+            document.getElementById('osValorKm').value = doc.kmValor || 2.50;
+            document.getElementById('osObservacao').value = doc.observacao || '';
+            
+            // Usa o clone no carrinho da tela
+            carrinhoOS = carrinhoClonado;
+            
+            fotoAtualOS_Base64 = doc.fotoAnexo || '';
+            if(fotoAtualOS_Base64) {
+                document.getElementById('previewFotoOS').src = fotoAtualOS_Base64;
+                document.getElementById('previewFotoOS').style.display = 'block';
+            } else {
+                document.getElementById('previewFotoOS').src = '';
+                document.getElementById('previewFotoOS').style.display = 'none';
+            }
+
+            window.calcularDeslocamentoOS();
+            window.atualizarCarrinhoOS();
+            
+            if(document.getElementById('btnCancelarEdicaoOS')) document.getElementById('btnCancelarEdicaoOS').style.display = 'block';
+            if(document.getElementById('colCancelarEdicaoOS')) document.getElementById('colCancelarEdicaoOS').style.display = 'block';
+            
+            alert(`MODO DE EDIÇÃO ATIVADO!\nVocê está editando a OS Nº ${doc.os || 'S/N'}.`);
+            window.scrollTo(0,0);
+        } else {
+            alert("Tipo de documento não suportado para edição: " + tipoDoc);
+        }
+    } catch (erro) {
+        alert("Ocorreu um erro ao carregar os dados para edição: " + erro.message);
+    }
+};
 
        // --- CONSTRUÇÃO DO PDF (DOCUMENTOS) ---
        window.gerarPDF_Historico = function(id) {
