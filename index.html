@@ -1576,41 +1576,45 @@ window.mudarPaginaProd = function(direcao) {
 
 
    // ================================================================
-   // INTERCEPTADOR DE URL (TELA DE ASSINATURA REMOTA)
-   // ================================================================
-   const urlParams = new URLSearchParams(window.location.search);
-   const codigoAssinar = urlParams.get('assinar');
+   // INTERCEPTADOR DE URL (TELA DE ASSINATURA REMOTA)
+   // ================================================================
+   const urlParams = new URLSearchParams(window.location.search);
+   const codigoAssinar = urlParams.get('assinar');
 
-   if (codigoAssinar) {
-       linkAssinaturaRemota_ID = codigoAssinar;
-       document.getElementById('appSidebar').style.display = 'none';
-       document.getElementById('appMainContent').style.display = 'none';
-       document.getElementById('telaAssinaturaRemota').style.display = 'flex';
+   if (codigoAssinar) {
+       linkAssinaturaRemota_ID = codigoAssinar;
        
-       onValue(ref(db, 'empresa'), function(s) {
-           const emp = s.val();
-           if(emp && emp.logo) document.getElementById('logoAssinaturaRemota').src = emp.logo;
-       });
+       // MÁGICA: Esconde a tela de login para liberar a visão do cliente!
+       document.getElementById('telaLogin').style.display = 'none'; 
+       
+       document.getElementById('appSidebar').style.display = 'none';
+       document.getElementById('appMainContent').style.display = 'none';
+       document.getElementById('telaAssinaturaRemota').style.display = 'flex';
+       
+       onValue(ref(db, 'empresa'), function(s) {
+           const emp = s.val();
+           if(emp && emp.logo) document.getElementById('logoAssinaturaRemota').src = emp.logo;
+       });
 
-       get(ref(db, 'caixa/' + linkAssinaturaRemota_ID)).then(function(snapshot) {
-           const docCaixa = snapshot.val();
-           if (docCaixa) {
-               document.getElementById('remoteClienteNome').innerText = docCaixa.clienteNome;
-               document.getElementById('remoteOSNum').innerText = docCaixa.os || "S/N";
-               let dataVencFormatada = docCaixa.vencimento ? docCaixa.vencimento.split('-').reverse().join('/') : 'À vista';
-               document.getElementById('remoteVencimento').innerText = dataVencFormatada;
-               document.getElementById('remoteTotal').innerText = `R$ ${docCaixa.total.toFixed(2)}`;
-               
-               if (docCaixa.assinaturaBase64) {
-                   document.getElementById('msgSucessoRemoto').style.display = 'block';
-                   document.getElementById('msgSucessoRemoto').innerHTML = "Este documento já foi assinado e confirmado. ✅";
-                   document.querySelector('.signature-pad').style.display = 'none'; 
-               } else {
-                   window.iniciarCanvasRemoto();
-               }
-           } else { alert("Documento não encontrado ou excluído do sistema."); }
-       });
-   }
+       get(ref(db, 'caixa/' + linkAssinaturaRemota_ID)).then(function(snapshot) {
+           const docCaixa = snapshot.val();
+           if (docCaixa) {
+               document.getElementById('remoteClienteNome').innerText = docCaixa.clienteNome;
+               document.getElementById('remoteOSNum').innerText = docCaixa.os || "S/N";
+               let dataVencFormatada = docCaixa.vencimento ? docCaixa.vencimento.split('-').reverse().join('/') : 'À vista';
+               document.getElementById('remoteVencimento').innerText = dataVencFormatada;
+               document.getElementById('remoteTotal').innerText = `R$ ${docCaixa.total.toFixed(2)}`;
+               
+               if (docCaixa.assinaturaBase64) {
+                   document.getElementById('msgSucessoRemoto').style.display = 'block';
+                   document.getElementById('msgSucessoRemoto').innerHTML = "Este documento já foi assinado e confirmado. ✅";
+                   document.querySelector('.signature-pad').style.display = 'none'; 
+               } else {
+                   window.iniciarCanvasRemoto();
+               }
+           } else { alert("Documento não encontrado ou excluído do sistema."); }
+       });
+   }
 
    let ctxRemoto; let desenhandoRemoto = false;
    
