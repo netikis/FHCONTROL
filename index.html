@@ -5142,6 +5142,26 @@ window.fecharCaixaBanco = async function() {
     }
 };
 
+// --- FUNÇÃO PARA ZERAR O PAINEL DO CAIXA MANUALMENTE ---
+window.zerarFluxoCaixa = async function() {
+    if (!confirm("⚠️ ATENÇÃO EXTREMA: Deseja realmente ZERAR o painel do Caixa Atual?\n\nIsso voltará as Entradas, Saídas e o Saldo Inicial para R$ 0,00.\n(Os documentos e vendas salvos na tabela não serão apagados, apenas o painel numérico será limpo).")) {
+        return;
+    }
+
+    try {
+        // Usamos as referências globais que você já tem no sistema para forçar os zeros
+        await window.meuSet(window.meuRef(window.meuBanco, 'caixaStatus'), { 
+            entradas: 0, 
+            saidas: 0, 
+            caixaInicial: 0 
+        });
+        
+        alert("✅ Painel do caixa zerado com sucesso!");
+    } catch (erro) {
+        alert("❌ Erro ao zerar o caixa: " + erro.message);
+    }
+};
+
 </script>
 </body>
 </html>
