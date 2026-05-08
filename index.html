@@ -852,6 +852,12 @@
             <div class="col"><label>Tx (%)</label><input type="number" step="0.1" id="vendaAvulsoPerc" value="0"></div>
             <div class="col"><button type="button" class="btn-secundario" style="width: 100%; height: 35px;" onclick="addAoCarrinhoVenda_Avulso()">➕ Add</button></div>
         </div>
+
+        <div class="row form-group" style="align-items: flex-end; border-top: 1px solid #7f8c8d; padding-top: 12px;">
+            <div class="col" style="flex: 2;"><label>4. Mão de Obra / Serviço</label><input type="text" id="vendaMaoDeObraDesc" placeholder="Ex: Instalação, Revisão, Diagnóstico..."></div>
+            <div class="col"><label>Valor (R$)</label><input type="number" step="0.01" id="vendaMaoDeObraValor" placeholder="Ex: 150.00"></div>
+            <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; height: 35px; background-color: #3498db; color: #fff;" onclick="addAoCarrinhoVenda_MaoDeObra()">➕ Serv</button></div>
+        </div>
     </div>
 
     <div class="container">
@@ -2296,6 +2302,16 @@ window.addAoCarrinhoVenda_Estoque = function() {
            window.atualizarCarrinhoVenda();
        }
 
+       window.addAoCarrinhoVenda_MaoDeObra = function() {
+           const d = document.getElementById('vendaMaoDeObraDesc').value;
+           const v = parseFloat(document.getElementById('vendaMaoDeObraValor').value);
+           if (!d || isNaN(v)) return alert("Preencha a descrição do Serviço e o Valor.");
+           carrinhoVenda.push({ nome: `[Mão de Obra] ${d}`, valor: v, valorOriginal: v, ehEstoque: false, categoriaOS: 'servico' });
+           document.getElementById('vendaMaoDeObraDesc').value = '';
+           document.getElementById('vendaMaoDeObraValor').value = '';
+           window.atualizarCarrinhoVenda();
+       }
+
       window.editarItemCarrinhoVenda = function(idx) {
     const item = carrinhoVenda[idx];
     carrinhoVenda.splice(idx, 1);
@@ -2316,10 +2332,17 @@ window.addAoCarrinhoVenda_Estoque = function() {
 
         document.getElementById('vendaProdutoQtd').focus();
     } else {
-        document.getElementById('vendaAvulsoNome').value = item.nome;
-        document.getElementById('vendaAvulsoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
-        document.getElementById('vendaAvulsoPerc').value = item.percOriginal || 0;
-        document.getElementById('vendaAvulsoValor').focus();
+        if (item.categoriaOS === 'servico') {
+            let nomePuro = String(item.nome || '').replace('[Mão de Obra] ', '').replace('[Serviço] ', '').trim();
+            document.getElementById('vendaMaoDeObraDesc').value = nomePuro;
+            document.getElementById('vendaMaoDeObraValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
+            document.getElementById('vendaMaoDeObraValor').focus();
+        } else {
+            document.getElementById('vendaAvulsoNome').value = item.nome;
+            document.getElementById('vendaAvulsoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
+            document.getElementById('vendaAvulsoPerc').value = item.percOriginal || 0;
+            document.getElementById('vendaAvulsoValor').focus();
+        }
     }
 };
        
@@ -2327,17 +2350,29 @@ window.addAoCarrinhoVenda_Estoque = function() {
            const div = document.getElementById('listaCarrinho'); div.innerHTML = ''; 
            let subtotal = 0;
            if (carrinhoVenda.length === 0) { div.innerHTML = 'Nenhum item adicionado no momento.'; } else {
-               carrinhoVenda.forEach((item, i) => { 
-                   subtotal += item.valor; 
-                   div.innerHTML += `
-                   <div class="cart-item">
-                       <span>${item.nome}</span>
-                       <span>R$ ${item.valor.toFixed(2)} 
-                           <button class="btn-acao edit" style="padding:2px 6px;margin-left:10px;" onclick="editarItemCarrinhoVenda(${i})" title="Editar Item">✏️</button>
-                           <button class="btn-danger" style="padding:2px 6px;margin-left:5px;" onclick="removerDoCarrinhoVenda(${i})" title="Remover Item">X</button>
-                       </span>
-                   </div>`; 
-               });
+               const itensIndexados = carrinhoVenda.map((item, idx) => ({ item, idx }));
+               const materiais = itensIndexados.filter(x => (x.item.categoriaOS || 'material') !== 'servico');
+               const servicos = itensIndexados.filter(x => (x.item.categoriaOS || '') === 'servico');
+
+               for (let it of carrinhoVenda) subtotal += it.valor;
+
+               const renderGrupo = (titulo, lista) => {
+                   if (lista.length === 0) return;
+                   div.innerHTML += `<div style="margin-top:10px; font-weight:bold; color:#f1c40f; border-bottom:1px solid rgba(241,196,15,0.35); padding-bottom:4px;">${titulo}</div>`;
+                   lista.forEach(({ item, idx }) => {
+                       div.innerHTML += `
+                       <div class="cart-item">
+                           <span>${item.nome}</span>
+                           <span>R$ ${item.valor.toFixed(2)} 
+                               <button class="btn-acao edit" style="padding:2px 6px;margin-left:10px;" onclick="editarItemCarrinhoVenda(${idx})" title="Editar Item">✏️</button>
+                               <button class="btn-danger" style="padding:2px 6px;margin-left:5px;" onclick="removerDoCarrinhoVenda(${idx})" title="Remover Item">X</button>
+                           </span>
+                       </div>`;
+                   });
+               };
+
+               renderGrupo('PRODUTOS / MATERIAIS', materiais);
+               renderGrupo('MÃO DE OBRA / SERVIÇOS', servicos);
            }
            document.getElementById('vendaSubtotalTxt').innerText = `R$ ${subtotal.toFixed(2)}`;
            window.calcularTotalComDesconto();
