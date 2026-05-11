@@ -774,9 +774,9 @@
             <tr>
                 <th style="width: 30px; text-align: center; padding: 5px;"><input type="checkbox" title="Selecionar Todos" onclick="window.toggleTodasEtiquetas(this)"></th>
                 <th style="width: 90px; text-align: left; padding: 5px;">Código</th>
-                <th style="text-align: left; padding: 5px;">Nome</th>
+                <th style="text-align: left; padding: 5px; cursor: pointer;" onclick="window.ordenarEstoquePor && window.ordenarEstoquePor('nome')" title="Ordenar por Nome (A→Z / Z→A)">Nome ⇅</th>
                 <th style="width: 90px; text-align: left; padding: 5px;">Categoria</th>
-                <th style="width: 70px; text-align: center; padding: 5px;">Qtd / un.</th>
+                <th style="width: 70px; text-align: center; padding: 5px; cursor: pointer;" onclick="window.ordenarEstoquePor && window.ordenarEstoquePor('quantidade')" title="Ordenar por Quantidade (0→1→2… / inverso)">Qtd / un. ⇅</th>
                 <th style="width: 90px; text-align: left; padding: 5px;">Custo</th>
                 <th style="width: 90px; text-align: left; padding: 5px;">Venda</th>
                 <th style="width: 90px; text-align: left; padding: 5px;">NCM</th> 
@@ -1649,6 +1649,15 @@ window.excluirTodosProdutos = async function() {
    let paginaAtualCli = 1; const itensPorPaginaCli = 15; let termoBuscaCli = "";
    let paginaAtualProd = 1; const itensPorPaginaProd = 35; let termoBuscaProd = "";
    let tempoEsperaBusca;
+   // Ordenação da tabela de estoque (clicável no cabeçalho)
+   window.estoqueOrdem = window.estoqueOrdem || { campo: 'padrao', dir: 'asc' };
+   window.ordenarEstoquePor = function(campo) {
+       const atual = window.estoqueOrdem || { campo: 'padrao', dir: 'asc' };
+       const mesma = atual.campo === campo;
+       window.estoqueOrdem = { campo, dir: mesma ? (atual.dir === 'asc' ? 'desc' : 'asc') : 'asc' };
+       paginaAtualProd = 1;
+       if (typeof window.renderizarTabelaEstoque === 'function') window.renderizarTabelaEstoque();
+   };
 
 // FUNÇÃO: Filtra os produtos sem travar o teclado
 window.filtrarProdutos = function() {
@@ -2076,16 +2085,25 @@ window.mudarPaginaProd = function(direcao) {
            
            let f = produtosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscaProd) || (p.categoria && p.categoria.toLowerCase().includes(termoBuscaProd)) || (p.codigo && p.codigo.toLowerCase().includes(termoBuscaProd)));
            
+           const ord = window.estoqueOrdem || { campo: 'padrao', dir: 'asc' };
+           const mult = ord.dir === 'desc' ? -1 : 1;
+           const nomeCmp = (a, b) => String(a?.nome || '').localeCompare(String(b?.nome || ''), 'pt-BR', { sensitivity: 'base' });
            f.sort((a, b) => {
-               let qtdA = a.quantidade || 0;
-               let qtdB = b.quantidade || 0;
-               let alertaA = qtdA <= 3;
-               let alertaB = qtdB <= 3;
-
+               const qtdA = Number(a?.quantidade) || 0;
+               const qtdB = Number(b?.quantidade) || 0;
+               if (ord.campo === 'quantidade') {
+                   if (qtdA !== qtdB) return (qtdA - qtdB) * mult; // 0,1,2...
+                   return nomeCmp(a, b);
+               }
+               if (ord.campo === 'nome') {
+                   return nomeCmp(a, b) * mult; // A→Z / Z→A
+               }
+               // padrão: alerta (≤3) primeiro, depois nome
+               const alertaA = qtdA <= 3;
+               const alertaB = qtdB <= 3;
                if (alertaA && !alertaB) return -1;
                if (!alertaA && alertaB) return 1;
-               
-               return a.nome.localeCompare(b.nome);
+               return nomeCmp(a, b);
            });
 
            const pag = f.slice((paginaAtualProd - 1) * itensPorPaginaProd, ((paginaAtualProd - 1) * itensPorPaginaProd) + itensPorPaginaProd);
