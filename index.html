@@ -2785,7 +2785,9 @@ window.finalizarVenda = async function(event) {
         }
 
         const isDigital = window.formaPagamentoEhDigital(formaPag);
-        const autoLancamentoBanco = !!(tipoDocSelecionado === 'VENDA' && statusPag === 'PAGO' && isDigital);
+        // Vendas digitais (PIX/Cartão/Boleto) já aparecem no módulo Banco via `caixaGlobal`.
+        // Não lançar automaticamente no extrato do banco, senão duplica (entrada/estorno).
+        const autoLancamentoBanco = false;
 
         // MÁGICA DE PRESERVAÇÃO: O ...originalDoc garante que NENHUM campo antigo se perca
         const doc = {
@@ -2837,15 +2839,7 @@ window.finalizarVenda = async function(event) {
                 }
             }
 
-            if (idNotaEditada && originalDoc && originalDoc.autoLancamentoBanco && (originalDoc.statusPagamento || '') === 'PAGO' && window.formaPagamentoEhDigital(originalDoc.formaPagamento)) {
-                const totOld = parseFloat(originalDoc.total) || 0;
-                if (totOld > 0 && typeof window.estornarNoBancoAutomatico === 'function') {
-                    window.estornarNoBancoAutomatico(`Ajuste por edição — ${originalDoc.tipo} Nº ${originalDoc.os || 'S/N'}`, totOld);
-                }
-            }
-            if (autoLancamentoBanco && typeof window.lancarNoBancoAutomatico === 'function') {
-                window.lancarNoBancoAutomatico(`${tipoDocSelecionado} Nº ${doc.os || 'S/N'} - ${cNome} (${formaPag})`, total);
-            }
+            // Sem estorno/lançamento automático no extrato do banco (evita duplicidades).
         }
 
         alert(idNotaEditada ? "Venda Atualizada com Sucesso!" : "Venda Registrada!");
@@ -2881,14 +2875,11 @@ window.marcarComoPago = async function(id) {
     try {
         const { ref, update } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
         const isDig = window.formaPagamentoEhDigital(doc.formaPagamento);
-        const patch = { statusPagamento: 'PAGO' };
-        if (isDig) patch.autoLancamentoBanco = true;
+        const patch = { statusPagamento: 'PAGO', autoLancamentoBanco: false };
         await update(ref(window.meuBanco, 'caixa/' + id), patch);
         const valor = parseFloat(doc.total) || 0;
         if (!isDig) {
             window.registrarMovimentoCaixa('entrada', valor);
-        } else if (typeof window.lancarNoBancoAutomatico === 'function') {
-            window.lancarNoBancoAutomatico(`${doc.tipo} Nº ${doc.os || 'S/N'} - ${doc.clienteNome} (${doc.formaPagamento})`, valor);
         }
         alert('Pagamento recebido com sucesso!');
     } catch (e) {
@@ -2910,8 +2901,6 @@ window.estornarPagamento = async function(id) {
         const isDig = window.formaPagamentoEhDigital(doc.formaPagamento);
         if (!isDig) {
             window.registrarMovimentoCaixa('entrada', -valor);
-        } else if (doc.autoLancamentoBanco && typeof window.estornarNoBancoAutomatico === 'function') {
-            window.estornarNoBancoAutomatico(`${doc.tipo} Nº ${doc.os || 'S/N'} - ${doc.clienteNome}`, valor);
         }
         alert('Pagamento estornado com sucesso.');
     } catch (e) {
@@ -3314,7 +3303,8 @@ window.salvarOrdemDeServico = async function(event) {
         }
 
         const isDigitalOS = window.formaPagamentoEhDigital(formaPag);
-        const autoLancamentoBancoOS = !!(statusPag === 'PAGO' && isDigitalOS);
+        // OS digital já aparece no módulo Banco via `caixaGlobal` (evita duplicidade no extrato).
+        const autoLancamentoBancoOS = false;
 
         // MÁGICA DE PRESERVAÇÃO
         const docOS = {
@@ -3369,15 +3359,7 @@ window.salvarOrdemDeServico = async function(event) {
             }
         }
 
-        if (idNotaEditada && originalDoc && originalDoc.autoLancamentoBanco && (originalDoc.statusPagamento || '') === 'PAGO' && window.formaPagamentoEhDigital(originalDoc.formaPagamento)) {
-            const totOldOs = parseFloat(originalDoc.total) || 0;
-            if (totOldOs > 0 && typeof window.estornarNoBancoAutomatico === 'function') {
-                window.estornarNoBancoAutomatico(`Ajuste por edição — OS Nº ${originalDoc.os || 'S/N'}`, totOldOs);
-            }
-        }
-        if (autoLancamentoBancoOS && typeof window.lancarNoBancoAutomatico === 'function') {
-            window.lancarNoBancoAutomatico(`ORDEM DE SERVIÇO Nº ${docOS.os || 'S/N'} - ${cNome} (${formaPag})`, totalGeral);
-        }
+        // Sem estorno/lançamento automático no extrato do banco (evita duplicidades).
         
         alert(idNotaEditada ? "Ordem de Serviço Atualizada!" : "OS Salva! Estoque atualizado.");
         
@@ -4104,8 +4086,6 @@ window.editarDocumentoCaixa = function(id) {
                        if (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO' || vCanc.tipo === 'ORCAMENTO') {
                            if (!isDig) {
                                window.registrarMovimentoCaixa('entrada', -tot);
-                           } else if (vCanc.autoLancamentoBanco && typeof window.estornarNoBancoAutomatico === 'function') {
-                               window.estornarNoBancoAutomatico(`${vCanc.tipo} Nº ${vCanc.os || 'S/N'} - ${vCanc.clienteNome}`, tot);
                            }
                        } else if (vCanc.tipo === 'DESPESA') {
                            window.registrarMovimentoCaixa('saida', -tot);
@@ -5349,7 +5329,7 @@ window.renderizarTabelaBanco = function() {
             
             let txtBadge = '';
             if (statusStr === 'PAGO') {
-                txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ BANCO - ${formaPgto.toUpperCase()}</span>`;
+                txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ VENDIDO - ${formaPgto.toUpperCase()}</span>`;
             } else {
                 txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE - ${formaPgto.toUpperCase()}</span>`;
             }
