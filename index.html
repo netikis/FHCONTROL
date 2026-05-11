@@ -3799,14 +3799,20 @@ window.editarDocumentoCaixa = function(id) {
                    </div>
                `;
            } else {
-               let todosHtml = '';
                let itensGarantidos = doc.itens ? (Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens)) : [];
-               
+               let matHtml = ''; let servHtml = '';
+               let totalMat = 0; let totalServ = 0;
+
                if(itensGarantidos.length > 0) {
-                   itensGarantidos.forEach(i => { 
-                       todosHtml += `<tr><td style="font-size: 9px; padding: 4px 6px;">${i.nome}</td><td class="text-right" style="width: 120px; font-size: 10px; padding: 4px 6px;">R$ ${i.valor.toFixed(2)}</td></tr>`; 
+                   itensGarantidos.forEach(i => {
+                       const isServ = (i.categoriaOS === 'servico') || String(i.nome || '').toLowerCase().includes('mão de obra') || String(i.nome || '').toLowerCase().includes('[mão de obra]') || String(i.nome || '').toLowerCase().includes('[serviço]');
+                       let tdHtml = `<tr><td style="font-size: 9px; padding: 4px 6px;">${i.nome}</td><td class="text-right" style="width: 120px; font-size: 10px; padding: 4px 6px;">R$ ${i.valor.toFixed(2)}</td></tr>`;
+                       if (isServ) { servHtml += tdHtml; totalServ += (Number(i.valor) || 0); }
+                       else { matHtml += tdHtml; totalMat += (Number(i.valor) || 0); }
                    });
-               } else { todosHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum item lançado.</td></tr>`; }
+               }
+               if(!matHtml) matHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum produto/material lançado.</td></tr>`;
+               if(!servHtml) servHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhuma mão de obra/serviço lançado.</td></tr>`;
 
                blocoDados = `
                    <div class="info-card">
@@ -3821,10 +3827,19 @@ window.editarDocumentoCaixa = function(id) {
 
                htmlTabelas = `
                    <div class="tabela-box" style="margin-top: 15px;">
-                       <div class="card-title">PRODUTOS / ITENS DO DOCUMENTO</div>
+                       <div class="card-title">PRODUTOS / MATERIAIS</div>
                        <table class="tabela-bonita">
-                          <thead><tr><th>Descrição do Item</th><th class="text-right">Valor Parcial</th></tr></thead>
-                          <tbody>${todosHtml}</tbody>
+                          <thead><tr><th>Descrição</th><th class="text-right">Valor</th></tr></thead>
+                          <tbody>${matHtml}</tbody>
+                          <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalMat.toFixed(2)}</th></tr></tfoot>
+                       </table>
+                   </div>
+                   <div class="tabela-box" style="margin-top: 15px;">
+                       <div class="card-title">MÃO DE OBRA / SERVIÇOS</div>
+                       <table class="tabela-bonita">
+                          <thead><tr><th>Descrição</th><th class="text-right">Valor</th></tr></thead>
+                          <tbody>${servHtml}</tbody>
+                          <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalServ.toFixed(2)}</th></tr></tfoot>
                        </table>
                    </div>
                `;
