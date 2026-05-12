@@ -2324,12 +2324,14 @@ window.imprimirEtiquetasEstoque = function() {
         
         let cod = chk.getAttribute('data-codigo') || '00000000';
         let preco = chk.getAttribute('data-venda');
+        let precoNum = window.parseMoedaBr(preco);
+        let precoFmt = precoNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         for (let i = 0; i < qtdCopias; i++) {
             arrayEtiquetas.push(`
                 <div class="etiqueta">
                     <div class="etq-nome">${nome}</div>
-                    <div class="etq-preco">R$ ${parseFloat(preco).toFixed(2)}</div>
+                    <div class="etq-preco">R$ ${precoFmt}</div>
                     <div class="etq-barcode-container">
                         <svg class="barcode"
                             jsbarcode-value="${cod}"
