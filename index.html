@@ -4746,7 +4746,9 @@ window.importarJSON = async function() {
     resultados.slice(0, 50).forEach(v => {
         let cor = v.tipo === 'DESPESA' ? '#e74c3c' : '#2ecc71';
         let formaPgtoRegistro = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '').toUpperCase() : '';
-        let statusTxt = (v.statusPagamento || 'PAGO') + (formaPgtoRegistro ? ` (${formaPgtoRegistro})` : '');
+        let statusTxt = v.tipo === 'FECHAMENTO'
+            ? 'FECHADO'
+            : (v.statusPagamento || 'PAGO') + (formaPgtoRegistro ? ` (${formaPgtoRegistro})` : '');
         let btnImprimir = '';
         if (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') {
         btnImprimir = `<button onclick="window.reimprimirDocumentoRegistro('${v.id}')" style="background-color: #f39c12; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">🖨️ Imprimir</button>`;
