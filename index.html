@@ -1454,7 +1454,7 @@ window.iniciarImportacao = async function(inputElement) {
            <p style="font-size: 13px; color: #bdc3c7; margin-top: 6px;">Pergunte sobre estoque, clientes, contas a receber, vendas, despesas e balanços. Os botões de PDF usam o mesmo gerador da tela de caixa.</p>
            <div id="assistenteChatLog" style="max-height: min(420px, 55vh); overflow-y: auto; border: 1px solid #7f8c8d; border-radius: 8px; padding: 12px; background: #1a252f; color: #ecf0f1; font-size: 13px; line-height: 1.45;"></div>
            <div style="display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap;">
-               <input type="text" id="assistenteChatInput" autocomplete="off" placeholder="Ex: balanço mensal 05/2026 | estoque parafuso | o que João deve? | PDFs do cliente Maria" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 6px; border: 1px solid #7f8c8d; background: #2c3e50; color: #ffffff;">
+               <input type="text" id="assistenteChatInput" autocomplete="off" placeholder="Ex: balanço mensal 05/2026 | estoque produto | o que &quot;cliente&quot; deve? | PDFs do cliente &quot;cliente&quot;" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 6px; border: 1px solid #7f8c8d; background: #2c3e50; color: #ffffff;">
                <button type="button" class="btn-primary" style="background-color: #1abc9c; padding: 10px 18px;" onclick="window.assistenteSistemaEnviar()">Enviar</button>
                <button type="button" class="btn-secundario" style="background-color: #34495e; color: #fff; padding: 10px 14px;" onclick="window.assistenteSistemaLimpar()">Limpar chat</button>
            </div>
@@ -5742,7 +5742,7 @@ window.zerarFluxoCaixa = async function() {
         });
         return { ent, sai, qe, qs };
     }
-    /** Palavras-chave para busca no estoque a partir de frase natural (ex.: ventilador). */
+    /** Palavras-chave para busca no estoque a partir de frase natural (ex.: nome do produto). */
     function extrairTermosBuscaEstoque(texto) {
         const STOP = new Set([
             'me', 'passe', 'pasa', 'passem', 'traga', 'traz', 'mostre', 'mostra', 'mostrem', 'liste', 'lista', 'listar', 'diga', 'informe', 'informa',
@@ -5814,10 +5814,10 @@ window.zerarFluxoCaixa = async function() {
     function assistenteAjudaHtml() {
         return `<p><strong>Exemplos de perguntas:</strong></p>
 <ul style="margin:6px 0 0 18px;padding:0;">
-<li><strong>Estoque:</strong> <code>estoque</code>, <code>estoque ventilador</code>, ou frases como <code>quantos modelos de ventilador tenho em estoque</code></li>
-<li><strong>Clientes:</strong> <code>quantos clientes</code>, <code>cadastro "João Silva"</code></li>
-<li><strong>A receber:</strong> <code>pendencias de NETO CHANCA</code>, <code>pendências Maria</code>, <code>pendentes cliente Maria</code>, <code>quem está devendo</code>, <code>valor total do que santo brownie deve</code></li>
-<li><strong>PDFs:</strong> <code>pdfs do cliente "Fulano"</code></li>
+<li><strong>Estoque:</strong> <code>estoque</code>, <code>estoque produto</code>, ou frases como <code>quantos modelos de produto tenho em estoque</code></li>
+<li><strong>Clientes:</strong> <code>quantos clientes</code>, <code>cadastro "cliente"</code></li>
+<li><strong>A receber:</strong> <code>pendencias de "cliente"</code>, <code>pendências "cliente"</code>, <code>pendentes cliente "cliente"</code>, <code>quem está devendo</code>, <code>valor total do que "cliente" deve</code></li>
+<li><strong>PDFs:</strong> <code>pdfs do cliente "cliente"</code></li>
 <li><strong>Vendas / despesas:</strong> <code>quanto vendi em 05/2026</code>, <code>despesas do mês</code></li>
 <li><strong>Balanço:</strong> <code>balanço semanal</code>, <code>balanço mensal</code>, <code>balanço anual 2026</code></li>
 </ul>
@@ -5904,7 +5904,7 @@ window.zerarFluxoCaixa = async function() {
             }
             if (!hits.length) {
                 return `<p>Nenhum produto encontrado para os termos: <strong>${escHtml(termos.join(', '))}</strong>.</p>
-<p style="font-size:12px;color:#bdc3c7;">Dica: use uma palavra do nome do produto (ex.: <code>estoque ventilador</code>).</p>`;
+<p style="font-size:12px;color:#bdc3c7;">Dica: use uma palavra do nome do produto (ex.: <code>estoque produto</code>).</p>`;
             }
             const qtdSoma = hits.reduce((s, p) => s + (parseFloat(p.quantidade) || 0), 0);
             let html = '';
@@ -5978,7 +5978,7 @@ ${extra}
 
         if (n.includes('cadastro') || n.includes('dados do cliente') || (n.includes('cliente') && (n.includes('telefone') || n.includes('endereco') || n.includes('endereço')))) {
             const nome = extrairNomeClienteHeuristico(raw) || raw.replace(/.*cliente/gi, '').trim();
-            if (!nome || nome.length < 2) return `<p>Informe o nome. Ex.: <code>cadastro "Maria Souza"</code></p>`;
+            if (!nome || nome.length < 2) return `<p>Informe o nome. Ex.: <code>cadastro "cliente"</code></p>`;
             const hits = cli.filter(c => matchNomeCliente(c.nome, nome)).slice(0, 5);
             if (!hits.length) return `<p>Nenhum cliente cadastrado com nome parecido com <strong>${escHtml(nome)}</strong>.</p>`;
             let html = '';
@@ -5992,7 +5992,7 @@ ${extra}
 
         if (n.includes('pdf') || (n.includes('notas') && n.includes('cliente')) || (n.includes('vendas') && n.includes('cliente')) || (n.includes('documentos') && (n.includes('cliente') || n.includes('pdf')))) {
             const nome = extrairNomeClienteHeuristico(raw);
-            if (!nome || nome.length < 2) return `<p>Diga o cliente. Ex.: <code>pdfs do cliente "João"</code></p>`;
+            if (!nome || nome.length < 2) return `<p>Diga o cliente. Ex.: <code>pdfs do cliente "cliente"</code></p>`;
             const docsCli = cx.filter(v => isVendaOuOS(v) && matchNomeCliente(v.clienteNome, nome));
             if (!docsCli.length) return `<p>Nenhuma venda/OS encontrada para <strong>${escHtml(nome)}</strong>.</p>`;
             docsCli.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
