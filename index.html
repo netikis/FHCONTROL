@@ -595,6 +595,26 @@
         <button id="btnSalvarBanco" class="btn-primary" style="width: 100%; padding: 12px; font-size: 15px;" onclick="salvarLancamentoBanco()">CONFIRMAR LANÇAMENTO</button>
     </div>
 </div>
+<div id="modalReceberPendente" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+        <span class="close-btn" onclick="window.fecharModalReceberPendente()">&times;</span>
+        <h2 style="margin-top: 0; color: #27ae60;">💰 Confirmar recebimento</h2>
+        <p id="receberPendenteResumo" style="font-size: 14px; color: #ecf0f1;"></p>
+        <p style="font-size: 12px; color: #bdc3c7;">Escolha como o cliente pagou. <strong>Dinheiro</strong> entra no caixa físico (gaveta). <strong>PIX / cartão / boleto</strong> entram no painel do banco digital (não somam na gaveta).</p>
+        <div class="form-group">
+            <label>Forma de pagamento efetiva</label>
+            <select id="receberFormaPgto" style="width: 100%; padding: 10px; font-weight: bold; background: #2c3e50; color: #fff; border: 1px solid #7f8c8d;">
+                <option value="Dinheiro">💵 Dinheiro (caixa / balcão)</option>
+                <option value="PIX">🌀 PIX (banco digital)</option>
+                <option value="Cartão de Débito">💳 Cartão de débito (banco digital)</option>
+                <option value="Cartão de Crédito">💳 Cartão de crédito (banco digital)</option>
+                <option value="Boleto">📑 Boleto (banco digital)</option>
+            </select>
+        </div>
+        <button type="button" class="btn-primary" style="width: 100%; padding: 12px; margin-top: 8px; background: #27ae60;" onclick="window.confirmarRecebimentoPendente()">Confirmar recebimento</button>
+        <button type="button" class="btn-secundario" style="width: 100%; margin-top: 8px;" onclick="window.fecharModalReceberPendente()">Cancelar</button>
+    </div>
+</div>
 <div id="telaAssinaturaRemota" style="display: none; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; height: 100%; background-color: #2c3e50; padding: 40px 20px 100px 20px; box-sizing: border-box; color: #ecf0f1; text-align: center; overflow-y: auto;">
    <img id="logoAssinaturaRemota" src="https://www.image2url.com/r2/default/files/1777991879754-324ae06d-dd51-42bd-9f5b-f242d4babc74.jpeg" style="max-width: 120px; border-radius: 8px; margin-bottom: 20px; background-color: #fff; padding: 5px; flex-shrink: 0;">
    
@@ -1135,6 +1155,15 @@ window.formaPagamentoEhDigital = function(formaPag) {
     return f.includes('pix') || f.includes('cartao') || f.includes('cartoes') || f.includes('debito') || f.includes('credito') || f.includes('boleto');
 };
 
+// Linhas que entram na tabela do caixa físico (balcão): sem PIX/cartão/boleto; vendas/OS pendentes ficam só em "Contas a receber".
+window.linhaEhCaixaBalcaoVisivel = function (v) {
+    let formaLow = (v.formaPagamento || '').toLowerCase();
+    let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
+    if (isDigital) return false;
+    if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO' || v.tipo === 'VD') && (v.statusPagamento || '') === 'PENDENTE') return false;
+    return true;
+};
+
 // Simula estoque após "devolver" itens do documento antigo e aplicar o carrinho novo (sem gravar no Firebase)
 window.simularEstoqueAposTroca = async function(dbBanco, itensNovos, idNotaEditada, originalDoc, modo) {
     const { ref, get } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
@@ -1286,6 +1315,33 @@ window.iniciarImportacao = async function(inputElement) {
                    </tbody>
                </table>
            </div>           
+
+<div style="background-color: #2c1f1f; padding: 15px; border-radius: 6px; border: 1px solid #f39c12; margin-bottom: 18px;">
+               <h3 style="margin-top: 0; color: #f39c12; font-size: 15px; text-transform: uppercase;">Contas a receber (pendentes)</h3>
+               <p style="margin: 0 0 10px 0; font-size: 13px; color: #ecf0f1;">Total em aberto: <strong id="totalPendentesCaixaHead" style="color: #f1c40f;">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Use <strong>Receber</strong> na linha para informar a forma de pagamento (dinheiro → gaveta; PIX/cartão → banco digital).</p>
+               <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px;">
+                   <label for="buscaPendentesCaixa" style="color: #bdc3c7; font-size: 12px; white-space: nowrap;">Buscar</label>
+                   <input type="search" id="buscaPendentesCaixa" autocomplete="off" placeholder="Nome, Nº documento, data ou valor…" oninput="if(window.filtrarPendentesCaixa)window.filtrarPendentesCaixa()" style="flex: 1; min-width: 200px; max-width: 480px; padding: 8px 10px; border-radius: 4px; border: 1px solid #7f8c8d; background: #1a252f; color: #ecf0f1; font-size: 13px;" />
+               </div>
+               <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+                   <table style="margin-top: 0;">
+                       <thead>
+                           <tr>
+                               <th>Nº Doc</th>
+                               <th>Tipo</th>
+                               <th>Data</th>
+                               <th>Cliente</th>
+                               <th>Total</th>
+                               <th>Previsto</th>
+                               <th style="min-width: 120px;">Ação</th>
+                           </tr>
+                       </thead>
+                       <tbody id="tabelaPendentesCaixa">
+                           <tr><td colspan="7" style="text-align: center; color: #bdc3c7;">Nenhuma conta pendente.</td></tr>
+                       </tbody>
+                   </table>
+               </div>
+           </div>
 
         <div class="caixa-actions-header"> 
     <button class="btn-secundario" onclick="definirCaixaInicial()">💵 Informar Caixa Inicial</button>
@@ -1554,7 +1610,8 @@ window.excluirTodosProdutos = async function() {
    
    let clientesGlobais = [];
    let produtosGlobais = [];
-   let caixaGlobal = []; 
+   let caixaGlobal = [];
+   window.caixaGlobal = caixaGlobal;
    let empresaGlobal = { nome: "Minha Empresa", cnpj: "", telefone: "", endereco: "", logo: "" }; 
    
    let carrinhoVenda = []; 
@@ -2899,30 +2956,181 @@ window.finalizarVenda = async function(event) {
     }
 };
 
-window.marcarComoPago = async function(id) {
-    const doc = window.caixaGlobal.find(x => x.id === id);
-    if (!doc) return;
+window.idDocRecebimentoPendente = null;
+
+window._escPendTxt = function (s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+};
+
+window._pendNormBusca = function (s) {
+    return String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+};
+
+window._pendenteMatchBusca = function (v, qNorm) {
+    if (!qNorm) return true;
+    const valor = parseFloat(v.total) || 0;
+    const venc = v.vencimento ? String(v.vencimento) : '';
+    const vencBR = venc && venc.indexOf('-') > 0 ? venc.split('-').reverse().join('/') : venc;
+    const partes = [
+        v.clienteNome || '',
+        String(v.os ?? ''),
+        v.dataStr || '',
+        (v.dataStr || '').split(/\s+/)[0] || '',
+        venc,
+        vencBR,
+        valor.toFixed(2),
+        valor.toFixed(2).replace('.', ','),
+        String(valor),
+        v.id || ''
+    ];
+    const hay = window._pendNormBusca(partes.join(' '));
+    return hay.indexOf(qNorm) !== -1;
+};
+
+window.filtrarPendentesCaixa = function () {
+    if (window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
+};
+
+window.renderizarTabelaPendentesCaixa = function () {
+    const tbody = document.getElementById('tabelaPendentesCaixa');
+    const hTot = document.getElementById('totalPendentesCaixaHead');
+    const hQtd = document.getElementById('qtdPendentesCaixaHead');
+    const inpBusca = document.getElementById('buscaPendentesCaixa');
+    if (!tbody) return;
+    const cx = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
+    const lista = cx.filter(v =>
+        (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO' || v.tipo === 'VD') &&
+        (v.statusPagamento || '') === 'PENDENTE'
+    );
+    const qRaw = inpBusca && inpBusca.value != null ? String(inpBusca.value).trim() : '';
+    const qNorm = window._pendNormBusca(qRaw);
+    const listaVis = qNorm ? lista.filter(v => window._pendenteMatchBusca(v, qNorm)) : lista;
+    const tot = listaVis.reduce((s, v) => s + (parseFloat(v.total) || 0), 0);
+    if (hTot) hTot.textContent = 'R$ ' + tot.toFixed(2);
+    if (hQtd) hQtd.textContent = String(listaVis.length);
+    if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #bdc3c7;">Nenhuma conta pendente.</td></tr>';
+        return;
+    }
+    if (!listaVis.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #bdc3c7;">Nenhum resultado para essa busca. Limpe o campo para ver todas.</td></tr>';
+        return;
+    }
+    listaVis.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    tbody.innerHTML = '';
+    listaVis.forEach(v => {
+        const tr = document.createElement('tr');
+        const prev = window._escPendTxt((v.formaPagamento || '—').replace(/Cartão de /g, ''));
+        tr.innerHTML = `
+            <td style="font-weight:bold;color:#fff;">${window._escPendTxt(String(v.os || '-'))}</td>
+            <td>${window._escPendTxt(v.tipo || '')}</td>
+            <td>${window._escPendTxt((v.dataStr || '').split(' ')[0])}</td>
+            <td>${window._escPendTxt(v.clienteNome || '-')}</td>
+            <td style="color:#f1c40f;font-weight:bold;">R$ ${(parseFloat(v.total) || 0).toFixed(2)}</td>
+            <td style="font-size:11px;">${prev}</td>
+            <td><button type="button" class="btn-receber-pendente-caixa" data-pend-id="${encodeURIComponent(String(v.id || ''))}" style="padding:6px 12px;font-size:11px;background:#27ae60;color:#fff;border:1px solid #1e8449;border-radius:4px;cursor:pointer;font-weight:bold;width:auto;max-width:100%;white-space:nowrap;">Receber</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+};
+
+window.fecharModalReceberPendente = function () {
+    window.idDocRecebimentoPendente = null;
+    const m = document.getElementById('modalReceberPendente');
+    if (m) m.style.display = 'none';
+};
+
+window._listaCaixaSincronizada = function () {
+    return Array.isArray(window.caixaGlobal) ? window.caixaGlobal : [];
+};
+
+window.abrirModalReceberPendente = function (id) {
+    const listaCx = window._listaCaixaSincronizada();
+    const doc = listaCx.find(x => String(x.id) === String(id));
+    if (!doc) {
+        alert('Documento não encontrado na lista do caixa. Aguarde a sincronização ou recarregue a página.');
+        return;
+    }
     if ((doc.statusPagamento || 'PENDENTE') === 'PAGO') {
         return alert('Este documento já está marcado como PAGO.');
     }
-    if (!confirm(`💰 CONFIRMAR RECEBIMENTO\n\nDeseja confirmar o recebimento de R$ ${parseFloat(doc.total).toFixed(2)} do(a) cliente ${doc.clienteNome}?`)) return;
+    window.idDocRecebimentoPendente = doc.id;
+    const res = document.getElementById('receberPendenteResumo');
+    if (res) {
+        res.innerHTML = `<strong>${window._escPendTxt(doc.clienteNome || '-')}</strong> — Doc. <strong>${window._escPendTxt(String(doc.os || '-'))}</strong> — Valor <strong>R$ ${(parseFloat(doc.total) || 0).toFixed(2)}</strong>`;
+    }
+    const sel = document.getElementById('receberFormaPgto');
+    if (sel) {
+        const fp = doc.formaPagamento || 'Dinheiro';
+        const ok = [...sel.options].some(o => o.value === fp);
+        sel.value = ok ? fp : 'Dinheiro';
+    }
+    const m = document.getElementById('modalReceberPendente');
+    if (m) m.style.display = 'flex';
+};
+
+window.confirmarRecebimentoPendente = async function () {
+    const id = window.idDocRecebimentoPendente;
+    if (!id) return;
+    const listaCx = window._listaCaixaSincronizada();
+    const doc = listaCx.find(x => String(x.id) === String(id));
+    if (!doc) {
+        window.fecharModalReceberPendente();
+        return;
+    }
+    const sel = document.getElementById('receberFormaPgto');
+    const forma = sel ? sel.value : 'Dinheiro';
+    const isDig = window.formaPagamentoEhDigital(forma);
+    const valor = parseFloat(doc.total) || 0;
     try {
         const { ref, update } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
-        const isDig = window.formaPagamentoEhDigital(doc.formaPagamento);
-        const patch = { statusPagamento: 'PAGO', autoLancamentoBanco: false };
-        await update(ref(window.meuBanco, 'caixa/' + id), patch);
-        const valor = parseFloat(doc.total) || 0;
+        await update(ref(window.meuBanco, 'caixa/' + id), {
+            statusPagamento: 'PAGO',
+            formaPagamento: forma,
+            autoLancamentoBanco: false
+        });
         if (!isDig) {
             window.registrarMovimentoCaixa('entrada', valor);
         }
-        alert('Pagamento recebido com sucesso!');
+        window.fecharModalReceberPendente();
+        alert('Pagamento recebido com sucesso!' + (isDig ? '\n\nValor contabilizado no banco digital (PIX/cartão).' : '\n\nValor contabilizado no caixa físico (gaveta).'));
+        if (window.atualizarPainelBanco) window.atualizarPainelBanco();
+        if (window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
     } catch (e) {
         alert('Erro ao atualizar: ' + e.message);
     }
 };
 
+window.marcarComoPago = function (id) {
+    window.abrirModalReceberPendente(id);
+};
+
+(function () {
+    if (window._delegReceberPendentesCaixa) return;
+    window._delegReceberPendentesCaixa = true;
+    document.addEventListener('click', function (ev) {
+        const t = ev.target;
+        if (!t || !t.closest) return;
+        const btn = t.closest('.btn-receber-pendente-caixa');
+        if (!btn) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        const enc = btn.getAttribute('data-pend-id');
+        if (enc == null || enc === '') return;
+        let id;
+        try {
+            id = decodeURIComponent(enc);
+        } catch (e) {
+            id = enc;
+        }
+        if (!id) return;
+        if (window.abrirModalReceberPendente) window.abrirModalReceberPendente(id);
+    }, true);
+})();
+
 window.estornarPagamento = async function(id) {
-    const doc = window.caixaGlobal.find(x => x.id === id);
+    const listaCx = window._listaCaixaSincronizada();
+    const doc = listaCx.find(x => String(x.id) === String(id));
     if (!doc) return;
     if ((doc.statusPagamento || 'PAGO') === 'PENDENTE') {
         return alert('Este documento já está como PENDENTE.');
@@ -3453,10 +3661,12 @@ window.salvarOrdemDeServico = async function(event) {
        onValue(ref(db, 'caixa'), function(snapshot) {
     caixaGlobal = []; const dados = snapshot.val();
     if (dados) { Object.keys(dados).forEach(key => caixaGlobal.push({ id: key, ...dados[key] })); }
-    caixaGlobal.sort((a, b) => b.timestamp - a.timestamp); 
-    
+    caixaGlobal.sort((a, b) => b.timestamp - a.timestamp);
+    window.caixaGlobal = caixaGlobal;
+
     if(window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
     if(window.renderizarTabelaBanco) window.renderizarTabelaBanco();
+    if(window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
     if(window.atualizarPainelBanco) window.atualizarPainelBanco();
 });
        
@@ -3465,12 +3675,8 @@ window.salvarOrdemDeServico = async function(event) {
     if(!tabela) return;
     tabela.innerHTML = '';
     
-    // FILTRO MÁGICO: Esconde TUDO que for PIX, Cartão ou Boleto do Caixa de Balcão.
-    let dadosBalcao = caixaGlobal.filter(v => {
-        let formaLow = (v.formaPagamento || '').toLowerCase();
-        let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
-        return !isDigital; 
-    });
+    // Caixa físico: sem digital; pendentes (VENDA/OS/VD) só na tabela "Contas a receber".
+    let dadosBalcao = caixaGlobal.filter(v => window.linhaEhCaixaBalcaoVisivel(v));
 
     if (dadosBalcao.length === 0) { 
         tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum documento físico registrado.</td></tr>'; 
@@ -5214,6 +5420,7 @@ window.filtrarCaixa = function() {
 
 window.mudarPaginaCaixa = function(direcao) {
     let filtrados = caixaGlobal.filter(v => {
+        if (!window.linhaEhCaixaBalcaoVisivel(v)) return false;
         let busca = (v.clienteNome || '').toLowerCase().includes(window.termoBuscaCaixa) || 
                     (v.os || '').toString().includes(window.termoBuscaCaixa);
         return busca;
@@ -5231,12 +5438,8 @@ window.renderizarTabelaCaixa = function() {
     if(!tabela) return;
     tabela.innerHTML = '';
     
-    // FILTRO DEFINITIVO: Esconde TUDO que for PIX, Cartão ou Boleto do Caixa Físico (Balcão), seja pago ou pendente.
-    let dadosBalcao = caixaGlobal.filter(v => {
-        let formaLow = (v.formaPagamento || '').toLowerCase();
-        let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
-        return !isDigital; 
-    });
+    // Caixa físico: sem digital; pendentes (VENDA/OS/VD) só na tabela "Contas a receber".
+    let dadosBalcao = caixaGlobal.filter(v => window.linhaEhCaixaBalcaoVisivel(v));
 
     if (dadosBalcao.length === 0) { 
         tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum documento físico registrado.</td></tr>'; 
