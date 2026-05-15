@@ -595,6 +595,22 @@
         <button id="btnSalvarBanco" class="btn-primary" style="width: 100%; padding: 12px; font-size: 15px;" onclick="salvarLancamentoBanco()">CONFIRMAR LANÇAMENTO</button>
     </div>
 </div>
+<div id="modalLancamentoCaixa" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('modalLancamentoCaixa').style.display='none'">&times;</span>
+        <h2 id="tituloModalCaixaBalcao" style="margin-top: 0; color: #27ae60;">➕ Lançar Entrada no Caixa (Balcão)</h2>
+        <p style="font-size: 12px; color:#bdc3c7;">Entrada manual em dinheiro na gaveta (ex.: suprimento, ajuste, recebimento avulso). Soma no painel do caixa físico de hoje.</p>
+        <div class="form-group">
+            <label>Descrição (Ex: Suprimento, Troco inicial, Recebimento avulso)</label>
+            <input type="text" id="descCaixaBalcao">
+        </div>
+        <div class="form-group">
+            <label>Valor (R$)</label>
+            <input type="number" step="0.01" id="valorCaixaBalcao">
+        </div>
+        <button id="btnSalvarCaixaBalcao" type="button" class="btn-primary" style="width: 100%; padding: 12px; font-size: 15px; background: #27ae60;" onclick="window.salvarLancamentoCaixaBalcao()">CONFIRMAR ENTRADA</button>
+    </div>
+</div>
 <div id="modalReceberPendente" class="modal">
     <div class="modal-content" style="max-width: 420px;">
         <span class="close-btn" onclick="window.fecharModalReceberPendente()">&times;</span>
@@ -1366,6 +1382,7 @@ window.iniciarImportacao = async function(inputElement) {
 
         <div class="caixa-actions-header"> 
     <button class="btn-secundario" onclick="definirCaixaInicial()">💵 Informar Caixa Inicial</button>
+    <button class="btn-secundario" style="background-color: #27ae60;" onclick="window.abrirModalCaixaBalcao()">➕ Lançar Entrada</button>
     <button class="btn-danger" onclick="document.getElementById('modalDespesa').style.display='flex'">➖ Lançar Despesa</button>
     <button class="btn-secundario" style="background-color: #8e44ad;" onclick="gerarRelatorioMensal()">📄 Resumo Mensal PDF</button>
     <button class="btn-secundario" style="background-color: #f39c12;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia</button>
@@ -3197,7 +3214,7 @@ window.sincronizarTotaisDoDia = async function() {
             let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
 
             // MÁGICA: Só soma na GAVETA se for uma venda/OS paga e NÃO for digital (Pix/Cartão/Boleto)
-            if (status === 'PAGO' && !isDigital && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO' || doc.tipo === 'VD' || doc.tipo === 'RECIBO')) {
+            if (status === 'PAGO' && !isDigital && (doc.tipo === 'VENDA' || doc.tipo === 'ORDEM DE SERVIÇO' || doc.tipo === 'VD' || doc.tipo === 'RECIBO' || doc.tipo === 'ENTRADA_CAIXA')) {
                 totalEntradasGaveta += valor;
             }
             // Soma as saídas/despesas normalmente
@@ -3743,7 +3760,9 @@ window.salvarOrdemDeServico = async function(event) {
         let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
         let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
 
-        if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+        if (v.tipo === 'ENTRADA_CAIXA') {
+            txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ ENTRADA MANUAL</span>`;
+        } else if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
             txtBadge = '-';
         } else if (statusStr === 'PAGO') {
             txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO${detalhePgto}</span>`;
@@ -3767,10 +3786,10 @@ window.salvarOrdemDeServico = async function(event) {
 
         acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
 
-        let corTipo = v.tipo === 'VENDA' ? '#3498db' : (v.tipo === 'ORCAMENTO' ? '#9b59b6' : (v.tipo === 'DESPESA' ? '#e74c3c' : '#f39c12'));
-        let sigla = v.tipo === 'VENDA' ? 'VENDA' : (v.tipo === 'ORCAMENTO' ? 'ORCAMENTO' : (v.tipo === 'DESPESA' ? 'DESPESAS' : (v.tipo === 'FECHAMENTO' ? 'FECH.CAIXA' : 'ORDEM.SERV.')));
+        let corTipo = v.tipo === 'ENTRADA_CAIXA' ? '#27ae60' : (v.tipo === 'VENDA' ? '#3498db' : (v.tipo === 'ORCAMENTO' ? '#9b59b6' : (v.tipo === 'DESPESA' ? '#e74c3c' : '#f39c12')));
+        let sigla = v.tipo === 'ENTRADA_CAIXA' ? 'ENTRADA' : (v.tipo === 'VENDA' ? 'VENDA' : (v.tipo === 'ORCAMENTO' ? 'ORCAMENTO' : (v.tipo === 'DESPESA' ? 'DESPESAS' : (v.tipo === 'FECHAMENTO' ? 'FECH.CAIXA' : 'ORDEM.SERV.'))));
 
-        if(v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+        if(v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO' || v.tipo === 'ENTRADA_CAIXA') {
             acoesHtml = `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Registro">🗑️</button>`;
         }
 
@@ -3782,7 +3801,7 @@ window.salvarOrdemDeServico = async function(event) {
             <td style="font-weight: bold;">${vencForm}</td>
             <td style="color:${v.tipo==='DESPESA'?'#e74c3c':'#2ecc71'}; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
             <td style="text-align: center;">${txtBadge}</td>
-            <td style="font-size: 11px; font-weight: bold;">${(v.tipo==='DESPESA'||v.tipo==='FECHAMENTO')?'-':temAss}</td>
+            <td style="font-size: 11px; font-weight: bold;">${(v.tipo==='DESPESA'||v.tipo==='FECHAMENTO'||v.tipo==='ENTRADA_CAIXA')?'-':temAss}</td>
             <td class="acoes-flex">${acoesHtml}</td>
         `; 
         tabela.appendChild(tr);
@@ -3811,13 +3830,13 @@ window.atualizarResumoPagamentosHoje = function() {
             let status = doc.statusPagamento || 'PAGO';
             let tipo = doc.tipo || '';
 
-            if (status === 'PAGO' && (tipo === 'VENDA' || tipo === 'ORDEM DE SERVIÇO' || tipo === 'VD')) {
+            if (status === 'PAGO' && (tipo === 'VENDA' || tipo === 'ORDEM DE SERVIÇO' || tipo === 'VD' || tipo === 'ENTRADA_CAIXA')) {
                 let forma = doc.formaPagamento || 'Outros';
                 let formaLow = forma.toLowerCase();
                 let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
                 
                 // SÓ ENTRA AQUI SE FOR DINHEIRO FÍSICO!
-                if (!isDigital) {
+                if (!isDigital || tipo === 'ENTRADA_CAIXA') {
                     if (resumo[forma]) {
                         resumo[forma].qtd++;
                         resumo[forma].total += valor;
@@ -4377,6 +4396,8 @@ window.editarDocumentoCaixa = function(id) {
                            }
                        } else if (vCanc.tipo === 'DESPESA') {
                            window.registrarMovimentoCaixa('saida', -tot);
+                       } else if (vCanc.tipo === 'ENTRADA_CAIXA') {
+                           window.registrarMovimentoCaixa('entrada', -tot);
                        }
                    }
                }
@@ -5325,6 +5346,41 @@ window.definirSaldoInicialBanco = function() {
         .then(() => alert("Saldo inicial do banco atualizado com sucesso!"));
 };
 
+window.abrirModalCaixaBalcao = function () {
+    const desc = document.getElementById('descCaixaBalcao');
+    const val = document.getElementById('valorCaixaBalcao');
+    if (desc) desc.value = '';
+    if (val) val.value = '';
+    const m = document.getElementById('modalLancamentoCaixa');
+    if (m) m.style.display = 'flex';
+    if (desc) desc.focus();
+};
+
+window.salvarLancamentoCaixaBalcao = function () {
+    const desc = (document.getElementById('descCaixaBalcao') && document.getElementById('descCaixaBalcao').value || '').trim();
+    const val = parseFloat(document.getElementById('valorCaixaBalcao') && document.getElementById('valorCaixaBalcao').value);
+    if (!desc || isNaN(val) || val <= 0) return alert('Preencha a descrição e um valor maior que zero.');
+    const agora = Date.now();
+    const doc = {
+        tipo: 'ENTRADA_CAIXA',
+        clienteNome: '[ENTRADA] ' + desc,
+        total: val,
+        formaPagamento: 'Dinheiro',
+        statusPagamento: 'PAGO',
+        dataStr: new Date(agora).toLocaleString('pt-BR'),
+        timestamp: agora,
+        os: '-',
+        usuario: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema'
+    };
+    set(push(ref(window.meuBanco, 'caixa')), doc).then(() => {
+        window.registrarMovimentoCaixa('entrada', val);
+        const m = document.getElementById('modalLancamentoCaixa');
+        if (m) m.style.display = 'none';
+        alert('Entrada lançada no caixa físico (gaveta) com sucesso!');
+        if (window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
+    }).catch(e => alert('Erro ao salvar: ' + e.message));
+};
+
 window.abrirModalBanco = function(tipo) {
     document.getElementById('tipoLancamentoBanco').value = tipo;
     document.getElementById('descBanco').value = '';
@@ -5506,7 +5562,9 @@ window.renderizarTabelaCaixa = function() {
         let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
         let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
 
-        if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+        if (v.tipo === 'ENTRADA_CAIXA') {
+            txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ ENTRADA MANUAL</span>`;
+        } else if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
             txtBadge = '-';
         } else if (statusStr === 'PAGO') {
             txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO${detalhePgto}</span>`;
@@ -5530,10 +5588,10 @@ window.renderizarTabelaCaixa = function() {
 
         acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
 
-        let corTipo = v.tipo === 'VENDA' ? '#3498db' : (v.tipo === 'ORCAMENTO' ? '#9b59b6' : (v.tipo === 'DESPESA' ? '#e74c3c' : '#f39c12'));
-        let sigla = v.tipo === 'VENDA' ? 'VENDA' : (v.tipo === 'ORCAMENTO' ? 'ORCAMENTO' : (v.tipo === 'DESPESA' ? 'DESPESAS' : (v.tipo === 'FECHAMENTO' ? 'FECH.CAIXA' : 'ORDEM.SERV.')));
+        let corTipo = v.tipo === 'ENTRADA_CAIXA' ? '#27ae60' : (v.tipo === 'VENDA' ? '#3498db' : (v.tipo === 'ORCAMENTO' ? '#9b59b6' : (v.tipo === 'DESPESA' ? '#e74c3c' : '#f39c12')));
+        let sigla = v.tipo === 'ENTRADA_CAIXA' ? 'ENTRADA' : (v.tipo === 'VENDA' ? 'VENDA' : (v.tipo === 'ORCAMENTO' ? 'ORCAMENTO' : (v.tipo === 'DESPESA' ? 'DESPESAS' : (v.tipo === 'FECHAMENTO' ? 'FECH.CAIXA' : 'ORDEM.SERV.'))));
 
-        if(v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
+        if(v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO' || v.tipo === 'ENTRADA_CAIXA') {
             acoesHtml = `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Registro">🗑️</button>`;
         }
 
@@ -5545,7 +5603,7 @@ window.renderizarTabelaCaixa = function() {
             <td style="font-weight: bold;">${vencForm}</td>
             <td style="color:${v.tipo==='DESPESA'?'#e74c3c':'#2ecc71'}; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
             <td style="text-align: center;">${txtBadge}</td>
-            <td style="font-size: 11px; font-weight: bold;">${(v.tipo==='DESPESA'||v.tipo==='FECHAMENTO')?'-':temAss}</td>
+            <td style="font-size: 11px; font-weight: bold;">${(v.tipo==='DESPESA'||v.tipo==='FECHAMENTO'||v.tipo==='ENTRADA_CAIXA')?'-':temAss}</td>
             <td class="acoes-flex">${acoesHtml}</td>
         `; 
         tabela.appendChild(tr);
