@@ -1155,6 +1155,27 @@ window.formaPagamentoEhDigital = function(formaPag) {
     return f.includes('pix') || f.includes('cartao') || f.includes('cartoes') || f.includes('debito') || f.includes('credito') || f.includes('boleto');
 };
 
+// Data para caixa / resumo do dia: se foi recebido depois (conta pendente), usa a data do recebimento, não a da venda.
+window.dataEfetivaCaixa = function (doc) {
+    if (!doc) return '';
+    const st = doc.statusPagamento || 'PAGO';
+    if (st === 'PAGO' && doc.dataRecebimentoStr) return String(doc.dataRecebimentoStr);
+    return String(doc.dataStr || '');
+};
+window.dataEfetivaCaixaInclui = function (doc, needle) {
+    const s = window.dataEfetivaCaixa(doc);
+    return s && s.includes(needle);
+};
+window.dataEfetivaCaixaDia = function (doc) {
+    return (window.dataEfetivaCaixa(doc) || '').split(/\s+/)[0] || '-';
+};
+window.timestampEfetivoCaixa = function (doc) {
+    if (!doc) return 0;
+    const st = doc.statusPagamento || 'PAGO';
+    if (st === 'PAGO' && doc.timestampRecebimento) return Number(doc.timestampRecebimento) || 0;
+    return Number(doc.timestamp) || 0;
+};
+
 // Linhas que entram na tabela do caixa físico (balcão): sem PIX/cartão/boleto; vendas/OS pendentes ficam só em "Contas a receber".
 window.linhaEhCaixaBalcaoVisivel = function (v) {
     let formaLow = (v.formaPagamento || '').toLowerCase();
@@ -3084,10 +3105,15 @@ window.confirmarRecebimentoPendente = async function () {
     const valor = parseFloat(doc.total) || 0;
     try {
         const { ref, update } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+        const agora = Date.now();
+        const dataRecebimentoStr = new Date(agora).toLocaleString('pt-BR');
         await update(ref(window.meuBanco, 'caixa/' + id), {
             statusPagamento: 'PAGO',
             formaPagamento: forma,
-            autoLancamentoBanco: false
+            autoLancamentoBanco: false,
+            dataRecebimentoStr: dataRecebimentoStr,
+            timestampRecebimento: agora,
+            timestamp: agora
         });
         if (!isDig) {
             window.registrarMovimentoCaixa('entrada', valor);
@@ -3138,13 +3164,20 @@ window.estornarPagamento = async function(id) {
     if (!confirm(`🔄 ESTORNAR PAGAMENTO\n\nDeseja desfazer este recebimento?\nO valor de R$ ${parseFloat(doc.total).toFixed(2)} será ajustado nos painéis (gaveta e/ou banco digital).`)) return;
     try {
         const { ref, update } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
-        await update(ref(window.meuBanco, 'caixa/' + id), { statusPagamento: 'PENDENTE', autoLancamentoBanco: false });
+        await update(ref(window.meuBanco, 'caixa/' + id), {
+            statusPagamento: 'PENDENTE',
+            autoLancamentoBanco: false,
+            dataRecebimentoStr: null,
+            timestampRecebimento: null
+        });
         const valor = parseFloat(doc.total) || 0;
         const isDig = window.formaPagamentoEhDigital(doc.formaPagamento);
         if (!isDig) {
             window.registrarMovimentoCaixa('entrada', -valor);
         }
         alert('Pagamento estornado com sucesso.');
+        if (window.atualizarPainelBanco) window.atualizarPainelBanco();
+        if (window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
     } catch (e) {
         alert('Erro ao atualizar: ' + e.message);
     }
@@ -3157,7 +3190,7 @@ window.sincronizarTotaisDoDia = async function() {
     let hoje = new Date().toLocaleDateString('pt-BR');
 
     baseDados.forEach(doc => {
-        if (doc.dataStr && doc.dataStr.includes(hoje)) {
+        if (window.dataEfetivaCaixaInclui(doc, hoje)) {
             let valor = parseFloat(doc.total) || 0;
             let status = doc.statusPagamento || 'PAGO';
             let formaLow = (doc.formaPagamento || '').toLowerCase();
@@ -3661,7 +3694,7 @@ window.salvarOrdemDeServico = async function(event) {
        onValue(ref(db, 'caixa'), function(snapshot) {
     caixaGlobal = []; const dados = snapshot.val();
     if (dados) { Object.keys(dados).forEach(key => caixaGlobal.push({ id: key, ...dados[key] })); }
-    caixaGlobal.sort((a, b) => b.timestamp - a.timestamp);
+    caixaGlobal.sort((a, b) => window.timestampEfetivoCaixa(b) - window.timestampEfetivoCaixa(a));
     window.caixaGlobal = caixaGlobal;
 
     if(window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
@@ -3744,7 +3777,7 @@ window.salvarOrdemDeServico = async function(event) {
         tr.innerHTML = `
             <td style="font-weight: bold; color: #ffffff;">${v.os || '-'}</td>
             <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
-            <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
+            <td style="font-weight: bold;">${window.dataEfetivaCaixaDia(v)}</td>
             <td style="font-weight: bold;">${v.clienteNome}</td>
             <td style="font-weight: bold;">${vencForm}</td>
             <td style="color:${v.tipo==='DESPESA'?'#e74c3c':'#2ecc71'}; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
@@ -3773,7 +3806,7 @@ window.atualizarResumoPagamentosHoje = function() {
     let qtdDespesas = 0;
 
     caixaGlobal.forEach(doc => {
-        if (doc.dataStr && doc.dataStr.includes(hoje)) {
+        if (window.dataEfetivaCaixaInclui(doc, hoje)) {
             let valor = parseFloat(doc.total) || 0;
             let status = doc.statusPagamento || 'PAGO';
             let tipo = doc.tipo || '';
@@ -4609,8 +4642,8 @@ window.gerarRelatorioMensal = function() {
     let mesAno = prompt("Digite o mês e ano para o EXTRATO COMPLETO (Ex: 04/2026):", mesPadrao);
     if(!mesAno) return;
     
-    // 1. Coleta dados do Caixa Geral (Balcão + Vendas Digitais)
-    let dadosCaixa = caixaGlobal.filter(doc => doc.dataStr && doc.dataStr.includes(mesAno));
+    // 1. Coleta dados do Caixa Geral (Balcão + Vendas Digitais) — data efetiva (recebimento se houver)
+    let dadosCaixa = caixaGlobal.filter(doc => window.dataEfetivaCaixaInclui(doc, mesAno));
     
     // 2. Coleta dados do Extrato do Banco (Lançamentos Manuais)
     let dadosBancoManual = window.extratoBanco.filter(doc => doc.dataStr && doc.dataStr.includes(mesAno));
@@ -4624,7 +4657,7 @@ window.gerarRelatorioMensal = function() {
         if (v.tipo === 'ORCAMENTO' || v.tipo === 'FECHAMENTO') return; // Ignora simulações e fechamentos de tela
 
         extratoUnificado.push({
-            data: v.dataStr.split(' ')[0],
+            data: window.dataEfetivaCaixaDia(v),
             doc: v.os || '-',
             tipo: v.tipo,
             descricao: v.clienteNome,
@@ -5507,7 +5540,7 @@ window.renderizarTabelaCaixa = function() {
         tr.innerHTML = `
             <td style="font-weight: bold; color: #ffffff;">${v.os || '-'}</td>
             <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
-            <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
+            <td style="font-weight: bold;">${window.dataEfetivaCaixaDia(v)}</td>
             <td style="font-weight: bold;">${v.clienteNome}</td>
             <td style="font-weight: bold;">${vencForm}</td>
             <td style="color:${v.tipo==='DESPESA'?'#e74c3c':'#2ecc71'}; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
@@ -5534,7 +5567,7 @@ window.renderizarTabelaBanco = function() {
         return isDigital;
     }).map(v => ({...v, isManual: false}));
 
-    let dadosUnidos = [...manuais, ...digitais].sort((a, b) => b.timestamp - a.timestamp);
+    let dadosUnidos = [...manuais, ...digitais].sort((a, b) => window.timestampEfetivoCaixa(b) - window.timestampEfetivoCaixa(a));
 
     let dadosFiltrados = dadosUnidos.filter(v => {
         let desc = (v.isManual ? (v.descricao||'') : (v.clienteNome||'')).toLowerCase();
@@ -5610,7 +5643,7 @@ window.renderizarTabelaBanco = function() {
             tr.innerHTML = `
                 <td style="font-weight: bold; color: #ffffff;">${v.os || '-'}</td>
                 <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
-                <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
+                <td style="font-weight: bold;">${window.dataEfetivaCaixaDia(v)}</td>
                 <td style="font-weight: bold; color: #3498db;">${v.clienteNome}</td>
                 <td style="font-weight: bold;">${vencForm}</td>
                 <td style="color:#2ecc71; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
@@ -5628,10 +5661,7 @@ window.atualizarPainelBanco = function() {
     let lastFechamentoTime = 0;
     
     // Função para garantir a leitura do timestamp com segurança
-    const getTimestampSeguro = (doc) => {
-        if (doc.timestamp) return doc.timestamp;
-        return 0;
-    };
+    const getTimestampSeguro = (doc) => window.timestampEfetivoCaixa(doc);
 
     // 1. Acha o momento do último fechamento
     (window.extratoBanco || []).forEach(d => {
@@ -5863,13 +5893,13 @@ window.zerarFluxoCaixa = async function() {
     function filtroMesAno(docs, mes, ano) {
         const pad = String(mes).padStart(2, '0');
         const needle = `/${pad}/${ano}`;
-        return docs.filter(v => v.dataStr && String(v.dataStr).includes(needle));
+        return docs.filter(v => window.dataEfetivaCaixaInclui(v, needle));
     }
     function filtroAno(docs, ano) {
         return docs.filter(v => {
-            const d = parseDataBr(v.dataStr);
+            const d = parseDataBr(window.dataEfetivaCaixa(v));
             if (d && d.getFullYear() === ano) return true;
-            const s = String(v.dataStr || '');
+            const s = String(window.dataEfetivaCaixa(v) || '');
             return s.includes(`/${ano}`);
         });
     }
@@ -5880,7 +5910,7 @@ window.zerarFluxoCaixa = async function() {
         ini.setDate(ini.getDate() - 6);
         ini.setHours(0, 0, 0, 0);
         return docs.filter(v => {
-            const d = parseDataBr(v.dataStr);
+            const d = parseDataBr(window.dataEfetivaCaixa(v));
             return d && d >= ini && d <= fim;
         });
     }
