@@ -1355,7 +1355,7 @@ window.iniciarImportacao = async function(inputElement) {
 
 <div style="background-color: #2c1f1f; padding: 15px; border-radius: 6px; border: 1px solid #f39c12; margin-bottom: 18px;">
                <h3 style="margin-top: 0; color: #f39c12; font-size: 15px; text-transform: uppercase;">Contas a receber (pendentes)</h3>
-               <p style="margin: 0 0 10px 0; font-size: 13px; color: #ecf0f1;">Total em aberto: <strong id="totalPendentesCaixaHead" style="color: #f1c40f;">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Use <strong>Receber</strong> na linha para informar a forma de pagamento (dinheiro → gaveta; PIX/cartão → banco digital).</p>
+               <p style="margin: 0 0 10px 0; font-size: 13px; color: #ecf0f1;">Total em aberto: <strong id="totalPendentesCaixaHead" style="color: #f1c40f;">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Use <strong>Editar</strong> para alterar a nota antes de receber; <strong>Receber</strong> para informar a forma de pagamento (dinheiro → gaveta; PIX/cartão → banco digital).</p>
                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px;">
                    <label for="buscaPendentesCaixa" style="color: #bdc3c7; font-size: 12px; white-space: nowrap;">Buscar</label>
                    <input type="search" id="buscaPendentesCaixa" autocomplete="off" placeholder="Nome, Nº documento, data ou valor…" oninput="if(window.filtrarPendentesCaixa)window.filtrarPendentesCaixa()" style="flex: 1; min-width: 200px; max-width: 480px; padding: 8px 10px; border-radius: 4px; border: 1px solid #7f8c8d; background: #1a252f; color: #ecf0f1; font-size: 13px;" />
@@ -1370,7 +1370,7 @@ window.iniciarImportacao = async function(inputElement) {
                                <th>Cliente</th>
                                <th>Total</th>
                                <th>Previsto</th>
-                               <th style="min-width: 120px;">Ação</th>
+                               <th style="min-width: 200px;">Ações</th>
                            </tr>
                        </thead>
                        <tbody id="tabelaPendentesCaixa">
@@ -3066,7 +3066,10 @@ window.renderizarTabelaPendentesCaixa = function () {
             <td>${window._escPendTxt(v.clienteNome || '-')}</td>
             <td style="color:#f1c40f;font-weight:bold;">R$ ${(parseFloat(v.total) || 0).toFixed(2)}</td>
             <td style="font-size:11px;">${prev}</td>
-            <td><button type="button" class="btn-receber-pendente-caixa" data-pend-id="${encodeURIComponent(String(v.id || ''))}" style="padding:6px 12px;font-size:11px;background:#27ae60;color:#fff;border:1px solid #1e8449;border-radius:4px;cursor:pointer;font-weight:bold;width:auto;max-width:100%;white-space:nowrap;">Receber</button></td>
+            <td style="white-space:nowrap;">
+                <button type="button" class="btn-editar-pendente-caixa" data-pend-id="${encodeURIComponent(String(v.id || ''))}" title="Editar nota" style="padding:6px 10px;font-size:11px;background:#3498db;color:#fff;border:1px solid #2980b9;border-radius:4px;cursor:pointer;font-weight:bold;margin-right:6px;">✏️ Editar</button>
+                <button type="button" class="btn-receber-pendente-caixa" data-pend-id="${encodeURIComponent(String(v.id || ''))}" title="Registrar recebimento" style="padding:6px 12px;font-size:11px;background:#27ae60;color:#fff;border:1px solid #1e8449;border-radius:4px;cursor:pointer;font-weight:bold;">Receber</button>
+            </td>
         `;
         tbody.appendChild(tr);
     });
@@ -3149,12 +3152,14 @@ window.marcarComoPago = function (id) {
 };
 
 (function () {
-    if (window._delegReceberPendentesCaixa) return;
-    window._delegReceberPendentesCaixa = true;
+    if (window._delegPendentesCaixaAcoes) return;
+    window._delegPendentesCaixaAcoes = true;
     document.addEventListener('click', function (ev) {
         const t = ev.target;
         if (!t || !t.closest) return;
-        const btn = t.closest('.btn-receber-pendente-caixa');
+        const btnEdit = t.closest('.btn-editar-pendente-caixa');
+        const btnRec = t.closest('.btn-receber-pendente-caixa');
+        const btn = btnEdit || btnRec;
         if (!btn) return;
         ev.preventDefault();
         ev.stopPropagation();
@@ -3167,7 +3172,11 @@ window.marcarComoPago = function (id) {
             id = enc;
         }
         if (!id) return;
-        if (window.abrirModalReceberPendente) window.abrirModalReceberPendente(id);
+        if (btnEdit && window.editarDocumentoCaixa) {
+            window.editarDocumentoCaixa(id);
+        } else if (btnRec && window.abrirModalReceberPendente) {
+            window.abrirModalReceberPendente(id);
+        }
     }, true);
 })();
 
@@ -3934,7 +3943,8 @@ window.atualizarResumoPagamentosHoje = function() {
 // ==========================================================
 window.editarDocumentoCaixa = function(id) {
     try {
-        const doc = caixaGlobal.find(x => x.id === id);
+        const listaCx = window._listaCaixaSincronizada ? window._listaCaixaSincronizada() : (typeof caixaGlobal !== 'undefined' ? caixaGlobal : []);
+        const doc = listaCx.find(x => String(x.id) === String(id));
         if (!doc) return alert("Documento não encontrado no sistema.");
 
         // MÁGICA 1: Salva o ID no sessionStorage para ele NUNCA sumir durante a edição
@@ -3943,7 +3953,7 @@ window.editarDocumentoCaixa = function(id) {
         editandoDocId = id; 
         
         let tipoDoc = (doc.tipo || '').toUpperCase();
-        let isVenda = tipoDoc.includes('VENDA') || tipoDoc.includes('RECIBO') || tipoDoc.includes('ORCAMENTO');
+        let isVenda = tipoDoc === 'VD' || tipoDoc.includes('VENDA') || tipoDoc.includes('RECIBO') || tipoDoc.includes('ORCAMENTO');
         let isOS = tipoDoc.includes('ORDEM') || tipoDoc.includes('OS');
 
         // MÁGICA 2: Faz uma cópia profunda (Clone) para não corromper a nota original
