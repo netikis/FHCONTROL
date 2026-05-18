@@ -1360,7 +1360,7 @@ window.iniciarImportacao = async function(inputElement) {
                    <label for="buscaPendentesCaixa" style="color: #bdc3c7; font-size: 12px; white-space: nowrap;">Buscar</label>
                    <input type="search" id="buscaPendentesCaixa" autocomplete="off" placeholder="Nome, Nº documento, data ou valor…" oninput="if(window.filtrarPendentesCaixa)window.filtrarPendentesCaixa()" style="flex: 1; min-width: 200px; max-width: 480px; padding: 8px 10px; border-radius: 4px; border: 1px solid #7f8c8d; background: #1a252f; color: #ecf0f1; font-size: 13px;" />
                </div>
-               <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+               <div class="table-responsive" style="max-height: 340px; overflow-x: auto; overflow-y: auto;">
                    <table style="margin-top: 0;">
                        <thead>
                            <tr>
@@ -1370,7 +1370,7 @@ window.iniciarImportacao = async function(inputElement) {
                                <th>Cliente</th>
                                <th>Total</th>
                                <th>Previsto</th>
-                               <th style="min-width: 200px;">Ações</th>
+                               <th style="min-width: 400px;">Ações</th>
                            </tr>
                        </thead>
                        <tbody id="tabelaPendentesCaixa">
@@ -3000,6 +3000,23 @@ window._escPendTxt = function (s) {
     return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 };
 
+// Mesmas ações do caixa balcão, para a tabela de contas a receber (pendentes).
+window.montarAcoesCelulaPendente = function (v) {
+    const enc = encodeURIComponent(String(v.id || ''));
+    const idAttr = `data-pend-id="${enc}"`;
+    let h = '<td class="acoes-flex" style="min-width:380px;">';
+    h += `<button type="button" class="btn-acao edit btn-pend-acao" ${idAttr} data-acao="editar" title="Editar Documento">✏️ Ed</button>`;
+    h += `<button type="button" class="btn-acao whats btn-pend-acao" ${idAttr} data-acao="whats" title="WhatsApp">📱 Whats</button>`;
+    if (!v.assinaturaBase64) {
+        h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="link" title="Copiar Link para Cliente">🔗 Link</button>`;
+    }
+    h += `<button type="button" class="btn-acao pdf btn-pend-acao" ${idAttr} data-acao="pdf" title="Visualizar e Baixar PDF">📄 PDF</button>`;
+    h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="cupom" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
+    h += `<button type="button" class="btn-acao receber btn-pend-acao" ${idAttr} data-acao="receber" title="Registrar Pagamento">💰 Receber</button>`;
+    h += '</td>';
+    return h;
+};
+
 window._pendNormBusca = function (s) {
     return String(s ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 };
@@ -3066,10 +3083,7 @@ window.renderizarTabelaPendentesCaixa = function () {
             <td>${window._escPendTxt(v.clienteNome || '-')}</td>
             <td style="color:#f1c40f;font-weight:bold;">R$ ${(parseFloat(v.total) || 0).toFixed(2)}</td>
             <td style="font-size:11px;">${prev}</td>
-            <td style="white-space:nowrap;">
-                <button type="button" class="btn-editar-pendente-caixa" data-pend-id="${encodeURIComponent(String(v.id || ''))}" title="Editar nota" style="padding:6px 10px;font-size:11px;background:#3498db;color:#fff;border:1px solid #2980b9;border-radius:4px;cursor:pointer;font-weight:bold;margin-right:6px;">✏️ Editar</button>
-                <button type="button" class="btn-receber-pendente-caixa" data-pend-id="${encodeURIComponent(String(v.id || ''))}" title="Registrar recebimento" style="padding:6px 12px;font-size:11px;background:#27ae60;color:#fff;border:1px solid #1e8449;border-radius:4px;cursor:pointer;font-weight:bold;">Receber</button>
-            </td>
+            ${window.montarAcoesCelulaPendente(v)}
         `;
         tbody.appendChild(tr);
     });
@@ -3157,14 +3171,13 @@ window.marcarComoPago = function (id) {
     document.addEventListener('click', function (ev) {
         const t = ev.target;
         if (!t || !t.closest) return;
-        const btnEdit = t.closest('.btn-editar-pendente-caixa');
-        const btnRec = t.closest('.btn-receber-pendente-caixa');
-        const btn = btnEdit || btnRec;
+        const btn = t.closest('.btn-pend-acao');
         if (!btn) return;
         ev.preventDefault();
         ev.stopPropagation();
         const enc = btn.getAttribute('data-pend-id');
-        if (enc == null || enc === '') return;
+        const acao = btn.getAttribute('data-acao');
+        if (enc == null || enc === '' || !acao) return;
         let id;
         try {
             id = decodeURIComponent(enc);
@@ -3172,11 +3185,12 @@ window.marcarComoPago = function (id) {
             id = enc;
         }
         if (!id) return;
-        if (btnEdit && window.editarDocumentoCaixa) {
-            window.editarDocumentoCaixa(id);
-        } else if (btnRec && window.abrirModalReceberPendente) {
-            window.abrirModalReceberPendente(id);
-        }
+        if (acao === 'editar' && window.editarDocumentoCaixa) window.editarDocumentoCaixa(id);
+        else if (acao === 'receber' && window.abrirModalReceberPendente) window.abrirModalReceberPendente(id);
+        else if (acao === 'whats' && window.enviarOSWhatsApp) window.enviarOSWhatsApp(id);
+        else if (acao === 'link' && window.copiarLinkAssinatura) window.copiarLinkAssinatura(id);
+        else if (acao === 'pdf' && window.gerarPDF_Historico) window.gerarPDF_Historico(id);
+        else if (acao === 'cupom' && window.imprimirCupom) window.imprimirCupom(id);
     }, true);
 })();
 
