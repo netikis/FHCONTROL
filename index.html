@@ -43,8 +43,8 @@
            var base = window._fhPdfBase();
            var tentativas = [
                [base + 'lib/html2canvas.min.js', base + 'lib/jspdf.umd.min.js'],
-               ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js'],
-               ['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js']
+               ['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js'],
+               ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js']
            ];
            window._garantirLibsPdf._promessa = (async function () {
                for (var i = 0; i < tentativas.length; i++) {
@@ -62,8 +62,8 @@
    </script>
    <script src="lib/html2canvas.min.js" onerror="window._fhPdfLibH2cErro=1"></script>
    <script src="lib/jspdf.umd.min.js" onerror="window._fhPdfLibJsErro=1"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 
    <style>
         /* =========================================
