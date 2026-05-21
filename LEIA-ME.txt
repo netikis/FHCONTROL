@@ -1,0 +1,22 @@
+Bibliotecas para "Baixar PDF para cliente"
+==========================================
+
+Se o sistema avisar que as bibliotecas de PDF nao carregaram:
+
+1. Execute o arquivo: instalar-libs-pdf.ps1 (na pasta SISTEMA BALCAO)
+   OU baixe manualmente estes dois arquivos nesta pasta lib:
+
+   html2canvas.min.js
+   https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js
+
+   jspdf.umd.min.js
+   https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js
+
+2. A estrutura deve ficar:
+   SISTEMA BALCAO\FHCONTROL.html
+   SISTEMA BALCAO\lib\html2canvas.min.js
+   SISTEMA BALCAO\lib\jspdf.umd.min.js
+
+3. Abra o FHCONTROL.html de novo e pressione Ctrl+F5.
+
+Com internet, o sistema tambem tenta carregar sozinho dos CDNs.
