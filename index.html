@@ -7,6 +7,61 @@
    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+   <script>
+   (function () {
+       window._fhPdfBase = function () {
+           var href = (window.location.href || '').split('#')[0].split('?')[0];
+           return href.replace(/[^/\\]+$/, '');
+       };
+       window._obterJsPDF = function () {
+           if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+           if (typeof window.jsPDF === 'function') return window.jsPDF;
+           return null;
+       };
+       window._libsPdfProntas = function () {
+           return !!(window.html2canvas && window._obterJsPDF());
+       };
+       window._carregarScriptPdf = function (url) {
+           return new Promise(function (resolve, reject) {
+               var id = 'fh-pdf-' + String(url).replace(/[^\w]/g, '').slice(-40);
+               if (document.getElementById(id)) {
+                   if (window._libsPdfProntas()) return resolve();
+                   return reject(new Error('script ja existia mas lib ausente'));
+               }
+               var s = document.createElement('script');
+               s.id = id;
+               s.src = url;
+               s.async = false;
+               s.onload = function () { resolve(); };
+               s.onerror = function () { reject(new Error('falha: ' + url)); };
+               document.head.appendChild(s);
+           });
+       };
+       window._garantirLibsPdf = function () {
+           if (window._libsPdfProntas()) return Promise.resolve(true);
+           if (window._garantirLibsPdf._promessa) return window._garantirLibsPdf._promessa;
+           var base = window._fhPdfBase();
+           var tentativas = [
+               [base + 'lib/html2canvas.min.js', base + 'lib/jspdf.umd.min.js'],
+               ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js'],
+               ['https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', 'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js']
+           ];
+           window._garantirLibsPdf._promessa = (async function () {
+               for (var i = 0; i < tentativas.length; i++) {
+                   try {
+                       await window._carregarScriptPdf(tentativas[i][0]);
+                       await window._carregarScriptPdf(tentativas[i][1]);
+                       if (window._libsPdfProntas()) return true;
+                   } catch (e) { /* proxima fonte */ }
+               }
+               return false;
+           })();
+           return window._garantirLibsPdf._promessa;
+       };
+   })();
+   </script>
+   <script src="lib/html2canvas.min.js" onerror="window._fhPdfLibH2cErro=1"></script>
+   <script src="lib/jspdf.umd.min.js" onerror="window._fhPdfLibJsErro=1"></script>
    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 
@@ -1342,8 +1397,9 @@ window._rodapeBotoesPdf = function (modo, nomeArquivo) {
     if (modo === 'cliente') {
         return `
         <div class="pdf-toolbar pdf-toolbar-cliente no-export-pdf">
-            <span class="pdf-toolbar-msg">Para enviar ao cliente: baixe o PDF protegido (visualizar e imprimir; sem editar).</span>
-            <button type="button" class="btn-pdf-protegido" onclick="if(window.opener&&window.opener.gerarPdfProtegidoDaJanela){window.opener.gerarPdfProtegidoDaJanela(window,'${arq}');}else{alert('Recarregue o sistema e tente novamente.');}">🔒 Baixar PDF para cliente</button>
+            <span class="pdf-toolbar-msg">Envio ao cliente: use Imprimir (loja) ou Baixar PDF protegido (anexo WhatsApp/e-mail).</span>
+            <button type="button" class="btn-pdf-imprimir" onclick="window.print()">🖨️ Imprimir</button>
+            <button type="button" id="btnBaixarPdfCliente" class="btn-pdf-protegido" onclick="window.__baixarPdfCliente && window.__baixarPdfCliente()">🔒 Baixar PDF para cliente</button>
         </div>`;
     }
     return `
@@ -1353,26 +1409,9 @@ window._rodapeBotoesPdf = function (modo, nomeArquivo) {
         </div>`;
 };
 
-window.gerarPdfProtegidoDaJanela = async function (janela, nomeArquivo) {
-    if (!janela || janela.closed) return alert('A janela de visualização foi fechada.');
-    if (!window.html2canvas || !window.jspdf) {
-        return alert('Bibliotecas de PDF não carregaram. Atualize a página (Ctrl+F5) e tente de novo.');
-    }
-    const alvo = janela.document.getElementById('pdf-export-root');
-    if (!alvo) return alert('Conteúdo do PDF não encontrado na janela.');
-    const toolbar = janela.document.querySelector('.pdf-toolbar');
-    if (toolbar) toolbar.style.visibility = 'hidden';
+window._criarPdfJsComProtecao = function (jsPDF) {
     try {
-        const canvas = await window.html2canvas(alvo, {
-            scale: 2,
-            useCORS: true,
-            allowTaint: true,
-            logging: false,
-            backgroundColor: '#ffffff'
-        });
-        const { jsPDF } = window.jspdf;
-        const arq = window._nomeArquivoPdfSeguro(nomeArquivo);
-        const pdf = new jsPDF({
+        return new jsPDF({
             orientation: 'p',
             unit: 'mm',
             format: 'a4',
@@ -1382,28 +1421,115 @@ window.gerarPdfProtegidoDaJanela = async function (janela, nomeArquivo) {
                 userPermissions: ['print']
             }
         });
-        const pageW = pdf.internal.pageSize.getWidth();
-        const pageH = pdf.internal.pageSize.getHeight();
-        const imgW = pageW;
-        const imgH = (canvas.height * imgW) / canvas.width;
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        let heightLeft = imgH;
-        let position = 0;
+    } catch (e1) {
+        try {
+            return new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+        } catch (e2) {
+            throw e1;
+        }
+    }
+};
+
+window._pdfAdicionarCanvas = function (pdf, canvas) {
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const imgW = pageW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    let heightLeft = imgH;
+    let position = 0;
+    pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+    heightLeft -= pageH;
+    while (heightLeft > 0) {
+        position = heightLeft - imgH;
+        pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
         heightLeft -= pageH;
-        while (heightLeft > 0) {
-            position = heightLeft - imgH;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-            heightLeft -= pageH;
+    }
+};
+
+window.gerarPdfProtegidoDaJanela = async function (janela, nomeArquivo) {
+    if (!janela || janela.closed) return alert('A janela de visualização foi fechada.');
+    const libsOk = await (window._garantirLibsPdf ? window._garantirLibsPdf() : Promise.resolve(false));
+    const JsPDF = window._obterJsPDF ? window._obterJsPDF() : null;
+    if (!libsOk || !window.html2canvas || !JsPDF) {
+        return alert(
+            'Bibliotecas de PDF não carregaram.\n\n' +
+            '• Pressione Ctrl+F5 na tela principal\n' +
+            '• Verifique conexão com a internet\n' +
+            '• Ou coloque na pasta lib (ao lado deste arquivo):\n' +
+            '  html2canvas.min.js e jspdf.umd.min.js\n' +
+            '  (baixe em cdnjs.cloudflare.com)'
+        );
+    }
+    const alvo = janela.document.getElementById('pdf-export-root');
+    if (!alvo) return alert('Conteúdo do PDF não encontrado na janela.');
+    const toolbar = janela.document.querySelector('.pdf-toolbar');
+    const btn = janela.document.getElementById('btnBaixarPdfCliente');
+    const txtBtn = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF...'; }
+    if (toolbar) toolbar.style.visibility = 'hidden';
+    const optsCanvas = function (omitirImagensExternas) {
+        return {
+            scale: 2,
+            useCORS: !omitirImagensExternas,
+            allowTaint: omitirImagensExternas,
+            logging: false,
+            backgroundColor: '#ffffff',
+            imageTimeout: 15000,
+            ignoreElements: omitirImagensExternas
+                ? function (el) {
+                    return el.tagName === 'IMG' && el.src && /^https?:/i.test(el.src);
+                }
+                : undefined,
+            onclone: function (docClone) {
+                const root = docClone.getElementById('pdf-export-root');
+                if (!root) return;
+                root.querySelectorAll('img').forEach(function (img) {
+                    try {
+                        if (!img.complete || img.naturalWidth === 0) img.style.display = 'none';
+                    } catch (ignore) {
+                        img.style.display = 'none';
+                    }
+                });
+            }
+        };
+    };
+    try {
+        let canvas;
+        try {
+            canvas = await window.html2canvas(alvo, optsCanvas(false));
+            canvas.toDataURL('image/jpeg', 0.5);
+        } catch (errCanvas) {
+            canvas = await window.html2canvas(alvo, optsCanvas(true));
         }
+        const arq = typeof nomeArquivo === 'string' && nomeArquivo.endsWith('.pdf')
+            ? nomeArquivo
+            : window._nomeArquivoPdfSeguro(nomeArquivo);
+        const pdf = window._criarPdfJsComProtecao(JsPDF);
+        window._pdfAdicionarCanvas(pdf, canvas);
         pdf.save(arq);
-        alert('PDF para cliente salvo.\n\nO cliente pode abrir, visualizar e imprimir. Editar e copiar texto ficam bloqueados no leitor de PDF.');
+        alert('PDF salvo: ' + arq + '\n\nVerifique a pasta de Downloads do navegador. O cliente pode visualizar e imprimir; edição de texto fica bloqueada (documento em imagem).');
     } catch (e) {
-        alert('Erro ao gerar PDF protegido: ' + (e && e.message ? e.message : e));
+        console.error('gerarPdfProtegidoDaJanela', e);
+        alert('Erro ao gerar PDF: ' + (e && e.message ? e.message : e) + '\n\nDica: se o logo não carregar, tente de novo ou use Imprimir > Salvar como PDF na versão loja.');
     } finally {
         if (toolbar) toolbar.style.visibility = '';
+        if (btn) { btn.disabled = false; btn.textContent = txtBtn || '🔒 Baixar PDF para cliente'; }
     }
+};
+
+window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
+    if (!janela || janela.closed) return;
+    const arq = window._nomeArquivoPdfSeguro(nomeArquivo);
+    const parentWin = window;
+    janela.__arquivoPdfCliente = arq;
+    janela.__baixarPdfCliente = function () {
+        if (!parentWin.gerarPdfProtegidoDaJanela) {
+            return alert('Recarregue o sistema principal (Ctrl+F5) e abra o PDF de novo.');
+        }
+        return parentWin.gerarPdfProtegidoDaJanela(janela, janela.__arquivoPdfCliente || arq);
+    };
 };
 </script>
 
@@ -4315,7 +4441,7 @@ window.editarDocumentoCaixa = function(id) {
                : `<div class="ass-box" style="margin-top: 40px;"><div class="ass-linha">Assinatura do Cliente</div></div>`;
 
            // Tratamento do Cabeçalho
-           let logoHeader = `<img src="https://www.image2url.com/r2/default/files/1777991879754-324ae06d-dd51-42bd-9f5b-f242d4babc74.jpeg" class="logo-img">`;
+           let logoHeader = `<img src="https://www.image2url.com/r2/default/files/1777991879754-324ae06d-dd51-42bd-9f5b-f242d4babc74.jpeg" class="logo-img" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="this.style.display='none'">`;
            let cnpjeTel = [];
            if(empresaGlobal.cnpj) cnpjeTel.push(`CNPJ: ${empresaGlobal.cnpj}`);
            if(empresaGlobal.telefone) cnpjeTel.push(`Contato: ${empresaGlobal.telefone}`);
@@ -4433,7 +4559,13 @@ window.editarDocumentoCaixa = function(id) {
                </body>
                </html>
            `;
-           let j = window.open('', '', 'width=900,height=750'); j.document.write(htmlPDF); j.document.close();
+           let j = window.open('', '', 'width=900,height=750');
+           if (!j) return alert('O navegador bloqueou a janela do PDF. Permita pop-ups para este site.');
+           j.document.write(htmlPDF);
+           j.document.close();
+           if (paraCliente) {
+               window._vincularDownloadPdfCliente(j, 'Doc-' + (doc.os || doc.tipo || 'documento'));
+           }
        }
 
        // --- IMPRIMIR CUPOM TÉRMICO (80mm) COM DADOS DA EMPRESA ---
@@ -6572,6 +6704,10 @@ ${extra}
     }
     window.assistenteSistemaLimpar();
 })();
+
+if (window._garantirLibsPdf && !window._libsPdfProntas()) {
+    window._garantirLibsPdf().catch(function () {});
+}
 
 </script>
 </body>
