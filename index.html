@@ -898,12 +898,30 @@
             </div>
         </div>
 
-        <div class="row form-group" style="align-items: flex-end; border-top: 1px solid #7f8c8d; padding-top: 12px;">
-            <div class="col" style="flex: 2;"><label>3. Adicionar Item Avulso</label><input type="text" id="vendaAvulsoNome" placeholder="Ex: Instalação Padrão"></div>
-            <div class="col"><label>Valor (R$)</label><input type="number" step="0.01" id="vendaAvulsoValor" placeholder="Ex: 150.00" oninput="if(window.atualizarTotalLinhaVendaAvulso) window.atualizarTotalLinhaVendaAvulso()"></div>
-            <div class="col"><label>Tx (%)</label><input type="number" step="0.1" id="vendaAvulsoPerc" value="0" oninput="if(window.atualizarTotalLinhaVendaAvulso) window.atualizarTotalLinhaVendaAvulso()"></div>
-            <div class="col" style="flex: 0.85;"><label style="color: #f1c40f;">Total (R$)</label><input type="text" id="vendaAvulsoTotalLinha" readonly tabindex="-1" style="font-weight: bold; color: #e67e22; background: rgba(230,126,34,0.15); border: 1px solid rgba(230,126,34,0.5);" placeholder="Valor + Tx" title="Total com taxa (valor + %) antes de incluir no carrinho"></div>
-            <div class="col"><button type="button" class="btn-secundario" style="width: 100%; height: 35px;" onclick="addAoCarrinhoVenda_Avulso()">➕ Add</button></div>
+        <div class="bloco-lancamento" style="border-color: rgba(231, 76, 60, 0.55); margin-top: 12px;">
+            <div class="row form-group">
+                <div class="col" style="flex: 2;">
+                    <label style="display: flex; align-items: center; gap: 6px; color: #ecf0f1;">
+                        <span style="color: #e74c3c; font-size: 20px; font-weight: bold; line-height: 1;" title="Item sem cadastro no estoque">!</span>
+                        3. Adicionar Item Avulso
+                    </label>
+                    <input type="text" id="vendaAvulsoNome" placeholder="Ex: Instalação Padrão, Taxa de visita...">
+                </div>
+            </div>
+            <div class="row form-group" style="align-items: flex-end;">
+                <div class="col" style="flex: 0.55;"><label>Unid. na venda</label><select id="vendaAvulsoUnidade" onchange="if(window.atualizarTotalLinhaVendaAvulso) window.atualizarTotalLinhaVendaAvulso()" style="width:100%; padding: 6px;">
+                    <option value="un">Unidade (un.)</option>
+                    <option value="m">Metro (m)</option>
+                    <option value="kg">Quilo (kg)</option>
+                    <option value="l">Litro (L)</option>
+                </select></div>
+                <div class="col" style="flex: 0.5;"><label id="vendaAvulsoQtdLabel">Qtd.</label><input type="text" inputmode="decimal" id="vendaAvulsoQtd" value="1" oninput="if(window.atualizarTotalLinhaVendaAvulso) window.atualizarTotalLinhaVendaAvulso()" placeholder="Ex.: 15,5" autocomplete="off"></div>
+                <div class="col"><label>Custo (R$)</label><input type="number" id="vendaAvulsoCusto" step="0.01" oninput="window.recalcularPrecoVendaAvulso()"></div>
+                <div class="col"><label>Margem (%)</label><input type="number" id="vendaAvulsoMargem" step="0.1" oninput="window.recalcularPrecoVendaAvulso()"></div>
+                <div class="col"><label style="color: #2ecc71;">Venda (R$)</label><input type="number" id="vendaAvulsoValor" step="0.01" placeholder="Preço unitário" oninput="window.recalcularMargemVendaAvulso()"></div>
+                <div class="col" style="flex: 0.75;"><label style="color: #f1c40f;">Total (R$)</label><input type="text" id="vendaAvulsoTotalLinha" readonly tabindex="-1" style="font-weight: bold; color: #2ecc71; background: rgba(46,204,113,0.12); border: 1px solid rgba(46,204,113,0.45);" placeholder="Qtd × Venda" title="Total desta linha (quantidade × preço unitário) antes de incluir no carrinho"></div>
+                <div class="col" style="flex: 0.6;"><button type="button" class="btn-secundario" style="width: 100%; height: 35px; background-color: #27ae60; color: white;" onclick="addAoCarrinhoVenda_Avulso()">➕ ADD</button></div>
+            </div>
         </div>
 
         <div class="row form-group" style="align-items: flex-end; border-top: 1px solid #7f8c8d; padding-top: 12px;">
@@ -2631,14 +2649,31 @@ setTimeout(() => {
        window.atualizarTotalLinhaVendaAvulso = function() {
            const el = document.getElementById('vendaAvulsoTotalLinha');
            if (!el) return;
-           const v = parseFloat(document.getElementById('vendaAvulsoValor') && document.getElementById('vendaAvulsoValor').value);
-           const perc = parseFloat(document.getElementById('vendaAvulsoPerc') && document.getElementById('vendaAvulsoPerc').value) || 0;
-           if (isNaN(v)) {
+           const q = window.parseQtdEstoque(document.getElementById('vendaAvulsoQtd') && document.getElementById('vendaAvulsoQtd').value);
+           const pu = parseFloat(document.getElementById('vendaAvulsoValor') && document.getElementById('vendaAvulsoValor').value);
+           if (isNaN(q) || q <= 0 || isNaN(pu)) {
                el.value = '';
                return;
            }
-           const tot = v + (v * (perc / 100));
-           el.value = (Math.round(tot * 100) / 100).toFixed(2);
+           el.value = (Math.round(q * pu * 100) / 100).toFixed(2);
+       };
+
+       window.recalcularPrecoVendaAvulso = function() {
+           const custo = parseFloat(document.getElementById('vendaAvulsoCusto') && document.getElementById('vendaAvulsoCusto').value) || 0;
+           const margem = parseFloat(document.getElementById('vendaAvulsoMargem') && document.getElementById('vendaAvulsoMargem').value) || 0;
+           const vendaEl = document.getElementById('vendaAvulsoValor');
+           if (vendaEl) vendaEl.value = (custo + (custo * (margem / 100))).toFixed(2);
+           window.atualizarTotalLinhaVendaAvulso();
+       };
+
+       window.recalcularMargemVendaAvulso = function() {
+           const custo = parseFloat(document.getElementById('vendaAvulsoCusto') && document.getElementById('vendaAvulsoCusto').value) || 0;
+           const venda = parseFloat(document.getElementById('vendaAvulsoValor') && document.getElementById('vendaAvulsoValor').value) || 0;
+           const margemEl = document.getElementById('vendaAvulsoMargem');
+           if (custo > 0 && venda > 0 && margemEl) {
+               margemEl.value = (((venda - custo) / custo) * 100).toFixed(2);
+           }
+           window.atualizarTotalLinhaVendaAvulso();
        };
 
        window.recalcularPrecoVendaManual = function() {
@@ -2719,17 +2754,34 @@ window.addAoCarrinhoVenda_Estoque = function() {
     if (window.atualizarTotalLinhaVendaEstoque) window.atualizarTotalLinhaVendaEstoque();
 };
        window.addAoCarrinhoVenda_Avulso = function() {
-           const n = document.getElementById('vendaAvulsoNome').value; 
-           const v = parseFloat(document.getElementById('vendaAvulsoValor').value); 
-           const perc = parseFloat(document.getElementById('vendaAvulsoPerc').value) || 0;
-         
-           if (!n || isNaN(v)) return alert("Preencha Nome e Valor.");
-             
-           carrinhoVenda.push({ nome: n, valor: v + (v * (perc / 100)), valorOriginal: v, percOriginal: perc, ehEstoque: false, categoriaOS: 'material' });
-             
-           document.getElementById('vendaAvulsoNome').value = ''; 
-           document.getElementById('vendaAvulsoValor').value = ''; 
-           document.getElementById('vendaAvulsoPerc').value = '0'; 
+           const n = (document.getElementById('vendaAvulsoNome') && document.getElementById('vendaAvulsoNome').value || '').trim();
+           const qtd = window.parseQtdEstoque(document.getElementById('vendaAvulsoQtd') && document.getElementById('vendaAvulsoQtd').value);
+           const precoUn = parseFloat(document.getElementById('vendaAvulsoValor') && document.getElementById('vendaAvulsoValor').value);
+           const custoUn = parseFloat(document.getElementById('vendaAvulsoCusto') && document.getElementById('vendaAvulsoCusto').value) || 0;
+           const margem = parseFloat(document.getElementById('vendaAvulsoMargem') && document.getElementById('vendaAvulsoMargem').value) || 0;
+           const selUn = document.getElementById('vendaAvulsoUnidade');
+           const ue = selUn ? window.normalizarUnidadeMedida(selUn.value || 'un') : 'un';
+
+           if (!n || isNaN(precoUn)) return alert('Preencha a descrição e o preço de venda (R$).');
+           if (isNaN(qtd) || qtd <= 0) return alert('Informe uma quantidade válida maior que zero (ex.: 3,5).');
+
+           const nomeExibir = `${n} — ${window.formatQtdComUnidade(qtd, ue)}`;
+           carrinhoVenda.push({
+               nome: nomeExibir,
+               valor: precoUn * qtd,
+               valorOriginal: precoUn,
+               custoOriginal: custoUn,
+               margemOriginal: margem,
+               qtdBaixa: qtd,
+               unidadeMedida: ue,
+               ehEstoque: false,
+               categoriaOS: 'material'
+           });
+
+           document.getElementById('vendaAvulsoNome').value = '';
+           document.getElementById('vendaAvulsoQtd').value = '1';
+           if (selUn) selUn.value = 'un';
+           ['vendaAvulsoCusto', 'vendaAvulsoMargem', 'vendaAvulsoValor'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
            const tAv = document.getElementById('vendaAvulsoTotalLinha'); if (tAv) tAv.value = '';
            window.atualizarCarrinhoVenda();
        }
@@ -2781,11 +2833,17 @@ window.addAoCarrinhoVenda_Estoque = function() {
             document.getElementById('vendaMaoDeObraValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
             document.getElementById('vendaMaoDeObraValor').focus();
         } else {
-            document.getElementById('vendaAvulsoNome').value = item.nome;
-            document.getElementById('vendaAvulsoValor').value = item.valorOriginal !== undefined ? item.valorOriginal.toFixed(2) : item.valor.toFixed(2);
-            document.getElementById('vendaAvulsoPerc').value = item.percOriginal || 0;
+            let nomePuro = String(item.nome || '').split(' — ')[0].trim();
+            document.getElementById('vendaAvulsoNome').value = nomePuro;
+            const qtdEd = item.qtdBaixa != null ? item.qtdBaixa : (item.valorOriginal > 0 ? (item.valor / item.valorOriginal) : 1);
+            document.getElementById('vendaAvulsoQtd').value = window.formatQtdEstoque(qtdEd);
+            if (item.custoOriginal !== undefined) document.getElementById('vendaAvulsoCusto').value = Number(item.custoOriginal).toFixed(2);
+            if (item.margemOriginal !== undefined) document.getElementById('vendaAvulsoMargem').value = Number(item.margemOriginal).toFixed(2);
+            document.getElementById('vendaAvulsoValor').value = item.valorOriginal !== undefined ? Number(item.valorOriginal).toFixed(2) : Number(item.valor).toFixed(2);
+            const ua = document.getElementById('vendaAvulsoUnidade');
+            if (ua && item.unidadeMedida) ua.value = window.normalizarUnidadeMedida(item.unidadeMedida);
             if (window.atualizarTotalLinhaVendaAvulso) window.atualizarTotalLinhaVendaAvulso();
-            document.getElementById('vendaAvulsoValor').focus();
+            document.getElementById('vendaAvulsoNome').focus();
         }
     }
 };
