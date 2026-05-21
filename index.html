@@ -1446,6 +1446,7 @@ window.iniciarImportacao = async function(inputElement) {
                 <button class="btn-secundario" style="background-color: #27ae60;" onclick="abrirModalBanco('ENTRADA')">➕ Lançar Entrada</button>
                 <button class="btn-danger" onclick="abrirModalBanco('SAIDA')">➖ Lançar Saída</button>
                 <button class="btn-secundario" style="background-color: #8e44ad;" onclick="window.fecharCaixaBanco()">🔒 Fechar Caixa do Banco</button>
+                <button class="btn-secundario" style="background-color: #c0392b;" onclick="window.zerarFluxoBanco()">⚠️ Zerar Banco</button>
             </div>
 
             <div class="toolbar" style="margin-top: 15px;">
@@ -5855,6 +5856,33 @@ window.fecharCaixaBanco = async function() {
         alert("✅ Banco fechado com sucesso! Painel totalmente zerado.");
     } catch(e) {
         alert("Erro ao registrar o fechamento do banco: " + e.message);
+    }
+};
+
+// --- ZERAR PAINEL DO BANCO (sem apagar extrato nem vendas digitais na tabela) ---
+window.zerarFluxoBanco = async function () {
+    if (!confirm(
+        '⚠️ ATENÇÃO: Deseja realmente ZERAR o painel do Banco Digital?\n\n' +
+        'O Saldo Inicial, Entradas e Saídas exibidos no painel voltarão a R$ 0,00.\n' +
+        '(Lançamentos manuais e vendas PIX/cartão na tabela NÃO serão apagados — apenas o painel numérico será reiniciado, como no caixa balcão.)'
+    )) {
+        return;
+    }
+    try {
+        const docZeragem = {
+            tipo: 'FECHAMENTO_BANCO',
+            descricao: '⚠️ ZERAGEM MANUAL DO PAINEL (reinício do fluxo)',
+            valor: 0,
+            dataStr: new Date().toLocaleString('pt-BR'),
+            timestamp: Date.now(),
+            usuario: window.usuarioLogado ? window.usuarioLogado.nome : 'Sistema'
+        };
+        await window.meuSet(window.meuPush(window.meuRef(window.meuBanco, 'caixaBancoExtrato')), docZeragem);
+        await window.meuSet(window.meuRef(window.meuBanco, 'caixaBancoStatus'), { saldoInicial: 0 });
+        if (window.atualizarPainelBanco) window.atualizarPainelBanco();
+        alert('✅ Painel do banco zerado com sucesso!');
+    } catch (erro) {
+        alert('❌ Erro ao zerar o banco: ' + erro.message);
     }
 };
 
