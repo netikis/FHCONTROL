@@ -7,6 +7,8 @@
    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 
    <style>
         /* =========================================
@@ -1328,6 +1330,80 @@ window.iniciarImportacao = async function(inputElement) {
         inputElement.value = ''; 
     };
     leitor.readAsText(arquivo, 'ISO-8859-1');
+};
+
+// PDF: modo loja = imprimir na loja | modo cliente = arquivo protegido para enviar (ver/imprimir, sem editar).
+window._nomeArquivoPdfSeguro = function (nome) {
+    return String(nome || 'documento').replace(/[^\w\-\.]/g, '_') + '.pdf';
+};
+
+window._rodapeBotoesPdf = function (modo, nomeArquivo) {
+    const arq = window._nomeArquivoPdfSeguro(nomeArquivo).replace(/'/g, '');
+    if (modo === 'cliente') {
+        return `
+        <div class="pdf-toolbar pdf-toolbar-cliente no-export-pdf">
+            <span class="pdf-toolbar-msg">Para enviar ao cliente: baixe o PDF protegido (visualizar e imprimir; sem editar).</span>
+            <button type="button" class="btn-pdf-protegido" onclick="if(window.opener&&window.opener.gerarPdfProtegidoDaJanela){window.opener.gerarPdfProtegidoDaJanela(window,'${arq}');}else{alert('Recarregue o sistema e tente novamente.');}">🔒 Baixar PDF para cliente</button>
+        </div>`;
+    }
+    return `
+        <div class="pdf-toolbar pdf-toolbar-loja no-export-pdf">
+            <span class="pdf-toolbar-msg">Uso na loja: imprima o papel para entregar ao cliente.</span>
+            <button type="button" class="btn-pdf-imprimir" onclick="window.print()">🖨️ Imprimir</button>
+        </div>`;
+};
+
+window.gerarPdfProtegidoDaJanela = async function (janela, nomeArquivo) {
+    if (!janela || janela.closed) return alert('A janela de visualização foi fechada.');
+    if (!window.html2canvas || !window.jspdf) {
+        return alert('Bibliotecas de PDF não carregaram. Atualize a página (Ctrl+F5) e tente de novo.');
+    }
+    const alvo = janela.document.getElementById('pdf-export-root');
+    if (!alvo) return alert('Conteúdo do PDF não encontrado na janela.');
+    const toolbar = janela.document.querySelector('.pdf-toolbar');
+    if (toolbar) toolbar.style.visibility = 'hidden';
+    try {
+        const canvas = await window.html2canvas(alvo, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+        });
+        const { jsPDF } = window.jspdf;
+        const arq = window._nomeArquivoPdfSeguro(nomeArquivo);
+        const pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: 'a4',
+            encryption: {
+                userPassword: '',
+                ownerPassword: 'FHControl-' + Date.now(),
+                userPermissions: ['print']
+            }
+        });
+        const pageW = pdf.internal.pageSize.getWidth();
+        const pageH = pdf.internal.pageSize.getHeight();
+        const imgW = pageW;
+        const imgH = (canvas.height * imgW) / canvas.width;
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        let heightLeft = imgH;
+        let position = 0;
+        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+        heightLeft -= pageH;
+        while (heightLeft > 0) {
+            position = heightLeft - imgH;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+            heightLeft -= pageH;
+        }
+        pdf.save(arq);
+        alert('PDF para cliente salvo.\n\nO cliente pode abrir, visualizar e imprimir. Editar e copiar texto ficam bloqueados no leitor de PDF.');
+    } catch (e) {
+        alert('Erro ao gerar PDF protegido: ' + (e && e.message ? e.message : e));
+    } finally {
+        if (toolbar) toolbar.style.visibility = '';
+    }
 };
 </script>
 
@@ -3063,13 +3139,14 @@ window._escPendTxt = function (s) {
 window.montarAcoesCelulaPendente = function (v) {
     const enc = encodeURIComponent(String(v.id || ''));
     const idAttr = `data-pend-id="${enc}"`;
-    let h = '<td class="acoes-flex" style="min-width:380px;">';
+    let h = '<td class="acoes-flex" style="min-width:460px;">';
     h += `<button type="button" class="btn-acao edit btn-pend-acao" ${idAttr} data-acao="editar" title="Editar Documento">✏️ Ed</button>`;
     h += `<button type="button" class="btn-acao whats btn-pend-acao" ${idAttr} data-acao="whats" title="WhatsApp">📱 Whats</button>`;
     if (!v.assinaturaBase64) {
         h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="link" title="Copiar Link para Cliente">🔗 Link</button>`;
     }
-    h += `<button type="button" class="btn-acao pdf btn-pend-acao" ${idAttr} data-acao="pdf" title="Visualizar e Baixar PDF">📄 PDF</button>`;
+    h += `<button type="button" class="btn-acao pdf btn-pend-acao" ${idAttr} data-acao="pdf" title="Visualizar e imprimir na loja">📄 PDF</button>`;
+    h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="pdf-cliente" title="PDF protegido para enviar ao cliente">📤 PDF Cliente</button>`;
     h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="cupom" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
     h += `<button type="button" class="btn-acao receber btn-pend-acao" ${idAttr} data-acao="receber" title="Registrar Pagamento">💰 Receber</button>`;
     h += '</td>';
@@ -3248,7 +3325,8 @@ window.marcarComoPago = function (id) {
         else if (acao === 'receber' && window.abrirModalReceberPendente) window.abrirModalReceberPendente(id);
         else if (acao === 'whats' && window.enviarOSWhatsApp) window.enviarOSWhatsApp(id);
         else if (acao === 'link' && window.copiarLinkAssinatura) window.copiarLinkAssinatura(id);
-        else if (acao === 'pdf' && window.gerarPDF_Historico) window.gerarPDF_Historico(id);
+        else if (acao === 'pdf' && window.gerarPDF_Historico) window.gerarPDF_Historico(id, 'loja');
+        else if (acao === 'pdf-cliente' && window.gerarPDFparaCliente) window.gerarPDFparaCliente(id);
         else if (acao === 'cupom' && window.imprimirCupom) window.imprimirCupom(id);
     }, true);
 })();
@@ -3857,7 +3935,8 @@ window.salvarOrdemDeServico = async function(event) {
         if (!v.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`; }
         acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
         acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
-        acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
+        acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}','loja')" title="Visualizar e imprimir na loja">📄 PDF</button>`;
+        acoesHtml += `<button class="btn-acao" onclick="gerarPDFparaCliente('${v.id}')" title="PDF protegido para enviar ao cliente">📤 PDF Cliente</button>`;
         acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
         
         if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PENDENTE') {
@@ -4100,12 +4179,18 @@ window.editarDocumentoCaixa = function(id) {
 };
 
        // --- CONSTRUÇÃO DO PDF (DOCUMENTOS) ---
-       window.gerarPDF_Historico = function(id) {
+       window.gerarPDF_Historico = function(id, modo) {
            const doc = caixaGlobal.find(x => x.id === id);
-           if(doc) window.construirPDF(doc);
-       }
+           if (doc) window.construirPDF(doc, modo || 'loja');
+       };
 
-       window.construirPDF = function(doc) {
+       window.gerarPDFparaCliente = function (id) {
+           window.gerarPDF_Historico(id, 'cliente');
+       };
+
+       window.construirPDF = function(doc, modo) {
+           modo = modo || 'loja';
+           const paraCliente = (modo === 'cliente');
            const formataDataHora = (isoStr) => {
                if(!isoStr || isoStr === 'Não informado' || isoStr === '') return "-";
                let d = new Date(isoStr);
@@ -4283,31 +4368,36 @@ window.editarDocumentoCaixa = function(id) {
                        .ass-nome { font-size: 11px; color: #555; margin-top: 2px; }
                        
                        .rodape { text-align: center; margin-top: 20px; font-size: 9px; color: #adb5bd; border-top: 1px dashed #dee2e6; padding-top: 8px; }
-                      
+                       ${paraCliente ? '#pdf-export-root { user-select: none; -webkit-user-select: none; }' : ''}
+                       .pdf-marca-dagua {
+                           position: fixed; top: 45%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg);
+                           font-size: 42px; color: rgba(44, 62, 80, 0.07); font-weight: 900; pointer-events: none; z-index: 0; white-space: nowrap;
+                       }
+                       .pdf-toolbar {
+                           position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                           display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px;
+                           z-index: 1000; background: rgba(44, 62, 80, 0.96); padding: 12px 18px; border-radius: 8px;
+                           box-shadow: 0 4px 14px rgba(0,0,0,0.35); max-width: 92%;
+                       }
+                       .pdf-toolbar-msg { color: #ecf0f1; font-size: 11px; max-width: 320px; line-height: 1.35; }
+                       .btn-pdf-imprimir {
+                           background-color: #2980b9; color: #fff; border: none; padding: 10px 16px;
+                           font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer;
+                       }
+                       .btn-pdf-imprimir:hover { background-color: #3498db; }
+                       .btn-pdf-protegido {
+                           background-color: #27ae60; color: #fff; border: none; padding: 10px 16px;
+                           font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer;
+                       }
+                       .btn-pdf-protegido:hover { background-color: #2ecc71; }
                        @media print {
-                           .btn-imprimir-flutuante { display: none !important; }
+                           .pdf-toolbar, .no-export-pdf { display: none !important; }
                        }
-                       .btn-imprimir-flutuante {
-                           position: fixed;
-                           bottom: 30px;
-                           right: 30px; 
-                           background-color: #27ae60;
-                           color: white;
-                           border: none;
-                           padding: 12px 20px;
-                           font-size: 14px;
-                           font-weight: bold;
-                           border-radius: 6px;
-                           cursor: pointer;
-                           box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-                           z-index: 1000;
-                       }
-                       .btn-imprimir-flutuante:hover {
-                           background-color: #2ecc71;
-                       }                  
                    </style>
                </head>
-               <body>
+               <body ${paraCliente ? 'oncontextmenu="return false;"' : ''} style="padding-bottom: 90px;">
+                   ${paraCliente ? '<div class="pdf-marca-dagua">CÓPIA PARA CLIENTE — SOMENTE LEITURA</div>' : ''}
+                   <div id="pdf-export-root" style="position: relative; z-index: 1;">
                    <div class="header">
                        <div class="logo-container">${logoHeader}</div>
                        <div class="empresa-info">
@@ -4337,9 +4427,9 @@ window.editarDocumentoCaixa = function(id) {
                        ${assinaturaHTML}
                    </div>
 
-                   <div class="rodape">Documento gerado eletronicamente pelo sistema FH CONSTRUÇÕES CIVIS LTDA.</div>
-                   
-                   <button class="btn-imprimir-flutuante" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+                   <div class="rodape">Documento gerado eletronicamente pelo sistema FH CONSTRUÇÕES CIVIS LTDA.${paraCliente ? ' — Versão para envio ao cliente (protegida contra edição).' : ''}</div>
+                   </div>
+                   ${window._rodapeBotoesPdf(modo, 'Doc-' + (doc.os || doc.tipo || 'documento'))}
                </body>
                </html>
            `;
@@ -4863,11 +4953,14 @@ window.gerarRelatorioMensal = function() {
                 
                 table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
                 th { background: #ecf0f1; color: #2c3e50; padding: 8px; text-align: left; text-transform: uppercase; font-size: 10px; border-bottom: 2px solid #bdc3c7;}
-                @media print { .btn-print { display: none; } }
-                .btn-print { display: block; width: 200px; margin: 20px auto; padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none;}
+                .pdf-toolbar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; z-index: 1000; background: rgba(44, 62, 80, 0.96); padding: 12px 18px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.35); }
+                .pdf-toolbar-msg { color: #ecf0f1; font-size: 11px; }
+                .btn-pdf-imprimir { background: #2980b9; color: #fff; border: none; padding: 10px 16px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+                @media print { .pdf-toolbar, .no-export-pdf { display: none !important; } }
             </style>
         </head>
-        <body>
+        <body style="padding-bottom: 90px;">
+            <div id="pdf-export-root">
             <div class="header">
                 <h2 style="margin:0;">RELATÓRIO MENSAL UNIFICADO (BALCÃO + BANCO)</h2>
                 <h3 style="margin:5px 0; color: #7f8c8d;">${empresaGlobal.nome} - Competência: ${mesAno}</h3>
@@ -4916,8 +5009,8 @@ window.gerarRelatorioMensal = function() {
                 Este relatório contempla todas as entradas (Dinheiro, PIX, Cartões) e despesas lançadas no período.<br>
                 Documento gerado pelo sistema FH CONSTRUÇÕES CIVIS LTDA em ${new Date().toLocaleString()}.
             </div>
-
-            <button class="btn-print" onclick="window.print()">🖨️ IMPRIMIR RELATÓRIO</button>
+            </div>
+            ${window._rodapeBotoesPdf('loja', 'Extrato-' + String(mesAno).replace(/\//g, '-'))}
         </body>
         </html>
     `;
@@ -5660,7 +5753,8 @@ window.renderizarTabelaCaixa = function() {
         if (!v.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')" title="Copiar Link para Cliente">🔗 Link</button>`; }
         acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
         acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
-        acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')" title="Visualizar e Baixar PDF">📄 PDF</button>`;
+        acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}','loja')" title="Visualizar e imprimir na loja">📄 PDF</button>`;
+        acoesHtml += `<button class="btn-acao" onclick="gerarPDFparaCliente('${v.id}')" title="PDF protegido para enviar ao cliente">📤 PDF Cliente</button>`;
         acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
         
         if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') && statusStr === 'PENDENTE') {
@@ -5767,7 +5861,8 @@ window.renderizarTabelaBanco = function() {
             if (!v.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')">🔗 Link</button>`; }
             acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
             acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
-            acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}')">📄 PDF</button>`;
+            acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}','loja')" title="Visualizar e imprimir na loja">📄 PDF</button>`;
+            acoesHtml += `<button class="btn-acao" onclick="gerarPDFparaCliente('${v.id}')" title="PDF protegido para enviar ao cliente">📤 PDF Cliente</button>`;
             acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')">🧾 Cupom</button>`;
             
             if (statusStr === 'PENDENTE') {
