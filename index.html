@@ -1430,21 +1430,25 @@ window._criarPdfJsComProtecao = function (jsPDF) {
     }
 };
 
+// Mesmas margens do @page (10mm). PNG = texto nítido (JPEG borrava o PDF cliente).
 window._pdfAdicionarCanvas = function (pdf, canvas) {
+    const margem = 10;
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
-    const imgW = pageW;
-    const imgH = (canvas.height * imgW) / canvas.width;
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const areaW = pageW - margem * 2;
+    const areaH = pageH - margem * 2;
+    const imgData = canvas.toDataURL('image/png');
+    const pxPerMm = canvas.width / areaW;
+    const imgH = canvas.height / pxPerMm;
     let heightLeft = imgH;
-    let position = 0;
-    pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-    heightLeft -= pageH;
+    let position = margem;
+    pdf.addImage(imgData, 'PNG', margem, position, areaW, imgH, undefined, 'FAST');
+    heightLeft -= areaH;
     while (heightLeft > 0) {
-        position = heightLeft - imgH;
+        position = margem - (imgH - heightLeft);
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-        heightLeft -= pageH;
+        pdf.addImage(imgData, 'PNG', margem, position, areaW, imgH, undefined, 'FAST');
+        heightLeft -= areaH;
     }
 };
 
@@ -1469,9 +1473,10 @@ window.gerarPdfProtegidoDaJanela = async function (janela, nomeArquivo) {
     const txtBtn = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF...'; }
     if (toolbar) toolbar.style.visibility = 'hidden';
+    const escalaCaptura = Math.min(3, Math.max(2, Math.round((window.devicePixelRatio || 1) * 2)));
     const optsCanvas = function (omitirImagensExternas) {
         return {
-            scale: 2,
+            scale: escalaCaptura,
             useCORS: !omitirImagensExternas,
             allowTaint: omitirImagensExternas,
             logging: false,
@@ -1485,6 +1490,10 @@ window.gerarPdfProtegidoDaJanela = async function (janela, nomeArquivo) {
             onclone: function (docClone) {
                 const root = docClone.getElementById('pdf-export-root');
                 if (!root) return;
+                root.style.width = '718px';
+                root.style.maxWidth = '718px';
+                root.style.margin = '0';
+                root.style.boxSizing = 'border-box';
                 root.querySelectorAll('img').forEach(function (img) {
                     try {
                         if (!img.complete || img.naturalWidth === 0) img.style.display = 'none';
@@ -1499,7 +1508,6 @@ window.gerarPdfProtegidoDaJanela = async function (janela, nomeArquivo) {
         let canvas;
         try {
             canvas = await window.html2canvas(alvo, optsCanvas(false));
-            canvas.toDataURL('image/jpeg', 0.5);
         } catch (errCanvas) {
             canvas = await window.html2canvas(alvo, optsCanvas(true));
         }
@@ -4453,7 +4461,19 @@ window.editarDocumentoCaixa = function(id) {
                    <title>Doc Nº ${doc.os}</title>
                    <style>
                        @page { size: A4; margin: 10mm; }
-                       body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; font-size: 11px; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                       body {
+                           font-family: 'Segoe UI', Arial, sans-serif; color: #333; font-size: 11px; margin: 0; padding: 0;
+                           -webkit-print-color-adjust: exact; print-color-adjust: exact;
+                           background: #eceff1;
+                       }
+                       #pdf-export-root {
+                           box-sizing: border-box;
+                           width: 190mm;
+                           max-width: 190mm;
+                           margin: 10mm auto;
+                           padding: 0;
+                           background: #ffffff;
+                       }
                        
                        .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #2c3e50; padding-bottom: 15px; margin-bottom: 15px; }
                        .logo-container { width: 25%; text-align: left; }
@@ -4517,6 +4537,8 @@ window.editarDocumentoCaixa = function(id) {
                        }
                        .btn-pdf-protegido:hover { background-color: #2ecc71; }
                        @media print {
+                           body { background: #ffffff !important; }
+                           #pdf-export-root { width: auto; max-width: none; margin: 0; }
                            .pdf-toolbar, .no-export-pdf { display: none !important; }
                        }
                    </style>
@@ -4559,7 +4581,7 @@ window.editarDocumentoCaixa = function(id) {
                </body>
                </html>
            `;
-           let j = window.open('', '', 'width=900,height=750');
+           let j = window.open('', '', 'width=820,height=900');
            if (!j) return alert('O navegador bloqueou a janela do PDF. Permita pop-ups para este site.');
            j.document.write(htmlPDF);
            j.document.close();
