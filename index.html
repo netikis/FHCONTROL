@@ -1247,15 +1247,42 @@ window.formaPagamentoEhDigital = function(formaPag) {
 };
 
 // Data para caixa / resumo do dia: se foi recebido depois (conta pendente), usa a data do recebimento, não a da venda.
+window._diaBrDeString = function (s) {
+    if (!s) return '';
+    const part = String(s).trim().split(/[\s,]+/)[0];
+    const m = part.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (!m) return part;
+    const y = m[3].length === 2 ? ('20' + m[3]) : m[3];
+    return m[1].padStart(2, '0') + '/' + m[2].padStart(2, '0') + '/' + y;
+};
 window.dataEfetivaCaixa = function (doc) {
     if (!doc) return '';
     const st = doc.statusPagamento || 'PAGO';
-    if (st === 'PAGO' && doc.dataRecebimentoStr) return String(doc.dataRecebimentoStr);
+    if (st === 'PAGO') {
+        if (doc.dataRecebimentoStr) return String(doc.dataRecebimentoStr);
+        if (doc.timestampRecebimento) return new Date(Number(doc.timestampRecebimento)).toLocaleString('pt-BR');
+    }
     return String(doc.dataStr || '');
 };
 window.dataEfetivaCaixaInclui = function (doc, needle) {
-    const s = window.dataEfetivaCaixa(doc);
-    return s && s.includes(needle);
+    const dia = window._diaBrDeString(window.dataEfetivaCaixa(doc));
+    const alvo = window._diaBrDeString(needle) || String(needle || '').trim();
+    if (!dia || !alvo) return false;
+    if (alvo.length <= 7 && alvo.indexOf('/') > 0) return dia.indexOf(alvo) !== -1;
+    return dia === alvo;
+};
+window.aplicarCamposRecebimentoAoDoc = function (doc, statusNovo, original) {
+    if (!doc || statusNovo !== 'PAGO') return doc;
+    const eraPendente = !original || (original.statusPagamento || 'PENDENTE') === 'PENDENTE';
+    if (eraPendente || !original || !original.dataRecebimentoStr) {
+        const agora = Date.now();
+        doc.dataRecebimentoStr = new Date(agora).toLocaleString('pt-BR');
+        doc.timestampRecebimento = agora;
+    } else if (original) {
+        doc.dataRecebimentoStr = original.dataRecebimentoStr;
+        doc.timestampRecebimento = original.timestampRecebimento;
+    }
+    return doc;
 };
 window.dataEfetivaCaixaDia = function (doc) {
     return (window.dataEfetivaCaixa(doc) || '').split(/\s+/)[0] || '-';
@@ -3208,6 +3235,7 @@ window.finalizarVenda = async function(event) {
             observacao: document.getElementById('vendaObservacao').value,
             autoLancamentoBanco: autoLancamentoBanco
         };
+        window.aplicarCamposRecebimentoAoDoc(doc, statusPag, originalDoc);
 
         if (idNotaEditada) { 
             await set(ref(dbBanco, 'caixa/' + idNotaEditada), doc); 
@@ -3416,16 +3444,18 @@ window.confirmarRecebimentoPendente = async function () {
             formaPagamento: forma,
             autoLancamentoBanco: false,
             dataRecebimentoStr: dataRecebimentoStr,
-            timestampRecebimento: agora,
-            timestamp: agora
+            timestampRecebimento: agora
         });
         if (!isDig) {
             window.registrarMovimentoCaixa('entrada', valor);
         }
         window.fecharModalReceberPendente();
-        alert('Pagamento recebido com sucesso!' + (isDig ? '\n\nValor contabilizado no banco digital (PIX/cartão).' : '\n\nValor contabilizado no caixa físico (gaveta).'));
+        alert('Pagamento recebido com sucesso!' + (isDig ? '\n\nPIX/cartão contabilizado no banco digital na data de hoje (' + window._diaBrDeString(dataRecebimentoStr) + ').' : '\n\nValor contabilizado no caixa físico (gaveta) na data de hoje.'));
         if (window.atualizarPainelBanco) window.atualizarPainelBanco();
         if (window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
+        if (window.renderizarTabelaBanco) window.renderizarTabelaBanco();
+        if (window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
+        if (window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
     } catch (e) {
         alert('Erro ao atualizar: ' + e.message);
     }
@@ -3918,6 +3948,7 @@ window.salvarOrdemDeServico = async function(event) {
             observacao: document.getElementById('osObservacao').value,
             autoLancamentoBanco: autoLancamentoBancoOS
         };
+        window.aplicarCamposRecebimentoAoDoc(docOS, statusPag, originalDoc);
 
         if (idNotaEditada) {
             await set(ref(dbBanco, 'caixa/' + idNotaEditada), docOS);
@@ -4111,10 +4142,10 @@ window.salvarOrdemDeServico = async function(event) {
 window.atualizarResumoPagamentosHoje = function() {
     let hoje = new Date().toLocaleDateString('pt-BR');
     
-    // O resumo agora é restrito APENAS ao dinheiro
     let resumo = {
         'Dinheiro': { qtd: 0, total: 0, icone: '💵' }
     };
+    let resumoDigital = {};
     
     let totalDespesas = 0;
     let qtdDespesas = 0;
@@ -4127,10 +4158,8 @@ window.atualizarResumoPagamentosHoje = function() {
 
             if (status === 'PAGO' && (tipo === 'VENDA' || tipo === 'ORDEM DE SERVIÇO' || tipo === 'VD' || tipo === 'ENTRADA_CAIXA')) {
                 let forma = doc.formaPagamento || 'Outros';
-                let formaLow = forma.toLowerCase();
-                let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
+                let isDigital = window.formaPagamentoEhDigital(forma);
                 
-                // SÓ ENTRA AQUI SE FOR DINHEIRO FÍSICO!
                 if (!isDigital || tipo === 'ENTRADA_CAIXA') {
                     if (resumo[forma]) {
                         resumo[forma].qtd++;
@@ -4138,6 +4167,11 @@ window.atualizarResumoPagamentosHoje = function() {
                     } else {
                         resumo[forma] = { qtd: 1, total: valor, icone: '💰' };
                     }
+                } else {
+                    const chave = forma.replace('Cartão de ', '');
+                    if (!resumoDigital[chave]) resumoDigital[chave] = { qtd: 0, total: 0, icone: chave.toLowerCase().includes('pix') ? '🌀' : '💳' };
+                    resumoDigital[chave].qtd++;
+                    resumoDigital[chave].total += valor;
                 }
             }
             
@@ -4160,10 +4194,20 @@ window.atualizarResumoPagamentosHoje = function() {
         let icone = resumo[forma].icone || '💰';
 
         html += `<tr style="border-bottom: 1px solid #2c3e50;">
-            <td style="font-weight: bold; color: #ecf0f1; padding: 10px;">${icone} ${forma}</td>
+            <td style="font-weight: bold; color: #ecf0f1; padding: 10px;">${icone} ${forma} <small style="color:#95a5a6;">(gaveta)</small></td>
             <td style="text-align: center; color: #bdc3c7;">${q}</td>
             <td style="text-align: right; font-weight: bold; color: #2ecc71;">R$ ${val.toFixed(2)}</td>
             <td style="text-align: center;"><span style="background-color: #27ae60; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px;">ENTRADA</span></td>
+        </tr>`;
+    });
+
+    Object.keys(resumoDigital).forEach(forma => {
+        const r = resumoDigital[forma];
+        html += `<tr style="border-bottom: 1px solid #2c3e50;">
+            <td style="font-weight: bold; color: #ecf0f1; padding: 10px;">${r.icone} ${forma} <small style="color:#95a5a6;">(banco — recebido hoje)</small></td>
+            <td style="text-align: center; color: #bdc3c7;">${r.qtd}</td>
+            <td style="text-align: right; font-weight: bold; color: #5dade2;">R$ ${r.total.toFixed(2)}</td>
+            <td style="text-align: center;"><span style="background-color: #2980b9; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px;">BANCO</span></td>
         </tr>`;
     });
 
