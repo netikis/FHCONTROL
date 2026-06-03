@@ -1240,6 +1240,45 @@ window.qtdEstoqueReservadaNoCarrinho = function(carrinho, idProd) {
     return Math.round(s * 100000) / 100000;
 };
 
+// Crédito de estoque ao editar nota salva (itens antigos ainda “voltam” ao saldo até gravar de novo)
+window._creditoEstoqueDocumentoEmEdicao = function (idProd, modo) {
+    if (!idProd) return 0;
+    const idEdit = sessionStorage.getItem('idNotaEditando') || window.editandoDocId || null;
+    if (!idEdit) return 0;
+    const lista = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
+    const doc = lista.find(x => String(x.id) === String(idEdit));
+    if (!doc || !doc.itens) return 0;
+    const tipo = String(doc.tipo || '').toUpperCase();
+    if (modo === 'VENDA') {
+        const ok = tipo === 'VD' || tipo.includes('VENDA') || tipo.includes('RECIBO') || tipo.includes('ORCAMENTO');
+        if (!ok) return 0;
+    } else if (modo === 'OS') {
+        if (!tipo.includes('ORDEM') && !tipo.includes('OS')) return 0;
+    }
+    const itens = Array.isArray(doc.itens) ? doc.itens : Object.values(doc.itens);
+    let s = 0;
+    itens.forEach(function (o) {
+        if (o && o.ehEstoque && o.idProd === idProd) s += Number(o.qtdBaixa) || 0;
+    });
+    return Math.round(s * 100000) / 100000;
+};
+
+// Disponível = cadastro + crédito (nota em edição e/ou linha que saiu do carrinho ao clicar ✏️) − reserva no carrinho
+window.calcularDisponivelEstoque = function (p, carrinho, modo) {
+    const cad = Number(p && p.quantidade) || 0;
+    const idProd = p && p.id;
+    const res = window.qtdEstoqueReservadaNoCarrinho(carrinho, idProd);
+    let creditoDoc = window._creditoEstoqueDocumentoEmEdicao(idProd, modo);
+    let creditoLinha = 0;
+    const emEd = window._linhaEstoqueEmEdicao;
+    const temNota = !!(sessionStorage.getItem('idNotaEditando') || window.editandoDocId);
+    if (emEd && emEd.modo === modo && emEd.idProd === idProd && !temNota) {
+        creditoLinha = Number(emEd.qtd) || 0;
+    }
+    const livre = Math.round((cad + creditoDoc + creditoLinha - res) * 100000) / 100000;
+    return { cadastro: cad, reservado: res, creditoDoc: creditoDoc, creditoLinha: creditoLinha, livre: livre };
+};
+
 // PIX / cartão / boleto → não entra na gaveta física; entra no extrato do banco quando marcado
 window.formaPagamentoEhDigital = function(formaPag) {
     let f = String(formaPag || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -1948,12 +1987,16 @@ window.excluirTodosProdutos = async function() {
            else if (un === 'l') lb.innerText = 'Qtd. (litros)';
            else lb.innerText = 'Qtd. (unid.)';
        }
-       const cad = Number(p.quantidade) || 0;
-       const res = window.qtdEstoqueReservadaNoCarrinho(carrinhoVenda, p.id);
-       const livre = Math.round((cad - res) * 100000) / 100000;
+       const disp = window.calcularDisponivelEstoque(p, carrinhoVenda, 'VENDA');
+       const cad = disp.cadastro;
+       const res = disp.reservado;
+       const livre = disp.livre;
        const qCampo = window.parseQtdEstoque(document.getElementById('vendaProdutoQtd') && document.getElementById('vendaProdutoQtd').value);
        let html = `<strong>Estoque no cadastro:</strong> ${window.formatQtdComUnidade(cad, un)} &nbsp;|&nbsp; `;
        html += `<strong>No carrinho (reserva):</strong> ${window.formatQtdComUnidade(res, un)} &nbsp;|&nbsp; `;
+       if (disp.creditoDoc > 0 || disp.creditoLinha > 0) {
+           html += `<strong style="color:#3498db;">Crédito (edição):</strong> ${window.formatQtdComUnidade(disp.creditoDoc + disp.creditoLinha, un)} &nbsp;|&nbsp; `;
+       }
        html += `<strong style="color:#f1c40f;">Livre p/ vender agora:</strong> ${window.formatQtdComUnidade(Math.max(0, livre), un)}`;
        if (!isNaN(qCampo) && qCampo > 0) {
            const depois = livre - qCampo;
@@ -1987,12 +2030,16 @@ window.excluirTodosProdutos = async function() {
            else if (un === 'l') lb.innerText = 'Qtd (L)';
            else lb.innerText = 'Qtd (un.)';
        }
-       const cad = Number(p.quantidade) || 0;
-       const res = window.qtdEstoqueReservadaNoCarrinho(carrinhoOS, p.id);
-       const livre = Math.round((cad - res) * 100000) / 100000;
+       const disp = window.calcularDisponivelEstoque(p, carrinhoOS, 'OS');
+       const cad = disp.cadastro;
+       const res = disp.reservado;
+       const livre = disp.livre;
        const qCampo = window.parseQtdEstoque(document.getElementById('osEstoqueQtd') && document.getElementById('osEstoqueQtd').value);
        let html = `<strong>Cadastro:</strong> ${window.formatQtdComUnidade(cad, un)} &nbsp;|&nbsp; `;
        html += `<strong>No carrinho OS:</strong> ${window.formatQtdComUnidade(res, un)} &nbsp;|&nbsp; `;
+       if (disp.creditoDoc > 0 || disp.creditoLinha > 0) {
+           html += `<strong style="color:#3498db;">Crédito (edição):</strong> ${window.formatQtdComUnidade(disp.creditoDoc + disp.creditoLinha, un)} &nbsp;|&nbsp; `;
+       }
        html += `<strong style="color:#f1c40f;">Livre:</strong> ${window.formatQtdComUnidade(Math.max(0, livre), un)}`;
        if (!isNaN(qCampo) && qCampo > 0) {
            const depois = livre - qCampo;
@@ -2148,6 +2195,7 @@ window.mudarPaginaProd = function(direcao) {
        // MÁGICA: Limpa o ID da memória global corretamente
        window.editandoDocId = null;
        editandoDocId = null;
+       window._linhaEstoqueEmEdicao = null;
        try { sessionStorage.removeItem('idNotaEditando'); } catch (e) {}
        
        carrinhoVenda = []; window.atualizarCarrinhoVenda();
@@ -2948,26 +2996,29 @@ window.addAoCarrinhoVenda_Estoque = function() {
         return;
     }
 
-    const qtdDisp = Number(p.quantidade) || 0;
-    const reservadoCarrinho = window.qtdEstoqueReservadaNoCarrinho(carrinhoVenda, p.id);
-    const livreParaIncluir = Math.round((qtdDisp - reservadoCarrinho) * 100000) / 100000;
+    const disp = window.calcularDisponivelEstoque(p, carrinhoVenda, 'VENDA');
+    const livreParaIncluir = disp.livre;
     if (livreParaIncluir < qtd - 1e-9) {
         const f = window.formatQtdEstoque;
+        let extra = '';
+        if (disp.creditoDoc > 0 || disp.creditoLinha > 0) {
+            extra = `\nCrédito por edição (nota/linha): ${f(disp.creditoDoc + disp.creditoLinha)}`;
+        }
         if (livreParaIncluir <= 0) {
             return alert(
                 `Não é possível adicionar mais deste produto.\n\n` +
                 `Produto: ${p.nome}\n` +
-                `Quantidade no estoque (cadastro): ${f(qtdDisp)}\n` +
-                `Já lançado no carrinho (mesmo produto): ${f(reservadoCarrinho)}\n` +
+                `Quantidade no estoque (cadastro): ${f(disp.cadastro)}\n` +
+                `Já lançado no carrinho (mesmo produto): ${f(disp.reservado)}${extra}\n` +
                 `Disponível para incluir agora: ${f(0)}\n\n` +
-                `O sistema considera tudo que já está no carrinho como “reserva” até finalizar ou remover a linha.`
+                `Ao editar (✏️) e reduzir quantidade, use ADD de novo — o sistema devolve o que saiu da linha.`
             );
         }
         return alert(
             `Quantidade acima do disponível.\n\n` +
             `Produto: ${p.nome}\n` +
-            `No estoque (cadastro): ${f(qtdDisp)}\n` +
-            `Já no carrinho (mesmo produto): ${f(reservadoCarrinho)}\n` +
+            `No estoque (cadastro): ${f(disp.cadastro)}\n` +
+            `Já no carrinho (mesmo produto): ${f(disp.reservado)}${extra}\n` +
             `Você está tentando incluir agora: ${f(qtd)}\n` +
             `Máximo que pode incluir nesta inclusão: ${f(livreParaIncluir)}`
         );
@@ -2987,6 +3038,7 @@ window.addAoCarrinhoVenda_Estoque = function() {
     document.getElementById('vendaProdutoQtd').value = '1';
     if (selUn) selUn.value = '';
     const tlA = document.getElementById('vendaProdutoTotalLinha'); if (tlA) tlA.value = '';
+    window._linhaEstoqueEmEdicao = null;
     window.atualizarCarrinhoVenda();
     if (window.atualizarTotalLinhaVendaEstoque) window.atualizarTotalLinhaVendaEstoque();
 };
@@ -3035,6 +3087,10 @@ window.addAoCarrinhoVenda_Estoque = function() {
 
       window.editarItemCarrinhoVenda = function(idx) {
     const item = carrinhoVenda[idx];
+    window._linhaEstoqueEmEdicao = null;
+    if (item && item.ehEstoque && item.idProd) {
+        window._linhaEstoqueEmEdicao = { modo: 'VENDA', idProd: item.idProd, qtd: Number(item.qtdBaixa) || 0 };
+    }
     carrinhoVenda.splice(idx, 1);
     window.atualizarCarrinhoVenda();
     
@@ -3697,26 +3753,28 @@ window.sincronizarTotaisDoDia = async function() {
            const p = produtosGlobais.find(x => String(x.nome).trim().toLowerCase() === n.trim().toLowerCase() || String(x.codigo).trim() === n.trim());
            if (!p) return alert("Produto não encontrado no estoque!");
 
-           const qtdDisp = Number(p.quantidade) || 0;
-           const reservadoCarrinhoOS = window.qtdEstoqueReservadaNoCarrinho(carrinhoOS, p.id);
-           const livreOS = Math.round((qtdDisp - reservadoCarrinhoOS) * 100000) / 100000;
+           const dispOS = window.calcularDisponivelEstoque(p, carrinhoOS, 'OS');
+           const livreOS = dispOS.livre;
            if (livreOS < qtd - 1e-9) {
                const f = window.formatQtdEstoque;
+               let extraOS = '';
+               if (dispOS.creditoDoc > 0 || dispOS.creditoLinha > 0) {
+                   extraOS = `\nCrédito por edição (nota/linha): ${f(dispOS.creditoDoc + dispOS.creditoLinha)}`;
+               }
                if (livreOS <= 0) {
                    return alert(
                        `Não é possível adicionar mais deste produto na OS.\n\n` +
                        `Produto: ${p.nome}\n` +
-                       `Quantidade no estoque (cadastro): ${f(qtdDisp)}\n` +
-                       `Já lançado no carrinho da OS (mesmo produto): ${f(reservadoCarrinhoOS)}\n` +
-                       `Disponível para incluir agora: ${f(0)}\n\n` +
-                       `O carrinho conta como reserva até finalizar ou remover a linha.`
+                       `Quantidade no estoque (cadastro): ${f(dispOS.cadastro)}\n` +
+                       `Já lançado no carrinho da OS (mesmo produto): ${f(dispOS.reservado)}${extraOS}\n` +
+                       `Disponível para incluir agora: ${f(0)}`
                    );
                }
                return alert(
                    `Quantidade acima do disponível.\n\n` +
                    `Produto: ${p.nome}\n` +
-                   `No estoque (cadastro): ${f(qtdDisp)}\n` +
-                   `Já no carrinho da OS (mesmo produto): ${f(reservadoCarrinhoOS)}\n` +
+                   `No estoque (cadastro): ${f(dispOS.cadastro)}\n` +
+                   `Já no carrinho da OS (mesmo produto): ${f(dispOS.reservado)}${extraOS}\n` +
                    `Você está tentando incluir agora: ${f(qtd)}\n` +
                    `Máximo que pode incluir nesta inclusão: ${f(livreOS)}`
                );
@@ -3746,6 +3804,7 @@ window.sincronizarTotaisDoDia = async function() {
            document.getElementById('osEstoquePerc').value = 0; 
            document.getElementById('osEstoqueTotal').value = '';
            if (selOs) selOs.value = '';
+           window._linhaEstoqueEmEdicao = null;
            window.atualizarCarrinhoOS();
        };
 
@@ -3782,6 +3841,10 @@ window.sincronizarTotaisDoDia = async function() {
 
        window.editarItemCarrinhoOS = function(idx) {
            const item = carrinhoOS[idx];
+           window._linhaEstoqueEmEdicao = null;
+           if (item && item.ehEstoque && item.idProd) {
+               window._linhaEstoqueEmEdicao = { modo: 'OS', idProd: item.idProd, qtd: Number(item.qtdBaixa) || 0 };
+           }
            carrinhoOS.splice(idx, 1);
            window.atualizarCarrinhoOS();
            
