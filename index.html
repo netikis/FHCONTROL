@@ -1649,7 +1649,7 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
 
 <div style="background-color: #2c1f1f; padding: 15px; border-radius: 6px; border: 1px solid #f39c12; margin-bottom: 18px;">
                <h3 style="margin-top: 0; color: #f39c12; font-size: 15px; text-transform: uppercase;">Contas a receber (pendentes)</h3>
-               <p style="margin: 0 0 10px 0; font-size: 13px; color: #ecf0f1;">Total em aberto: <strong id="totalPendentesCaixaHead" style="color: #f1c40f;">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Use <strong>Editar</strong> para alterar a nota antes de receber; <strong>Receber</strong> para informar a forma de pagamento (dinheiro → gaveta; PIX/cartão → banco digital).</p>
+               <p style="margin: 0 0 10px 0; font-size: 13px; color: #ecf0f1;">Total em aberto: <strong id="totalPendentesCaixaHead" style="color: #f1c40f;">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Use <strong>Editar</strong> para alterar a nota antes de receber; <strong>Receber</strong> para informar a forma de pagamento (dinheiro → gaveta; PIX/cartão → banco digital); <strong>Excluir</strong> para cancelar a nota e devolver os produtos ao estoque.</p>
                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px;">
                    <label for="buscaPendentesCaixa" style="color: #bdc3c7; font-size: 12px; white-space: nowrap;">Buscar</label>
                    <input type="search" id="buscaPendentesCaixa" autocomplete="off" placeholder="Nome, Nº documento, data ou valor…" oninput="if(window.filtrarPendentesCaixa)window.filtrarPendentesCaixa()" style="flex: 1; min-width: 200px; max-width: 480px; padding: 8px 10px; border-radius: 4px; border: 1px solid #7f8c8d; background: #1a252f; color: #ecf0f1; font-size: 13px;" />
@@ -3367,6 +3367,7 @@ window.montarAcoesCelulaPendente = function (v) {
     h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="pdf-cliente" title="PDF protegido para enviar ao cliente">📤 PDF Cliente</button>`;
     h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="cupom" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
     h += `<button type="button" class="btn-acao receber btn-pend-acao" ${idAttr} data-acao="receber" title="Registrar Pagamento">💰 Receber</button>`;
+    h += `<button type="button" class="btn-acao del btn-pend-acao" ${idAttr} data-acao="excluir" title="Excluir nota e devolver produtos ao estoque">🗑️ Excluir</button>`;
     h += '</td>';
     return h;
 };
@@ -3521,6 +3522,54 @@ window.marcarComoPago = function (id) {
     window.abrirModalReceberPendente(id);
 };
 
+window.excluirNotaPendente = async function (id) {
+    const listaCx = window._listaCaixaSincronizada();
+    const doc = listaCx.find(x => String(x.id) === String(id));
+    if (!doc) {
+        return alert('Documento não encontrado. Aguarde a sincronização ou recarregue a página.');
+    }
+    if ((doc.statusPagamento || 'PENDENTE') !== 'PENDENTE') {
+        return alert('Somente notas com status PENDENTE podem ser excluídas por aqui. Para notas já pagas, use Estornar ou Cancelar na tabela do caixa.');
+    }
+    const msg =
+        '⚠️ ATENÇÃO: Ao clicar em excluir a nota, os produtos adicionados irão retornar ao estoque.\n\n' +
+        `Documento Nº ${doc.os || '-'} — ${doc.clienteNome || 'Cliente'} — R$ ${(parseFloat(doc.total) || 0).toFixed(2)}\n\n` +
+        'Deseja prosseguir?';
+    if (!confirm(msg)) return;
+    try {
+        const { ref, get, update, remove } = await import('https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js');
+        const dbBanco = window.meuBanco;
+        const snap = await get(ref(dbBanco, 'caixa/' + id));
+        const vCanc = snap.val();
+        if (!vCanc) {
+            return alert('Documento não encontrado no banco de dados.');
+        }
+        const tiposComEstoque = { VENDA: true, VD: true, 'ORDEM DE SERVIÇO': true };
+        if (tiposComEstoque[vCanc.tipo] && vCanc.itens) {
+            const itensGarantidos = Array.isArray(vCanc.itens) ? vCanc.itens : Object.values(vCanc.itens);
+            for (const item of itensGarantidos) {
+                if (item.ehEstoque && item.idProd) {
+                    const snapP = await get(ref(dbBanco, 'produtos/' + item.idProd));
+                    const pDb = snapP.val();
+                    if (pDb) {
+                        await update(ref(dbBanco, 'produtos/' + item.idProd), {
+                            quantidade: window.aplicarDeltaQtdDb(pDb.quantidade, item.qtdBaixa)
+                        });
+                    }
+                }
+            }
+        }
+        await remove(ref(dbBanco, 'caixa/' + id));
+        alert('✅ Nota excluída. Os produtos do estoque foram devolvidos quando aplicável.');
+        if (window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
+        if (window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
+        if (window.renderizarTabelaBanco) window.renderizarTabelaBanco();
+        if (window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
+    } catch (erro) {
+        alert('Erro ao excluir: ' + (erro.message || erro));
+    }
+};
+
 (function () {
     if (window._delegPendentesCaixaAcoes) return;
     window._delegPendentesCaixaAcoes = true;
@@ -3548,6 +3597,7 @@ window.marcarComoPago = function (id) {
         else if (acao === 'pdf' && window.gerarPDF_Historico) window.gerarPDF_Historico(id, 'loja');
         else if (acao === 'pdf-cliente' && window.gerarPDFparaCliente) window.gerarPDFparaCliente(id);
         else if (acao === 'cupom' && window.imprimirCupom) window.imprimirCupom(id);
+        else if (acao === 'excluir' && window.excluirNotaPendente) window.excluirNotaPendente(id);
     }, true);
 })();
 
@@ -5727,32 +5777,6 @@ window.estornarNoBancoAutomatico = function(descricao, valor) {
     }
 };
 
-// NOVA FUNÇÃO: Calcula e atualiza o painel do banco
-window.atualizarPainelBanco = function() {
-    let totalEntradas = 0;
-    let totalSaidas = 0;
-
-    // Soma tudo que está no extrato do banco
-    window.extratoBanco.forEach(doc => {
-        if (doc.tipo === 'ENTRADA') {
-            totalEntradas += (parseFloat(doc.valor) || 0);
-        } else if (doc.tipo === 'SAIDA') {
-            totalSaidas += (parseFloat(doc.valor) || 0);
-        }
-    });
-
-    let saldoInicial = window.saldoInicialBanco || 0;
-    let saldoAtual = saldoInicial + totalEntradas - totalSaidas;
-
-    // Joga os valores na tela
-    if(document.getElementById('dashIniBanco')) {
-        document.getElementById('dashIniBanco').innerText = `R$ ${saldoInicial.toFixed(2)}`;
-        document.getElementById('dashEntBanco').innerText = `R$ ${totalEntradas.toFixed(2)}`;
-        document.getElementById('dashSaiBanco').innerText = `R$ ${totalSaidas.toFixed(2)}`;
-        document.getElementById('dashSaldoBanco').innerText = `R$ ${saldoAtual.toFixed(2)}`;
-    }
-};
-
 // Monitora o Saldo Inicial do Banco no Firebase
 onValue(ref(window.meuBanco, 'caixaBancoStatus'), s => {
     let val = s.val();
@@ -5885,50 +5909,6 @@ window.mudarPaginaBanco = function(direcao) {
         window.paginaAtualBanco += direcao;
         window.renderizarTabelaBanco();
     }
-};
-
-window.renderizarTabelaBanco = function() {
-    const tabela = document.getElementById('tabelaCaixaBanco');
-    if(!tabela) return;
-    tabela.innerHTML = '';
-    
-    // 1. Filtra pela busca
-    let dadosFiltrados = window.extratoBanco.filter(v => 
-        (v.descricao || '').toLowerCase().includes(window.termoBuscaBanco)
-    );
-
-    if (dadosFiltrados.length === 0) {
-        tabela.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhum movimento bancário encontrado.</td></tr>';
-        if(document.getElementById('infoPaginaBanco')) document.getElementById('infoPaginaBanco').innerText = "Pág 1 de 1";
-        return;
-    }
-
-    // 2. Lógica de Paginação (15 por página)
-    const inicio = (window.paginaAtualBanco - 1) * window.itensPorPaginaBanco;
-    const fim = inicio + window.itensPorPaginaBanco;
-    const itensDaPagina = dadosFiltrados.slice(inicio, fim);
-    
-    if(document.getElementById('infoPaginaBanco')) {
-        document.getElementById('infoPaginaBanco').innerText = `Pág ${window.paginaAtualBanco} de ${Math.ceil(dadosFiltrados.length / window.itensPorPaginaBanco)}`;
-    }
-
-    // 3. Renderiza apenas os itens da página atual
-    itensDaPagina.forEach(v => {
-        let cor = v.tipo === 'ENTRADA' ? '#2ecc71' : '#e74c3c';
-        let sinal = v.tipo === 'ENTRADA' ? '+' : '-';
-        
-        tabela.innerHTML += `
-            <tr>
-                <td style="font-weight: bold;">${v.dataStr.split(' ')[0]}</td>
-                <td><span style="background-color: ${cor}; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${v.tipo}</span></td>
-                <td style="font-weight: bold;">${v.descricao}</td>
-                <td style="color:${cor}; font-weight:bold; text-align: right;">${sinal} R$ ${v.valor.toFixed(2)}</td>
-                <td style="text-align: center;">
-                    <button class="btn-acao del" onclick="excluirLancamentoBanco('${v.id}')" title="Excluir Lançamento">🗑️</button>
-                </td>
-            </tr>
-        `;
-    });
 };
 
 // ================================================================
@@ -6153,104 +6133,77 @@ window.renderizarTabelaBanco = function() {
     });
 };
 
-// NOVA FUNÇÃO: Calcula e atualiza o painel do banco (BLINDADA)
-window.atualizarPainelBanco = function() {
+// Totais do banco após o último fechamento (PIX/cartão pendente usa data do RECEBIMENTO)
+window._calcularFluxoBancoAtual = function () {
     let lastFechamentoTime = 0;
-    
-    // Função para garantir a leitura do timestamp com segurança
-    const getTimestampSeguro = (doc) => window.timestampEfetivoCaixa(doc);
+    const getTs = function (doc) { return window.timestampEfetivoCaixa(doc); };
 
-    // 1. Acha o momento do último fechamento
-    (window.extratoBanco || []).forEach(d => {
-        let ts = getTimestampSeguro(d);
-        if((d.tipo === 'FECHAMENTO_BANCO' || d.tipo === 'FECHAMENTO') && ts > lastFechamentoTime) {
+    (window.extratoBanco || []).forEach(function (d) {
+        const ts = getTs(d);
+        if ((d.tipo === 'FECHAMENTO_BANCO' || d.tipo === 'FECHAMENTO') && ts > lastFechamentoTime) {
             lastFechamentoTime = ts;
         }
     });
 
-    let totalEntradas = 0;
+    let totalEntradasManual = 0;
+    let totalEntradasDigital = 0;
     let totalSaidas = 0;
 
-    // 2. Soma Extrato Manual (Pós-fechamento)
-    (window.extratoBanco || []).forEach(doc => {
-        let ts = getTimestampSeguro(doc);
-        if(ts <= lastFechamentoTime) return; // Ignora se for antes do fechamento
-        
-        if (doc.tipo === 'ENTRADA') totalEntradas += (parseFloat(doc.valor) || 0);
+    (window.extratoBanco || []).forEach(function (doc) {
+        const ts = getTs(doc);
+        if (ts <= lastFechamentoTime) return;
+        if (doc.tipo === 'ENTRADA') totalEntradasManual += (parseFloat(doc.valor) || 0);
         else if (doc.tipo === 'SAIDA') totalSaidas += (parseFloat(doc.valor) || 0);
     });
 
-    // 3. Soma Vendas Digitais (Pós-fechamento) - AGORA COM A VARIÁVEL CORRETA!
-    let baseVendas = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
-    
-    baseVendas.forEach(v => {
-        let ts = getTimestampSeguro(v);
-        if(ts <= lastFechamentoTime) return; // Ignora se for antes do fechamento
-        
-        let formaLow = (v.formaPagamento || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        let isDigital = formaLow.includes('pix') || formaLow.includes('cartao') || formaLow.includes('debito') || formaLow.includes('credito') || formaLow.includes('boleto');
-        
-        let status = v.statusPagamento || 'PAGO'; 
-        
-        if (status === 'PAGO' && isDigital) {
-            totalEntradas += (parseFloat(v.total) || 0);
+    const baseVendas = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
+    baseVendas.forEach(function (v) {
+        const ts = getTs(v);
+        if (ts <= lastFechamentoTime) return;
+        const tipo = v.tipo || '';
+        if (tipo === 'ORCAMENTO' || tipo === 'FECHAMENTO' || tipo === 'DESPESA') return;
+        const status = v.statusPagamento || 'PAGO';
+        if (status === 'PAGO' && window.formaPagamentoEhDigital(v.formaPagamento)) {
+            totalEntradasDigital += (parseFloat(v.total) || 0);
         }
     });
 
-    let saldoInicial = window.saldoInicialBanco || 0;
-    let saldoAtual = saldoInicial + totalEntradas - totalSaidas;
+    const saldoInicial = window.saldoInicialBanco || 0;
+    const totalEntradas = totalEntradasManual + totalEntradasDigital;
+    const saldoAtual = saldoInicial + totalEntradas - totalSaidas;
 
-    if(document.getElementById('dashIniBanco')) {
-        document.getElementById('dashIniBanco').innerText = `R$ ${saldoInicial.toFixed(2)}`;
-        document.getElementById('dashEntBanco').innerText = `R$ ${totalEntradas.toFixed(2)}`;
-        document.getElementById('dashSaiBanco').innerText = `R$ ${totalSaidas.toFixed(2)}`;
-        document.getElementById('dashSaldoBanco').innerText = `R$ ${saldoAtual.toFixed(2)}`;
+    return {
+        saldoInicial: saldoInicial,
+        totalEntradas: totalEntradas,
+        totalEntradasManual: totalEntradasManual,
+        totalEntradasDigital: totalEntradasDigital,
+        totalSaidas: totalSaidas,
+        saldoAtual: saldoAtual
+    };
+};
+
+window.atualizarPainelBanco = function() {
+    const fluxo = window._calcularFluxoBancoAtual();
+    if (document.getElementById('dashIniBanco')) {
+        document.getElementById('dashIniBanco').innerText = `R$ ${fluxo.saldoInicial.toFixed(2)}`;
+        document.getElementById('dashEntBanco').innerText = `R$ ${fluxo.totalEntradas.toFixed(2)}`;
+        document.getElementById('dashSaiBanco').innerText = `R$ ${fluxo.totalSaidas.toFixed(2)}`;
+        document.getElementById('dashSaldoBanco').innerText = `R$ ${fluxo.saldoAtual.toFixed(2)}`;
     }
 };
 
 window.fecharCaixaBanco = async function() {
-    let lastFechamentoTime = 0;
-    
-    const getTimestampSeguro = (doc) => {
-        if (doc.timestamp) return doc.timestamp;
-        return 0;
-    };
+    const fluxo = window._calcularFluxoBancoAtual();
+    const saldoInicial = fluxo.saldoInicial;
+    const totalEntradas = fluxo.totalEntradas;
+    const totalSaidas = fluxo.totalSaidas;
+    const saldoAtual = fluxo.saldoAtual;
 
-    (window.extratoBanco || []).forEach(d => {
-        let ts = getTimestampSeguro(d);
-        if((d.tipo === 'FECHAMENTO_BANCO' || d.tipo === 'FECHAMENTO') && ts > lastFechamentoTime) lastFechamentoTime = ts;
-    });
-
-    let totalEntradas = 0;
-    let totalSaidas = 0;
-
-    (window.extratoBanco || []).forEach(doc => {
-        let ts = getTimestampSeguro(doc);
-        if(ts <= lastFechamentoTime) return;
-        
-        if (doc.tipo === 'ENTRADA') totalEntradas += (parseFloat(doc.valor) || 0);
-        else if (doc.tipo === 'SAIDA') totalSaidas += (parseFloat(doc.valor) || 0);
-    });
-
-    let baseVendas = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
-    
-    baseVendas.forEach(v => {
-        let ts = getTimestampSeguro(v);
-        if(ts <= lastFechamentoTime) return;
-        
-        let formaLow = (v.formaPagamento || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        let isDigital = formaLow.includes('pix') || formaLow.includes('cartao') || formaLow.includes('debito') || formaLow.includes('credito') || formaLow.includes('boleto');
-        let status = v.statusPagamento || 'PAGO'; 
-        
-        if (status === 'PAGO' && isDigital) {
-            totalEntradas += (parseFloat(v.total) || 0);
-        }
-    });
-
-    let saldoInicial = window.saldoInicialBanco || 0;
-    let saldoAtual = saldoInicial + totalEntradas - totalSaidas;
-
-    let msg = `FECHAMENTO DO BANCO\n\nSaldo Inicial: R$ ${saldoInicial.toFixed(2)}\nTotal de Entradas: R$ ${totalEntradas.toFixed(2)}\nTotal de Saídas: R$ ${totalSaidas.toFixed(2)}\n\nSaldo Atual no Banco: R$ ${saldoAtual.toFixed(2)}\n\nDeseja realizar o Fechamento?\nO painel será TOTALMENTE ZERADO (R$ 0,00) para o próximo turno.`;
+    let msg = `FECHAMENTO DO BANCO\n\nSaldo Inicial: R$ ${saldoInicial.toFixed(2)}\n`;
+    msg += `Entradas manuais: R$ ${fluxo.totalEntradasManual.toFixed(2)}\n`;
+    msg += `Entradas PIX/cartão (recebidas): R$ ${fluxo.totalEntradasDigital.toFixed(2)}\n`;
+    msg += `Total de Entradas: R$ ${totalEntradas.toFixed(2)}\n`;
+    msg += `Total de Saídas: R$ ${totalSaidas.toFixed(2)}\n\nSaldo Atual no Banco: R$ ${saldoAtual.toFixed(2)}\n\nDeseja realizar o Fechamento?\nO painel será TOTALMENTE ZERADO (R$ 0,00) para o próximo turno.`;
 
     if (!confirm(msg)) return;
 
@@ -6267,6 +6220,7 @@ window.fecharCaixaBanco = async function() {
         await window.meuSet(window.meuPush(window.meuRef(window.meuBanco, 'caixaBancoExtrato')), docFechamento);
         await window.meuSet(window.meuRef(window.meuBanco, 'caixaBancoStatus'), { saldoInicial: 0 });
 
+        if (window.atualizarPainelBanco) window.atualizarPainelBanco();
         alert("✅ Banco fechado com sucesso! Painel totalmente zerado.");
     } catch(e) {
         alert("Erro ao registrar o fechamento do banco: " + e.message);
