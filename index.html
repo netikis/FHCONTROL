@@ -1382,6 +1382,51 @@ window._reverterRecebimentosGavetaDoc = function (doc) {
         window.registrarMovimentoCaixa('entrada', -((parseFloat(doc.total) || 0)));
     }
 };
+// Monta linhas da tabela do banco: cada recebimento parcial digital vira uma linha própria
+window._montarLinhasDigitaisBanco = function () {
+    const linhas = [];
+    const cx = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
+    const tiposOk = { VENDA: true, VD: true, 'ORDEM DE SERVIÇO': true };
+    cx.forEach(function (v) {
+        if (!tiposOk[v.tipo]) return;
+        const parciais = window._listaRecebimentosParciais(v);
+        const parciaisDig = parciais.filter(function (p) { return window.formaPagamentoEhDigital(p.formaPagamento); });
+        parciaisDig.forEach(function (p, idx) {
+            linhas.push({
+                docPai: v,
+                isManual: false,
+                isLinhaParcial: true,
+                parcialInfo: p,
+                parcialIdx: idx,
+                _sortTs: Number(p.timestamp) || 0,
+                id: v.id
+            });
+        });
+        const formaDig = window.formaPagamentoEhDigital(v.formaPagamento);
+        const quitado = window._docQuitado(v);
+        const saldo = window._saldoDevedorDoc(v);
+        if (parciais.length === 0 && formaDig) {
+            linhas.push({
+                docPai: v,
+                isManual: false,
+                isLinhaParcial: false,
+                isNotaEmAberto: false,
+                _sortTs: window.timestampEfetivoCaixa(v),
+                id: v.id
+            });
+        } else if (parciais.length > 0 && !quitado && saldo > 0.009) {
+            linhas.push({
+                docPai: v,
+                isManual: false,
+                isLinhaParcial: false,
+                isNotaEmAberto: true,
+                _sortTs: Number(v.timestamp) || 0,
+                id: v.id
+            });
+        }
+    });
+    return linhas;
+};
 window._htmlPagamentoNotaDoc = function (doc) {
     const total = parseFloat(doc.total) || 0;
     const recebido = window._totalRecebidoDoc(doc);
@@ -3516,6 +3561,9 @@ window.renderizarTabelaPendentesCaixa = function () {
         const recebido = window._totalRecebidoDoc(v);
         const saldo = window._saldoDevedorDoc(v);
         let colTotal = '';
+        const badgeParc = (recebido > 0 && saldo > 0.009)
+            ? '<span style="background:#2980b9;color:#fff;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:bold;margin-right:4px;">💰 RECEBIDO PARCIAL</span>'
+            : '';
         if (recebido > 0 && saldo > 0.009) {
             colTotal = `<div style="font-size:10px;color:#95a5a6;">Total nota: R$ ${totalNota.toFixed(2)}</div>
                 <div style="color:#f1c40f;font-weight:bold;">Saldo: R$ ${saldo.toFixed(2)}</div>
@@ -3524,7 +3572,7 @@ window.renderizarTabelaPendentesCaixa = function () {
             colTotal = `<span style="color:#f1c40f;font-weight:bold;">R$ ${totalNota.toFixed(2)}</span>`;
         }
         tr.innerHTML = `
-            <td style="font-weight:bold;color:#fff;">${window._escPendTxt(String(v.os || '-'))}</td>
+            <td style="font-weight:bold;color:#fff;">${badgeParc}${window._escPendTxt(String(v.os || '-'))}</td>
             <td>${window._escPendTxt(v.tipo || '')}</td>
             <td>${window._escPendTxt((v.dataStr || '').split(' ')[0])}</td>
             <td>${window._escPendTxt(v.clienteNome || '-')}</td>
@@ -6225,20 +6273,23 @@ window.renderizarTabelaBanco = function() {
     if(!tabela) return;
     tabela.innerHTML = '';
     
-    let manuais = window.extratoBanco.map(e => ({...e, isManual: true}));
+    let manuais = window.extratoBanco.map(e => ({...e, isManual: true, _sortTs: window.timestampEfetivoCaixa(e) || Number(e.timestamp) || 0}));
 
-    let digitais = caixaGlobal.filter(v => {
-        let formaLow = (v.formaPagamento || '').toLowerCase();
-        let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
-        return isDigital;
-    }).map(v => ({...v, isManual: false}));
+    let digitais = window._montarLinhasDigitaisBanco();
 
-    let dadosUnidos = [...manuais, ...digitais].sort((a, b) => window.timestampEfetivoCaixa(b) - window.timestampEfetivoCaixa(a));
+    let dadosUnidos = [...manuais, ...digitais].sort((a, b) => (b._sortTs || 0) - (a._sortTs || 0));
 
     let dadosFiltrados = dadosUnidos.filter(v => {
-        let desc = (v.isManual ? (v.descricao||'') : (v.clienteNome||'')).toLowerCase();
-        let osBusca = v.isManual ? '' : (v.os||'').toString();
-        return desc.includes(window.termoBuscaBanco) || osBusca.includes(window.termoBuscaBanco);
+        if (v.isManual) {
+            const desc = (v.descricao || '').toLowerCase();
+            return desc.includes(window.termoBuscaBanco);
+        }
+        const doc = v.docPai || v;
+        const desc = (doc.clienteNome || '').toLowerCase();
+        const osBusca = (doc.os || '').toString();
+        const buscaParc = v.isLinhaParcial ? 'recebido parcial receb.parc parcial' : '';
+        const hay = (desc + ' ' + osBusca + ' ' + buscaParc).toLowerCase();
+        return hay.includes(window.termoBuscaBanco);
     });
 
     if (dadosFiltrados.length === 0) {
@@ -6274,16 +6325,42 @@ window.renderizarTabelaBanco = function() {
                 <td style="text-align: center;">-</td>
                 <td class="acoes-flex"><button class="btn-acao del" onclick="excluirLancamentoBanco('${v.id}')" title="Excluir">🗑️ Excluir</button></td>
             `;
+        } else if (v.isLinhaParcial) {
+            const doc = v.docPai;
+            const p = v.parcialInfo;
+            const valorParc = parseFloat(p.valor) || 0;
+            const formaPgto = (p.formaPagamento || '').replace('Cartão de ', '');
+            const dataParc = (p.dataStr || '').split(' ')[0] || '-';
+            const corTipo = doc.tipo === 'VENDA' ? '#3498db' : '#f39c12';
+            const sigla = doc.tipo === 'VENDA' ? 'VENDA' : 'ORDEM.SERV.';
+            const txtBadge = `<span class="badge-pago" style="background-color: #2980b9; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">💰 RECEBIDO PARCIAL — ${formaPgto.toUpperCase()}</span>`;
+            let acoesHtml = `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${doc.id}','loja')" title="Ver nota completa">📄 PDF</button>`;
+            acoesHtml += `<button class="btn-acao" onclick="gerarPDFparaCliente('${doc.id}')" title="PDF cliente">📤 PDF Cliente</button>`;
+            acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${doc.id}')">🧾 Cupom</button>`;
+            tr.innerHTML = `
+                <td style="font-weight: bold; color: #ffffff;">${doc.os || '-'}</td>
+                <td><span style="background-color: #2980b9; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">RECEB.PARC</span></td>
+                <td style="font-weight: bold; color: #5dade2;">${dataParc}</td>
+                <td style="font-weight: bold; color: #3498db;">${doc.clienteNome} <span style="font-size:10px;color:#95a5a6;">(${sigla} Nº ${doc.os || '-'})</span></td>
+                <td>-</td>
+                <td style="color:#5dade2; font-weight:bold;">+ R$ ${valorParc.toFixed(2)}</td>
+                <td style="text-align: center;">${txtBadge}</td>
+                <td style="text-align: center;">-</td>
+                <td class="acoes-flex">${acoesHtml}</td>
+            `;
         } else {
-            const temAss = v.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
-            let vencForm = v.vencimento ? v.vencimento.split('-').reverse().join('/') : '-';
-            let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
-            let statusStr = v.statusPagamento || 'PAGO'; 
+            const doc = v.docPai || v;
+            const temAss = doc.assinaturaBase64 ? '<span style="color:#2ecc71;">✍️ OK</span>' : '<span style="color:#e74c3c;">❌ Pend</span>';
+            let vencForm = doc.vencimento ? doc.vencimento.split('-').reverse().join('/') : '-';
+            let formaPgto = doc.formaPagamento ? doc.formaPagamento.replace('Cartão de ', '') : '';
+            let statusStr = doc.statusPagamento || 'PAGO'; 
             
             let txtBadge = '';
-            const recebidoParc = window._totalRecebidoDoc(v);
-            const saldoParc = window._saldoDevedorDoc(v);
-            if (statusStr === 'PAGO') {
+            const recebidoParc = window._totalRecebidoDoc(doc);
+            const saldoParc = window._saldoDevedorDoc(doc);
+            if (v.isNotaEmAberto && recebidoParc > 0) {
+                txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ NOTA EM ABERTO — Saldo R$ ${saldoParc.toFixed(2)}</span>`;
+            } else if (statusStr === 'PAGO') {
                 txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ VENDIDO - ${formaPgto.toUpperCase()}</span>`;
             } else if (recebidoParc > 0) {
                 txtBadge = `<span class="badge-pendente" style="background-color: #2980b9; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">💰 PARCIAL — Saldo R$ ${saldoParc.toFixed(2)}</span>`;
@@ -6291,33 +6368,36 @@ window.renderizarTabelaBanco = function() {
                 txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE - ${formaPgto.toUpperCase()}</span>`;
             }
 
-            let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${v.id}')" title="Editar Documento">✏️ Ed</button>`;
-            acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${v.id}')">📱 Whats</button>`;
-            if (!v.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${v.id}')">🔗 Link</button>`; }
+            let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${doc.id}')" title="Editar Documento">✏️ Ed</button>`;
+            acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${doc.id}')">📱 Whats</button>`;
+            if (!doc.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${doc.id}')">🔗 Link</button>`; }
             acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
             acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
-            acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${v.id}','loja')" title="Visualizar e imprimir na loja">📄 PDF</button>`;
-            acoesHtml += `<button class="btn-acao" onclick="gerarPDFparaCliente('${v.id}')" title="PDF protegido para enviar ao cliente">📤 PDF Cliente</button>`;
-            acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${v.id}')">🧾 Cupom</button>`;
+            acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${doc.id}','loja')" title="Visualizar e imprimir na loja">📄 PDF</button>`;
+            acoesHtml += `<button class="btn-acao" onclick="gerarPDFparaCliente('${doc.id}')" title="PDF protegido para enviar ao cliente">📤 PDF Cliente</button>`;
+            acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${doc.id}')">🧾 Cupom</button>`;
             
-            if (statusStr === 'PENDENTE') {
-                acoesHtml += `<button class="btn-acao receber" style="border-color:#27ae60; color:#27ae60;" onclick="marcarComoPago('${v.id}')">💰 Receber</button>`;
+            if (statusStr === 'PENDENTE' || v.isNotaEmAberto) {
+                acoesHtml += `<button class="btn-acao receber" style="border-color:#27ae60; color:#27ae60;" onclick="marcarComoPago('${doc.id}')">💰 Receber</button>`;
             } else {
-                acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${v.id}')">🔄 Estornar</button>`;
+                acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${doc.id}')">🔄 Estornar</button>`;
             }
             
-            acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${v.id}')" title="Cancelar Documento">🗑️</button>`;
+            acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${doc.id}')" title="Cancelar Documento">🗑️</button>`;
 
-            let corTipo = v.tipo === 'VENDA' ? '#3498db' : '#f39c12';
-            let sigla = v.tipo === 'VENDA' ? 'VENDA' : 'ORDEM.SERV.';
+            let corTipo = doc.tipo === 'VENDA' ? '#3498db' : '#f39c12';
+            let sigla = doc.tipo === 'VENDA' ? 'VENDA' : 'ORDEM.SERV.';
+            let colValor = v.isNotaEmAberto
+                ? `<div style="font-size:10px;color:#95a5a6;">Total: R$ ${(parseFloat(doc.total) || 0).toFixed(2)}</div><div style="color:#f1c40f;font-weight:bold;">Saldo: R$ ${saldoParc.toFixed(2)}</div>`
+                : `R$ ${parseFloat(doc.total).toFixed(2)}`;
 
             tr.innerHTML = `
-                <td style="font-weight: bold; color: #ffffff;">${v.os || '-'}</td>
+                <td style="font-weight: bold; color: #ffffff;">${doc.os || '-'}</td>
                 <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
-                <td style="font-weight: bold;">${window.dataEfetivaCaixaDia(v)}</td>
-                <td style="font-weight: bold; color: #3498db;">${v.clienteNome}</td>
+                <td style="font-weight: bold;">${window.dataEfetivaCaixaDia(doc)}</td>
+                <td style="font-weight: bold; color: #3498db;">${doc.clienteNome}</td>
                 <td style="font-weight: bold;">${vencForm}</td>
-                <td style="color:#2ecc71; font-weight:bold;">R$ ${parseFloat(v.total).toFixed(2)}</td>
+                <td style="color:#2ecc71; font-weight:bold;">${colValor}</td>
                 <td style="text-align: center;">${txtBadge}</td>
                 <td style="font-size: 11px; font-weight: bold;">${temAss}</td>
                 <td class="acoes-flex">${acoesHtml}</td>
