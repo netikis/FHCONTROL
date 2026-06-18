@@ -673,7 +673,12 @@
         <span class="close-btn" onclick="window.fecharModalReceberPendente()">&times;</span>
         <h2 style="margin-top: 0; color: #27ae60;">💰 Confirmar recebimento</h2>
         <p id="receberPendenteResumo" style="font-size: 14px; color: #ecf0f1;"></p>
-        <p style="font-size: 12px; color: #bdc3c7;">Escolha como o cliente pagou. <strong>Dinheiro</strong> entra no caixa físico (gaveta). <strong>PIX / cartão / boleto</strong> entram no painel do banco digital (não somam na gaveta).</p>
+        <p id="receberPendenteSaldoInfo" style="font-size: 12px; color: #f1c40f; margin-top: 0;"></p>
+        <p style="font-size: 12px; color: #bdc3c7;">Escolha como o cliente pagou. <strong>Dinheiro</strong> entra no caixa físico (gaveta). <strong>PIX / cartão / boleto</strong> entram no painel do banco digital (não somam na gaveta). Você pode receber o valor total ou um <strong>pagamento parcial</strong>.</p>
+        <div class="form-group">
+            <label>Valor deste recebimento (R$)</label>
+            <input type="number" id="receberValorParcial" step="0.01" min="0.01" placeholder="0,00" style="width: 100%; padding: 10px; font-weight: bold; background: #2c3e50; color: #fff; border: 1px solid #7f8c8d; box-sizing: border-box;" />
+        </div>
         <div class="form-group">
             <label>Forma de pagamento efetiva</label>
             <select id="receberFormaPgto" style="width: 100%; padding: 10px; font-weight: bold; background: #2c3e50; color: #fff; border: 1px solid #7f8c8d;">
@@ -1333,6 +1338,79 @@ window.timestampEfetivoCaixa = function (doc) {
     return Number(doc.timestamp) || 0;
 };
 
+// --- Pagamento parcial em contas pendentes ---
+window._listaRecebimentosParciais = function (doc) {
+    if (!doc || !doc.recebimentosParciais) return [];
+    return Array.isArray(doc.recebimentosParciais) ? doc.recebimentosParciais : Object.values(doc.recebimentosParciais);
+};
+window._totalRecebidoDoc = function (doc) {
+    if (!doc) return 0;
+    const lista = window._listaRecebimentosParciais(doc);
+    if (lista.length) {
+        return lista.reduce(function (s, r) { return s + (parseFloat(r.valor) || 0); }, 0);
+    }
+    if ((doc.statusPagamento || 'PENDENTE') === 'PAGO') return parseFloat(doc.total) || 0;
+    return parseFloat(doc.valorRecebidoParcial) || 0;
+};
+window._saldoDevedorDoc = function (doc) {
+    if (!doc) return 0;
+    const total = parseFloat(doc.total) || 0;
+    return Math.max(0, total - window._totalRecebidoDoc(doc));
+};
+window._docQuitado = function (doc) {
+    return window._saldoDevedorDoc(doc) <= 0.009;
+};
+window._recebimentoParcialIncluiDia = function (rec, needle) {
+    const dia = window._diaBrDeString(rec && rec.dataStr ? rec.dataStr : '');
+    const alvo = window._diaBrDeString(needle) || String(needle || '').trim();
+    if (!dia || !alvo) return false;
+    if (alvo.length <= 7 && alvo.indexOf('/') > 0) return dia.indexOf(alvo) !== -1;
+    return dia === alvo;
+};
+window._reverterRecebimentosGavetaDoc = function (doc) {
+    if (!doc) return;
+    const parciais = window._listaRecebimentosParciais(doc);
+    if (parciais.length) {
+        parciais.forEach(function (p) {
+            if (!window.formaPagamentoEhDigital(p.formaPagamento)) {
+                window.registrarMovimentoCaixa('entrada', -((parseFloat(p.valor) || 0)));
+            }
+        });
+        return;
+    }
+    if ((doc.statusPagamento || 'PAGO') === 'PAGO' && !window.formaPagamentoEhDigital(doc.formaPagamento)) {
+        window.registrarMovimentoCaixa('entrada', -((parseFloat(doc.total) || 0)));
+    }
+};
+window._htmlPagamentoNotaDoc = function (doc) {
+    const total = parseFloat(doc.total) || 0;
+    const recebido = window._totalRecebidoDoc(doc);
+    const saldo = window._saldoDevedorDoc(doc);
+    const parciais = window._listaRecebimentosParciais(doc);
+    let html = '<div style="margin-top:12px;padding:10px;border:1px solid #dee2e6;border-radius:6px;background:#f8f9fa;">';
+    html += '<div style="font-weight:800;margin-bottom:6px;text-transform:uppercase;font-size:10px;color:#34495e;">Situação do pagamento</div>';
+    html += `<div style="margin-bottom:4px;">Valor total da nota: <strong>R$ ${total.toFixed(2)}</strong></div>`;
+    if (parciais.length) {
+        html += '<table style="width:100%;margin-top:8px;font-size:10px;border-collapse:collapse;">';
+        html += '<thead><tr style="background:#e9ecef;"><th style="text-align:left;padding:4px;">Data recebimento</th><th style="padding:4px;">Forma</th><th style="text-align:right;padding:4px;">Baixa</th></tr></thead><tbody>';
+        parciais.forEach(function (p) {
+            const v = parseFloat(p.valor) || 0;
+            const dt = (p.dataStr || '').split(' ')[0] || '-';
+            const fp = (p.formaPagamento || '-').replace('Cartão de ', '');
+            html += `<tr><td style="padding:4px;border-bottom:1px solid #eee;">${dt}</td><td style="padding:4px;border-bottom:1px solid #eee;">${fp}</td><td style="padding:4px;border-bottom:1px solid #eee;text-align:right;color:#27ae60;font-weight:bold;">- R$ ${v.toFixed(2)}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        html += `<div style="margin-top:8px;font-size:11px;">Total recebido: <strong style="color:#27ae60;">R$ ${recebido.toFixed(2)}</strong></div>`;
+        html += `<div style="margin-top:6px;font-size:15px;font-weight:900;color:#e74c3c;">SALDO DEVEDOR: R$ ${saldo.toFixed(2)}</div>`;
+    } else if ((doc.statusPagamento || '') === 'PAGO') {
+        html += '<div style="margin-top:6px;color:#27ae60;font-weight:bold;">Pagamento: recebido integralmente</div>';
+    } else {
+        html += '<div style="margin-top:6px;color:#f39c12;font-weight:bold;">Pagamento: pendente</div>';
+    }
+    html += '</div>';
+    return html;
+};
+
 // Linhas que entram na tabela do caixa físico (balcão): sem PIX/cartão/boleto; vendas/OS pendentes ficam só em "Contas a receber".
 window.linhaEhCaixaBalcaoVisivel = function (v) {
     let formaLow = (v.formaPagamento || '').toLowerCase();
@@ -1649,7 +1727,7 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
 
 <div style="background-color: #2c1f1f; padding: 15px; border-radius: 6px; border: 1px solid #f39c12; margin-bottom: 18px;">
                <h3 style="margin-top: 0; color: #f39c12; font-size: 15px; text-transform: uppercase;">Contas a receber (pendentes)</h3>
-               <p style="margin: 0 0 10px 0; font-size: 13px; color: #ecf0f1;">Total em aberto: <strong id="totalPendentesCaixaHead" style="color: #f1c40f;">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Use <strong>Editar</strong> para alterar a nota antes de receber; <strong>Receber</strong> para informar a forma de pagamento (dinheiro → gaveta; PIX/cartão → banco digital); <strong>Excluir</strong> para cancelar a nota e devolver os produtos ao estoque.</p>
+               <p style="margin: 0 0 10px 0; font-size: 13px; color: #ecf0f1;">Total em aberto: <strong id="totalPendentesCaixaHead" style="color: #f1c40f;">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Use <strong>Editar</strong> para alterar a nota antes de receber; <strong>Receber</strong> para informar valor parcial ou total (dinheiro → gaveta; PIX/cartão → banco digital); <strong>Excluir</strong> para cancelar a nota e devolver os produtos ao estoque.</p>
                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px;">
                    <label for="buscaPendentesCaixa" style="color: #bdc3c7; font-size: 12px; white-space: nowrap;">Buscar</label>
                    <input type="search" id="buscaPendentesCaixa" autocomplete="off" placeholder="Nome, Nº documento, data ou valor…" oninput="if(window.filtrarPendentesCaixa)window.filtrarPendentesCaixa()" style="flex: 1; min-width: 200px; max-width: 480px; padding: 8px 10px; border-radius: 4px; border: 1px solid #7f8c8d; background: #1a252f; color: #ecf0f1; font-size: 13px;" />
@@ -3367,6 +3445,9 @@ window.montarAcoesCelulaPendente = function (v) {
     h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="pdf-cliente" title="PDF protegido para enviar ao cliente">📤 PDF Cliente</button>`;
     h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="cupom" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
     h += `<button type="button" class="btn-acao receber btn-pend-acao" ${idAttr} data-acao="receber" title="Registrar Pagamento">💰 Receber</button>`;
+    if (window._totalRecebidoDoc(v) > 0 && !window._docQuitado(v)) {
+        h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="estornar" title="Estornar todos os recebimentos parciais" style="color:#e74c3c;">🔄 Estornar</button>`;
+    }
     h += `<button type="button" class="btn-acao del btn-pend-acao" ${idAttr} data-acao="excluir" title="Excluir nota e devolver produtos ao estoque">🗑️ Excluir</button>`;
     h += '</td>';
     return h;
@@ -3415,7 +3496,7 @@ window.renderizarTabelaPendentesCaixa = function () {
     const qRaw = inpBusca && inpBusca.value != null ? String(inpBusca.value).trim() : '';
     const qNorm = window._pendNormBusca(qRaw);
     const listaVis = qNorm ? lista.filter(v => window._pendenteMatchBusca(v, qNorm)) : lista;
-    const tot = listaVis.reduce((s, v) => s + (parseFloat(v.total) || 0), 0);
+    const tot = listaVis.reduce(function (s, v) { return s + window._saldoDevedorDoc(v); }, 0);
     if (hTot) hTot.textContent = 'R$ ' + tot.toFixed(2);
     if (hQtd) hQtd.textContent = String(listaVis.length);
     if (!lista.length) {
@@ -3431,12 +3512,23 @@ window.renderizarTabelaPendentesCaixa = function () {
     listaVis.forEach(v => {
         const tr = document.createElement('tr');
         const prev = window._escPendTxt((v.formaPagamento || '—').replace(/Cartão de /g, ''));
+        const totalNota = parseFloat(v.total) || 0;
+        const recebido = window._totalRecebidoDoc(v);
+        const saldo = window._saldoDevedorDoc(v);
+        let colTotal = '';
+        if (recebido > 0 && saldo > 0.009) {
+            colTotal = `<div style="font-size:10px;color:#95a5a6;">Total nota: R$ ${totalNota.toFixed(2)}</div>
+                <div style="color:#f1c40f;font-weight:bold;">Saldo: R$ ${saldo.toFixed(2)}</div>
+                <div style="font-size:10px;color:#2ecc71;">Recebido: R$ ${recebido.toFixed(2)}</div>`;
+        } else {
+            colTotal = `<span style="color:#f1c40f;font-weight:bold;">R$ ${totalNota.toFixed(2)}</span>`;
+        }
         tr.innerHTML = `
             <td style="font-weight:bold;color:#fff;">${window._escPendTxt(String(v.os || '-'))}</td>
             <td>${window._escPendTxt(v.tipo || '')}</td>
             <td>${window._escPendTxt((v.dataStr || '').split(' ')[0])}</td>
             <td>${window._escPendTxt(v.clienteNome || '-')}</td>
-            <td style="color:#f1c40f;font-weight:bold;">R$ ${(parseFloat(v.total) || 0).toFixed(2)}</td>
+            <td>${colTotal}</td>
             <td style="font-size:11px;">${prev}</td>
             ${window.montarAcoesCelulaPendente(v)}
         `;
@@ -3461,13 +3553,28 @@ window.abrirModalReceberPendente = function (id) {
         alert('Documento não encontrado na lista do caixa. Aguarde a sincronização ou recarregue a página.');
         return;
     }
-    if ((doc.statusPagamento || 'PENDENTE') === 'PAGO') {
-        return alert('Este documento já está marcado como PAGO.');
+    if (window._docQuitado(doc)) {
+        return alert('Este documento já está quitado (PAGO).');
     }
     window.idDocRecebimentoPendente = doc.id;
+    const totalNota = parseFloat(doc.total) || 0;
+    const recebido = window._totalRecebidoDoc(doc);
+    const saldo = window._saldoDevedorDoc(doc);
     const res = document.getElementById('receberPendenteResumo');
     if (res) {
-        res.innerHTML = `<strong>${window._escPendTxt(doc.clienteNome || '-')}</strong> — Doc. <strong>${window._escPendTxt(String(doc.os || '-'))}</strong> — Valor <strong>R$ ${(parseFloat(doc.total) || 0).toFixed(2)}</strong>`;
+        res.innerHTML = `<strong>${window._escPendTxt(doc.clienteNome || '-')}</strong> — Doc. <strong>${window._escPendTxt(String(doc.os || '-'))}</strong>`;
+    }
+    const infoSaldo = document.getElementById('receberPendenteSaldoInfo');
+    if (infoSaldo) {
+        let txt = `Valor total da nota: <strong>R$ ${totalNota.toFixed(2)}</strong>`;
+        if (recebido > 0) txt += ` &nbsp;|&nbsp; Já recebido: <strong style="color:#2ecc71;">R$ ${recebido.toFixed(2)}</strong>`;
+        txt += ` &nbsp;|&nbsp; Saldo devedor: <strong style="color:#f1c40f;">R$ ${saldo.toFixed(2)}</strong>`;
+        infoSaldo.innerHTML = txt;
+    }
+    const inpVal = document.getElementById('receberValorParcial');
+    if (inpVal) {
+        inpVal.value = saldo.toFixed(2);
+        inpVal.max = saldo.toFixed(2);
     }
     const sel = document.getElementById('receberFormaPgto');
     if (sel) {
@@ -3488,26 +3595,60 @@ window.confirmarRecebimentoPendente = async function () {
         window.fecharModalReceberPendente();
         return;
     }
+    const saldoAntes = window._saldoDevedorDoc(doc);
+    if (saldoAntes <= 0.009) {
+        window.fecharModalReceberPendente();
+        return alert('Esta nota já está quitada.');
+    }
+    const inpVal = document.getElementById('receberValorParcial');
+    const valorReceber = inpVal ? (parseFloat(String(inpVal.value).replace(',', '.')) || 0) : saldoAntes;
+    if (valorReceber <= 0) {
+        return alert('Informe um valor maior que zero para este recebimento.');
+    }
+    if (valorReceber > saldoAntes + 0.009) {
+        return alert(`O valor informado (R$ ${valorReceber.toFixed(2)}) é maior que o saldo devedor (R$ ${saldoAntes.toFixed(2)}).`);
+    }
     const sel = document.getElementById('receberFormaPgto');
     const forma = sel ? sel.value : 'Dinheiro';
     const isDig = window.formaPagamentoEhDigital(forma);
-    const valor = parseFloat(doc.total) || 0;
     try {
         const { ref, update } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
         const agora = Date.now();
         const dataRecebimentoStr = new Date(agora).toLocaleString('pt-BR');
-        await update(ref(window.meuBanco, 'caixa/' + id), {
-            statusPagamento: 'PAGO',
+        const historico = window._listaRecebimentosParciais(doc).slice();
+        historico.push({
+            valor: valorReceber,
+            formaPagamento: forma,
+            dataStr: dataRecebimentoStr,
+            timestamp: agora
+        });
+        const totalRecebido = historico.reduce(function (s, r) { return s + (parseFloat(r.valor) || 0); }, 0);
+        const saldoRestante = Math.max(0, (parseFloat(doc.total) || 0) - totalRecebido);
+        const quitado = saldoRestante <= 0.009;
+        const payload = {
+            recebimentosParciais: historico,
+            valorRecebidoParcial: totalRecebido,
+            saldoDevedor: saldoRestante,
             formaPagamento: forma,
             autoLancamentoBanco: false,
-            dataRecebimentoStr: dataRecebimentoStr,
-            timestampRecebimento: agora
-        });
+            statusPagamento: quitado ? 'PAGO' : 'PENDENTE'
+        };
+        if (quitado) {
+            payload.dataRecebimentoStr = dataRecebimentoStr;
+            payload.timestampRecebimento = agora;
+        }
+        await update(ref(window.meuBanco, 'caixa/' + id), payload);
         if (!isDig) {
-            window.registrarMovimentoCaixa('entrada', valor);
+            window.registrarMovimentoCaixa('entrada', valorReceber);
         }
         window.fecharModalReceberPendente();
-        alert('Pagamento recebido com sucesso!' + (isDig ? '\n\nPIX/cartão contabilizado no banco digital na data de hoje (' + window._diaBrDeString(dataRecebimentoStr) + ').' : '\n\nValor contabilizado no caixa físico (gaveta) na data de hoje.'));
+        let msgOk = quitado
+            ? '✅ Nota quitada com sucesso!'
+            : `✅ Pagamento parcial registrado!\n\nRecebido agora: R$ ${valorReceber.toFixed(2)}\nSaldo devedor restante: R$ ${saldoRestante.toFixed(2)}`;
+        msgOk += isDig
+            ? '\n\nValor contabilizado no banco digital na data de hoje (' + window._diaBrDeString(dataRecebimentoStr) + ').'
+            : '\n\nValor contabilizado no caixa físico (gaveta) na data de hoje.';
+        alert(msgOk);
         if (window.atualizarPainelBanco) window.atualizarPainelBanco();
         if (window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
         if (window.renderizarTabelaBanco) window.renderizarTabelaBanco();
@@ -3528,12 +3669,18 @@ window.excluirNotaPendente = async function (id) {
     if (!doc) {
         return alert('Documento não encontrado. Aguarde a sincronização ou recarregue a página.');
     }
-    if ((doc.statusPagamento || 'PENDENTE') !== 'PENDENTE') {
-        return alert('Somente notas com status PENDENTE podem ser excluídas por aqui. Para notas já pagas, use Estornar ou Cancelar na tabela do caixa.');
+    if ((doc.statusPagamento || 'PENDENTE') !== 'PENDENTE' || window._docQuitado(doc)) {
+        return alert('Somente notas com saldo em aberto podem ser excluídas por aqui. Para notas quitadas, use Estornar ou Cancelar na tabela do caixa.');
+    }
+    const recebidoParcial = window._totalRecebidoDoc(doc);
+    const saldo = window._saldoDevedorDoc(doc);
+    let msgExtra = '';
+    if (recebidoParcial > 0) {
+        msgExtra = `\n\n⚠️ Esta nota já teve R$ ${recebidoParcial.toFixed(2)} recebido(s). Esse valor será estornado do caixa/banco ao excluir.`;
     }
     const msg =
         '⚠️ ATENÇÃO: Ao clicar em excluir a nota, os produtos adicionados irão retornar ao estoque.\n\n' +
-        `Documento Nº ${doc.os || '-'} — ${doc.clienteNome || 'Cliente'} — R$ ${(parseFloat(doc.total) || 0).toFixed(2)}\n\n` +
+        `Documento Nº ${doc.os || '-'} — ${doc.clienteNome || 'Cliente'} — Saldo devedor: R$ ${saldo.toFixed(2)}${msgExtra}\n\n` +
         'Deseja prosseguir?';
     if (!confirm(msg)) return;
     try {
@@ -3544,6 +3691,7 @@ window.excluirNotaPendente = async function (id) {
         if (!vCanc) {
             return alert('Documento não encontrado no banco de dados.');
         }
+        window._reverterRecebimentosGavetaDoc(vCanc);
         const tiposComEstoque = { VENDA: true, VD: true, 'ORDEM DE SERVIÇO': true };
         if (tiposComEstoque[vCanc.tipo] && vCanc.itens) {
             const itensGarantidos = Array.isArray(vCanc.itens) ? vCanc.itens : Object.values(vCanc.itens);
@@ -3598,6 +3746,7 @@ window.excluirNotaPendente = async function (id) {
         else if (acao === 'pdf-cliente' && window.gerarPDFparaCliente) window.gerarPDFparaCliente(id);
         else if (acao === 'cupom' && window.imprimirCupom) window.imprimirCupom(id);
         else if (acao === 'excluir' && window.excluirNotaPendente) window.excluirNotaPendente(id);
+        else if (acao === 'estornar' && window.estornarPagamento) window.estornarPagamento(id);
     }, true);
 })();
 
@@ -3605,26 +3754,29 @@ window.estornarPagamento = async function(id) {
     const listaCx = window._listaCaixaSincronizada();
     const doc = listaCx.find(x => String(x.id) === String(id));
     if (!doc) return;
-    if ((doc.statusPagamento || 'PAGO') === 'PENDENTE') {
-        return alert('Este documento já está como PENDENTE.');
+    if ((doc.statusPagamento || 'PAGO') === 'PENDENTE' && window._totalRecebidoDoc(doc) <= 0) {
+        return alert('Este documento já está como PENDENTE (sem recebimentos).');
     }
-    if (!confirm(`🔄 ESTORNAR PAGAMENTO\n\nDeseja desfazer este recebimento?\nO valor de R$ ${parseFloat(doc.total).toFixed(2)} será ajustado nos painéis (gaveta e/ou banco digital).`)) return;
+    const recebido = window._totalRecebidoDoc(doc);
+    if (!confirm(`🔄 ESTORNAR PAGAMENTO\n\nDeseja desfazer o(s) recebimento(s) desta nota?\nValor a estornar: R$ ${recebido.toFixed(2)}\nOs valores serão ajustados nos painéis (gaveta e/ou banco digital).`)) return;
     try {
         const { ref, update } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
+        window._reverterRecebimentosGavetaDoc(doc);
         await update(ref(window.meuBanco, 'caixa/' + id), {
             statusPagamento: 'PENDENTE',
             autoLancamentoBanco: false,
             dataRecebimentoStr: null,
-            timestampRecebimento: null
+            timestampRecebimento: null,
+            recebimentosParciais: null,
+            valorRecebidoParcial: null,
+            saldoDevedor: null
         });
-        const valor = parseFloat(doc.total) || 0;
-        const isDig = window.formaPagamentoEhDigital(doc.formaPagamento);
-        if (!isDig) {
-            window.registrarMovimentoCaixa('entrada', -valor);
-        }
         alert('Pagamento estornado com sucesso.');
         if (window.atualizarPainelBanco) window.atualizarPainelBanco();
         if (window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
+        if (window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
+        if (window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
+        if (window.renderizarTabelaBanco) window.renderizarTabelaBanco();
     } catch (e) {
         alert('Erro ao atualizar: ' + e.message);
     }
@@ -3637,6 +3789,20 @@ window.sincronizarTotaisDoDia = async function() {
     let hoje = new Date().toLocaleDateString('pt-BR');
 
     baseDados.forEach(doc => {
+        let tipo = doc.tipo || '';
+        let parciais = window._listaRecebimentosParciais(doc);
+        if (parciais.length && (tipo === 'VENDA' || tipo === 'ORDEM DE SERVIÇO' || tipo === 'VD')) {
+            parciais.forEach(function (p) {
+                if (!window._recebimentoParcialIncluiDia(p, hoje)) return;
+                if (!window.formaPagamentoEhDigital(p.formaPagamento)) {
+                    totalEntradasGaveta += parseFloat(p.valor) || 0;
+                }
+            });
+            if (window.dataEfetivaCaixaInclui(doc, hoje) && tipo === 'DESPESA') {
+                totalSaidas += parseFloat(doc.total) || 0;
+            }
+            return;
+        }
         if (window.dataEfetivaCaixaInclui(doc, hoje)) {
             let valor = parseFloat(doc.total) || 0;
             let status = doc.statusPagamento || 'PAGO';
@@ -4264,10 +4430,31 @@ window.atualizarResumoPagamentosHoje = function() {
     let qtdDespesas = 0;
 
     caixaGlobal.forEach(doc => {
-        if (window.dataEfetivaCaixaInclui(doc, hoje)) {
+        let tipo = doc.tipo || '';
+        let parciais = window._listaRecebimentosParciais(doc);
+        if (parciais.length && (tipo === 'VENDA' || tipo === 'ORDEM DE SERVIÇO' || tipo === 'VD')) {
+            parciais.forEach(function (p) {
+                if (!window._recebimentoParcialIncluiDia(p, hoje)) return;
+                let valor = parseFloat(p.valor) || 0;
+                let forma = p.formaPagamento || 'Outros';
+                let isDigital = window.formaPagamentoEhDigital(forma);
+                if (!isDigital) {
+                    if (resumo[forma]) {
+                        resumo[forma].qtd++;
+                        resumo[forma].total += valor;
+                    } else {
+                        resumo[forma] = { qtd: 1, total: valor, icone: '💰' };
+                    }
+                } else {
+                    const chave = forma.replace('Cartão de ', '');
+                    if (!resumoDigital[chave]) resumoDigital[chave] = { qtd: 0, total: 0, icone: chave.toLowerCase().includes('pix') ? '🌀' : '💳' };
+                    resumoDigital[chave].qtd++;
+                    resumoDigital[chave].total += valor;
+                }
+            });
+        } else if (window.dataEfetivaCaixaInclui(doc, hoje)) {
             let valor = parseFloat(doc.total) || 0;
             let status = doc.statusPagamento || 'PAGO';
-            let tipo = doc.tipo || '';
 
             if (status === 'PAGO' && (tipo === 'VENDA' || tipo === 'ORDEM DE SERVIÇO' || tipo === 'VD' || tipo === 'ENTRADA_CAIXA')) {
                 let forma = doc.formaPagamento || 'Outros';
@@ -4722,6 +4909,7 @@ window.editarDocumentoCaixa = function(id) {
                    ${obsHTML}
 
                    <div class="total-destaque">TOTAL GERAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
+                   ${window._htmlPagamentoNotaDoc(doc)}
                    
                    ${fotoHTML}
 
@@ -4831,10 +5019,11 @@ window.editarDocumentoCaixa = function(id) {
             <table>${itensHtml}</table>
             <div class="line"></div>
             <div style="text-align:right; font-size:14px;" class="bold">TOTAL: R$ ${parseFloat(doc.total).toFixed(2)}</div>
+            ${window._htmlPagamentoNotaDoc(doc).replace(/font-size:15px/g, 'font-size:13px').replace(/font-size:10px/g, 'font-size:9px')}
             ${htmlTroco}
             <div class="line"></div>
             <div class="center" style="font-size:11px;">
-                ${doc.statusPagamento === 'PAGO' ? 'PAGAMENTO: RECEBIDO' : 'PAGAMENTO: PENDENTE'}<br>
+                ${window._docQuitado(doc) ? 'PAGAMENTO: RECEBIDO' : (window._totalRecebidoDoc(doc) > 0 ? 'PAGAMENTO: PARCIAL' : 'PAGAMENTO: PENDENTE')}<br>
                 ${doc.assinaturaBase64 ? 'Documento com Assinatura Digital Verificada.' : ''}
             </div>
             <div class="center" style="font-size:10px; margin-top: 15px; margin-bottom: 50px;">Obrigado pela preferência!</div>
@@ -4871,18 +5060,12 @@ window.editarDocumentoCaixa = function(id) {
                    }
                    
                    let status = vCanc.statusPagamento || 'PAGO';
-                   if (status === 'PAGO') {
-                       const isDig = window.formaPagamentoEhDigital(vCanc.formaPagamento);
-                       const tot = parseFloat(vCanc.total) || 0;
-                       if (vCanc.tipo === 'VENDA' || vCanc.tipo === 'ORDEM DE SERVIÇO' || vCanc.tipo === 'ORCAMENTO') {
-                           if (!isDig) {
-                               window.registrarMovimentoCaixa('entrada', -tot);
-                           }
-                       } else if (vCanc.tipo === 'DESPESA') {
-                           window.registrarMovimentoCaixa('saida', -tot);
-                       } else if (vCanc.tipo === 'ENTRADA_CAIXA') {
-                           window.registrarMovimentoCaixa('entrada', -tot);
-                       }
+                   if (vCanc.tipo === 'DESPESA' && status === 'PAGO') {
+                       window.registrarMovimentoCaixa('saida', -((parseFloat(vCanc.total) || 0)));
+                   } else if (vCanc.tipo === 'ENTRADA_CAIXA' && status === 'PAGO') {
+                       window.registrarMovimentoCaixa('entrada', -((parseFloat(vCanc.total) || 0)));
+                   } else if (vCanc.tipo !== 'DESPESA' && vCanc.tipo !== 'FECHAMENTO') {
+                       window._reverterRecebimentosGavetaDoc(vCanc);
                    }
                }
                
@@ -4920,7 +5103,14 @@ window.editarDocumentoCaixa = function(id) {
            let itensGarantidos = v.itens ? (Array.isArray(v.itens) ? v.itens : Object.values(v.itens)) : [];
            if(itensGarantidos) itensGarantidos.forEach(i => { msg += `- ${i.nome}: R$ ${i.valor.toFixed(2)}\n`; });
            
-           msg += `\n*Valor Total: R$ ${parseFloat(v.total).toFixed(2)}*\n\n`;
+           msg += `\n*Valor Total: R$ ${parseFloat(v.total).toFixed(2)}*\n`;
+           const recebidoWa = window._totalRecebidoDoc(v);
+           const saldoWa = window._saldoDevedorDoc(v);
+           if (recebidoWa > 0) {
+               msg += `*Recebido:* R$ ${recebidoWa.toFixed(2)}\n`;
+               if (saldoWa > 0.009) msg += `*Saldo devedor:* R$ ${saldoWa.toFixed(2)}\n`;
+           }
+           msg += `\n`;
            
            if(v.observacao) {
                msg += `*Observações:* ${v.observacao}\n\n`;
@@ -6091,8 +6281,12 @@ window.renderizarTabelaBanco = function() {
             let statusStr = v.statusPagamento || 'PAGO'; 
             
             let txtBadge = '';
+            const recebidoParc = window._totalRecebidoDoc(v);
+            const saldoParc = window._saldoDevedorDoc(v);
             if (statusStr === 'PAGO') {
                 txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ VENDIDO - ${formaPgto.toUpperCase()}</span>`;
+            } else if (recebidoParc > 0) {
+                txtBadge = `<span class="badge-pendente" style="background-color: #2980b9; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">💰 PARCIAL — Saldo R$ ${saldoParc.toFixed(2)}</span>`;
             } else {
                 txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE - ${formaPgto.toUpperCase()}</span>`;
             }
@@ -6158,10 +6352,21 @@ window._calcularFluxoBancoAtual = function () {
 
     const baseVendas = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
     baseVendas.forEach(function (v) {
-        const ts = getTs(v);
-        if (ts <= lastFechamentoTime) return;
         const tipo = v.tipo || '';
         if (tipo === 'ORCAMENTO' || tipo === 'FECHAMENTO' || tipo === 'DESPESA') return;
+        const parciais = window._listaRecebimentosParciais(v);
+        if (parciais.length) {
+            parciais.forEach(function (p) {
+                const ts = Number(p.timestamp) || 0;
+                if (ts <= lastFechamentoTime) return;
+                if (window.formaPagamentoEhDigital(p.formaPagamento)) {
+                    totalEntradasDigital += parseFloat(p.valor) || 0;
+                }
+            });
+            return;
+        }
+        const ts = getTs(v);
+        if (ts <= lastFechamentoTime) return;
         const status = v.statusPagamento || 'PAGO';
         if (status === 'PAGO' && window.formaPagamentoEhDigital(v.formaPagamento)) {
             totalEntradasDigital += (parseFloat(v.total) || 0);
@@ -6411,7 +6616,7 @@ window.zerarFluxoCaixa = async function() {
             }
             if (isVendaOuOS(v)) {
                 if (status === 'PENDENTE') {
-                    pendentes += val;
+                    pendentes += window._saldoDevedorDoc(v);
                     qPen++;
                 } else if (status === 'PAGO') {
                     entradas += val;
@@ -6657,7 +6862,7 @@ ${extra}
                 }
                 return `<p>Nenhuma venda/OS pendente${nomeFiltro ? ` para nome parecido com <strong>${escHtml(nomeFiltro)}</strong>` : ''}.</p>`;
             }
-            const tot = pends.reduce((s, v) => s + (parseFloat(v.total) || 0), 0);
+            const tot = pends.reduce(function (s, v) { return s + window._saldoDevedorDoc(v); }, 0);
             const nomesUnicos = [...new Set(pends.map(v => v.clienteNome).filter(Boolean))];
             let html = '';
             if (nomeFiltro && querTotal) {
@@ -6668,7 +6873,10 @@ ${extra}
             }
             html += `<ul style="margin:4px 0 0 18px;max-height:220px;overflow-y:auto;">`;
             pends.slice(0, 40).forEach(v => {
-                html += `<li>${escHtml(v.dataStr || '')} — ${escHtml(v.clienteNome || '-')} — OS ${escHtml(String(v.os || '-'))} — <strong>R$ ${(parseFloat(v.total) || 0).toFixed(2)}</strong></li>`;
+                const saldo = window._saldoDevedorDoc(v);
+                const recebido = window._totalRecebidoDoc(v);
+                let extra = recebido > 0 ? ` (recebido R$ ${recebido.toFixed(2)}, saldo R$ ${saldo.toFixed(2)})` : '';
+                html += `<li>${escHtml(v.dataStr || '')} — ${escHtml(v.clienteNome || '-')} — OS ${escHtml(String(v.os || '-'))} — <strong>R$ ${saldo.toFixed(2)}</strong>${extra}</li>`;
             });
             html += `</ul>`;
             if (pends.length > 40) html += `<p style="font-size:12px;color:#bdc3c7;">+ ${pends.length - 40} documento(s) — refine o nome do cliente.</p>`;
