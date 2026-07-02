@@ -923,6 +923,10 @@
                 </select>
             </div>
             
+            <div class="col" style="flex: 1.2;">
+                <label style="color: #ffffff;">Data Emissão</label>
+                <input type="date" id="vendaDataEmissao" style="font-weight: bold;" title="Data em que o orçamento/venda foi emitido (aparece no PDF)">
+            </div>
             <div class="col" style="flex: 1.5;"><label style="color: #ffffff;">Data Vencimento</label><input type="date" id="vendaVencimento" style="font-weight: bold;"></div>
         </div>
 
@@ -1298,6 +1302,48 @@ window._diaBrDeString = function (s) {
     if (!m) return part;
     const y = m[3].length === 2 ? ('20' + m[3]) : m[3];
     return m[1].padStart(2, '0') + '/' + m[2].padStart(2, '0') + '/' + y;
+};
+window._dataStrParaInputDate = function (dataStr) {
+    if (!dataStr) return '';
+    const part = String(dataStr).trim().split(/[\s,]+/)[0].replace(',', '');
+    const m = part.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (!m) return '';
+    const y = m[3].length === 2 ? ('20' + m[3]) : m[3];
+    return y + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[1]).padStart(2, '0');
+};
+window._dataInputParaDataStrBr = function (yyyyMmDd, dataStrExistente) {
+    if (!yyyyMmDd) {
+        return dataStrExistente || new Date().toLocaleString('pt-BR');
+    }
+    const partes = yyyyMmDd.split('-');
+    if (partes.length !== 3) return dataStrExistente || new Date().toLocaleString('pt-BR');
+    const y = partes[0];
+    const m = partes[1];
+    const d = partes[2];
+    let hora = new Date().toLocaleTimeString('pt-BR');
+    if (dataStrExistente) {
+        const hm = String(dataStrExistente).match(/(\d{1,2}:\d{2}(?::\d{2})?)/);
+        if (hm) hora = hm[1];
+    }
+    return String(d).padStart(2, '0') + '/' + String(m).padStart(2, '0') + '/' + y + ' ' + hora;
+};
+window._timestampDeDataStrBr = function (dataStr) {
+    if (!dataStr) return 0;
+    const part = String(dataStr).trim().split(/[\s,]+/)[0].replace(',', '');
+    const m = part.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (!m) return 0;
+    const y = m[3].length === 2 ? parseInt('20' + m[3], 10) : parseInt(m[3], 10);
+    const mo = parseInt(m[2], 10) - 1;
+    const dia = parseInt(m[1], 10);
+    let h = 12, mi = 0, se = 0;
+    const hm = String(dataStr).match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (hm) {
+        h = parseInt(hm[1], 10);
+        mi = parseInt(hm[2], 10);
+        se = parseInt(hm[3] || '0', 10);
+    }
+    const dt = new Date(y, mo, dia, h, mi, se);
+    return isNaN(dt.getTime()) ? 0 : dt.getTime();
 };
 window.dataEfetivaCaixa = function (doc) {
     if (!doc) return '';
@@ -2335,6 +2381,8 @@ window.mudarPaginaProd = function(direcao) {
        document.getElementById('osStatusPag').value = 'PENDENTE';
        document.getElementById('vendaPagamento').value = 'Dinheiro';
        document.getElementById('osPagamento').value = 'Dinheiro';
+       if (document.getElementById('vendaDataEmissao')) document.getElementById('vendaDataEmissao').valueAsDate = new Date();
+       if (document.getElementById('vendaVencimento')) document.getElementById('vendaVencimento').valueAsDate = new Date();
 
        document.getElementById('osEstoqueCusto').value = '';
        document.getElementById('osEstoqueMargem').value = '';
@@ -2925,7 +2973,8 @@ window.imprimirEtiquetasEstoque = function() {
            });
            document.getElementById(inputId).value = maxNum + 1;
            if(document.getElementById('vendaVencimento')) document.getElementById('vendaVencimento').valueAsDate = new Date(); 
-           if(document.getElementById('osVencimento')) document.getElementById('osVencimento').valueAsDate = new Date(); 
+           if(document.getElementById('vendaDataEmissao')) document.getElementById('vendaDataEmissao').valueAsDate = new Date();
+           if(document.getElementById('osVencimento')) document.getElementById('osVencimento').valueAsDate = new Date();
        }
 
     window.carregarSelectsGerais = function() {
@@ -3393,6 +3442,10 @@ window.finalizarVenda = async function(event) {
         // Não lançar automaticamente no extrato do banco, senão duplica (entrada/estorno).
         const autoLancamentoBanco = false;
 
+        const dataEmInput = document.getElementById('vendaDataEmissao') ? document.getElementById('vendaDataEmissao').value : '';
+        const dataStrDoc = window._dataInputParaDataStrBr(dataEmInput, idNotaEditada ? originalDoc.dataStr : null);
+        const tsDoc = window._timestampDeDataStrBr(dataStrDoc) || Date.now();
+
         // MÁGICA DE PRESERVAÇÃO: O ...originalDoc garante que NENHUM campo antigo se perca
         const doc = {
             ...originalDoc, 
@@ -3401,8 +3454,8 @@ window.finalizarVenda = async function(event) {
             vencimento: v, 
             statusPagamento: statusPag, 
             formaPagamento: formaPag,
-            dataStr: originalDoc.dataStr ? originalDoc.dataStr : new Date().toLocaleString('pt-BR'),
-            timestamp: originalDoc.timestamp ? originalDoc.timestamp : Date.now(),
+            dataStr: dataStrDoc,
+            timestamp: tsDoc,
             clienteId: cId, 
             clienteNome: cNome, 
             itens: itensCongelados, 
@@ -4643,6 +4696,9 @@ window.editarDocumentoCaixa = function(id) {
             
             document.getElementById('vendaTipoDoc').value = doc.tipo;
             document.getElementById('vendaOS').value = doc.os || '';
+            if (document.getElementById('vendaDataEmissao')) {
+                document.getElementById('vendaDataEmissao').value = window._dataStrParaInputDate(doc.dataStr) || '';
+            }
             document.getElementById('vendaVencimento').value = doc.vencimento || '';
             document.getElementById('vendaClienteBusca').value = doc.clienteNome || '';
             document.getElementById('vendaStatusPag').value = doc.statusPagamento || 'PAGO';
