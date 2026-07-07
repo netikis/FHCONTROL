@@ -133,6 +133,59 @@
            border: 1px solid #f1c40f; 
        }
 
+       /* --- Subtópicos (Caixa / Relatórios) --- */
+       .subtab-nav {
+           display: flex;
+           flex-wrap: wrap;
+           gap: 8px;
+           margin-bottom: 18px;
+           border-bottom: 2px solid #2c3e50;
+           padding-bottom: 10px;
+       }
+       .subtab-btn {
+           background-color: #2c3e50;
+           color: #bdc3c7;
+           border: 1px solid transparent;
+           padding: 10px 16px;
+           font-size: 13px;
+           font-weight: bold;
+           cursor: pointer;
+           border-radius: 6px;
+           transition: background-color 0.3s, color 0.3s;
+           text-transform: uppercase;
+       }
+       .subtab-btn:hover { background-color: #34495e; color: #f1c40f; }
+       .subtab-btn.active { background-color: #0056b3; color: #f8f9fa; border: 1px solid #f1c40f; }
+       .subtab-content { display: none; }
+       .subtab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+
+       /* --- Submenu lateral (aninhado sob Caixa / Relatórios) --- */
+       .submenu-lateral {
+           display: flex;
+           flex-direction: column;
+           gap: 4px;
+           margin: 2px 0 6px 12px;
+           padding-left: 8px;
+           border-left: 2px solid #34495e;
+       }
+       .submenu-btn {
+           background-color: transparent;
+           color: #bdc3c7;
+           border: 1px solid transparent;
+           padding: 8px 10px;
+           text-align: left;
+           font-size: 11px;
+           font-weight: bold;
+           cursor: pointer;
+           border-radius: 6px;
+           transition: background-color 0.3s, color 0.3s;
+           line-height: 1.3;
+       }
+       .submenu-btn:hover { background-color: #2c3e50; color: #f1c40f; }
+       .submenu-btn.active { background-color: #0056b3; color: #f8f9fa; border: 1px solid #f1c40f; }
+       #btnGrupoClientes::after, #btnGrupoVendas::after, #btnTabCaixa::after, #btnTabRegistro::after, #btnGrupoDespesas::after { content: "▸"; float: right; opacity: 0.7; }
+       #btnGrupoClientes.grupo-aberto::after, #btnGrupoVendas.grupo-aberto::after, #btnTabCaixa.grupo-aberto::after, #btnTabRegistro.grupo-aberto::after, #btnGrupoDespesas.grupo-aberto::after { content: "▾"; }
+
        /* --- Área Principal --- */
        .main-content { 
            flex: 1; 
@@ -722,12 +775,41 @@
    <div class="sidebar-logo">
         <img id="logoSidebar" src="https://www.image2url.com/r2/default/files/1777991879754-324ae06d-dd51-42bd-9f5b-f242d4babc74.jpeg" alt="Logo Empresa">
     </div>
-   <button class="menu-btn active" id="btnTabClientes" onclick="abrirAba('tabClientes', this)">👥 Clientes</button>
-   <button class="menu-btn" id="btnTabEstoque" onclick="abrirAba('tabEstoque', this)">📦 Estoque</button>
-   <button class="menu-btn" id="btnTabVendas" onclick="abrirAba('tabVendas', this)">🛒 Venda / Orçamentos</button>
-   <button class="menu-btn" id="btnTabOS" onclick="abrirAba('tabOS', this)" style="color: #ffffff;">📝 OS</button>
-   <button class="menu-btn" id="btnTabCaixa" onclick="abrirAba('tabCaixa', this)">💰 Caixa / Relatórios</button>
-   <button class="menu-btn" id="btnTabRegistro" onclick="abrirAba('tabRegistro', this); window.iniciarRegistroTotal();">🗂️ Registro Total</button>
+   <button class="menu-btn active" id="btnGrupoClientes" onclick="toggleGrupoMenu('submenuClientes', this)">👥 Clientes</button>
+   <div id="submenuClientes" class="submenu-lateral" style="display: none;">
+       <button class="submenu-btn" id="btnTabCadastroCliente" onclick="abrirAba('tabCadastroCliente', this)">🧾 Cadastrar Cliente</button>
+       <button class="submenu-btn" id="btnTabClientesCad" onclick="abrirAba('tabClientesCad', this)">👥 Clientes Cadastrados</button>
+   </div>
+
+   <button class="menu-btn" id="btnGrupoVendas" onclick="toggleGrupoMenu('submenuVendas', this)">🛒 Vendas</button>
+   <div id="submenuVendas" class="submenu-lateral" style="display: none;">
+       <button class="submenu-btn" id="btnTabCadastroProd" onclick="abrirAba('tabCadastroProd', this)">🏷️ Cadastro de Produtos</button>
+       <button class="submenu-btn" id="btnTabControleEstoque" onclick="abrirAba('tabControleEstoque', this)">📦 Controle de Estoque</button>
+       <button class="submenu-btn" id="btnTabVendas" onclick="abrirAba('tabVendas', this)">🧾 Venda / Orçamento</button>
+       <button class="submenu-btn" id="btnTabOS" onclick="abrirAba('tabOS', this)">📝 Ordem de Serviço em Campo</button>
+   </div>
+
+   <button class="menu-btn" id="btnTabCaixa" onclick="toggleGrupoMenu('submenuCaixa', this)">💰 Caixa / Relatórios</button>
+   <div id="submenuCaixa" class="submenu-lateral" style="display: none;">
+       <button class="submenu-btn active" id="subBtnBalcao" onclick="abrirSubCaixa('subCaixaBalcao', this)">💰 Caixa / Balcão</button>
+       <button class="submenu-btn" id="subBtnBanco" onclick="abrirSubCaixa('subCaixaBanco', this)">🏦 Caixa do Banco (Digital / PIX / Cartões)</button>
+       <button class="submenu-btn" id="subBtnPendentes" onclick="abrirSubCaixa('subCaixaPendentes', this)">⏳ Contas a Receber (Pendentes)</button>
+       <button class="submenu-btn" id="subBtnResumo" onclick="abrirSubCaixa('subCaixaResumo', this)">📄 Relatório Caixa</button>
+   </div>
+   <button class="menu-btn" id="btnTabRegistro" onclick="toggleGrupoMenu('submenuRegistro', this)">🗂️ Registro Geral</button>
+   <div id="submenuRegistro" class="submenu-lateral" style="display: none;">
+       <button class="submenu-btn" id="subBtnRegBusca" onclick="abrirRegistroSub('busca', this)">🔍 Busca Geral</button>
+       <button class="submenu-btn" id="subBtnRegPastas" onclick="abrirRegistroSub('pastas', this)">📁 Arquivos em Pastas</button>
+       <button class="submenu-btn" id="subBtnRegGraficos" onclick="abrirRegistroSub('graficos', this)">📊 Gráficos de Fluxo</button>
+   </div>
+   <button class="menu-btn" id="btnGrupoDespesas" onclick="toggleGrupoMenu('submenuDespesas', this)">🏗️ Despesas</button>
+   <div id="submenuDespesas" class="submenu-lateral" style="display: none;">
+       <button class="submenu-btn" id="btnTabDespCadastrar" onclick="abrirAba('tabDespCadastrar', this); window.despRenderCadastro();">➕ Adicionar Despesas</button>
+       <button class="submenu-btn" id="btnTabDespRelatorio" onclick="abrirAba('tabDespRelatorio', this); window.despInitRelatorio();">🔍 Relatório de Gastos por Obra</button>
+       <button class="submenu-btn" id="btnTabDespExportar" onclick="abrirAba('tabDespExportar', this); window.despInitExportar();">📋 Exportar Relatórios</button>
+       <button class="submenu-btn" id="btnTabDespGeral" onclick="abrirAba('tabDespGeral', this); window.despCarregarRelatorioGeral();">📊 Relatório Geral de Obras</button>
+       <button class="submenu-btn" id="btnTabTerceiros" onclick="abrirAba('tabTerceiros', this); window.despInitTerceiros();">👷 Terceiros</button>
+   </div>
    <button class="menu-btn" id="btnTabAssistente" onclick="abrirAba('tabAssistente', this)">💬 Assistente</button>
    <button class="menu-btn" id="btnTabConfig" onclick="abrirAba('tabConfig', this)">⚙️ Config / Empresa</button>
    
@@ -739,7 +821,7 @@
 
 <div class="main-content" id="appMainContent">
 
-   <div id="tabClientes" class="tab-content active">
+   <div id="tabCadastroCliente" class="tab-content active">
        
         <div class="container">
             <h2 id="tituloCliente">Cadastro de Cliente</h2>
@@ -778,6 +860,9 @@
             </form>
         </div>
 
+   </div>
+
+   <div id="tabClientesCad" class="tab-content">
         <div class="container">
             <h2>Clientes Cadastrados</h2>
             <div class="toolbar">
@@ -807,7 +892,7 @@
    </div>
 
 
-   <div id="tabEstoque" class="tab-content">
+   <div id="tabCadastroProd" class="tab-content">
        
         <div class="container">
             <h2 id="tituloProduto">Cadastro de Produto / Serviço</h2>
@@ -839,7 +924,9 @@
                 </div>
             </form>
         </div>
+   </div>
 
+   <div id="tabControleEstoque" class="tab-content">
         <div class="container">
             <h2>Produtos no Estoque</h2>
             
@@ -1777,6 +1864,7 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
 </script>
 
    <div id="tabCaixa" class="tab-content">
+       <div id="subCaixaBalcao" class="subtab-content active">
        <div class="container">
            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
                <div>
@@ -1816,38 +1904,10 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
                </table>
            </div>           
 
-<div style="background-color: #2c1f1f; padding: 15px; border-radius: 6px; border: 1px solid #f39c12; margin-bottom: 18px;">
-               <h3 style="margin-top: 0; color: #f39c12; font-size: 15px; text-transform: uppercase;">Contas a receber (pendentes)</h3>
-               <p style="margin: 0 0 10px 0; font-size: 13px; color: #ecf0f1;">Total em aberto: <strong id="totalPendentesCaixaHead" style="color: #f1c40f;">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Use <strong>Editar</strong> para alterar a nota antes de receber; <strong>Receber</strong> para informar valor parcial ou total (dinheiro → gaveta; PIX/cartão → banco digital); <strong>Excluir</strong> para cancelar a nota e devolver os produtos ao estoque.</p>
-               <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px;">
-                   <label for="buscaPendentesCaixa" style="color: #bdc3c7; font-size: 12px; white-space: nowrap;">Buscar</label>
-                   <input type="search" id="buscaPendentesCaixa" autocomplete="off" placeholder="Nome, Nº documento, data ou valor…" oninput="if(window.filtrarPendentesCaixa)window.filtrarPendentesCaixa()" style="flex: 1; min-width: 200px; max-width: 480px; padding: 8px 10px; border-radius: 4px; border: 1px solid #7f8c8d; background: #1a252f; color: #ecf0f1; font-size: 13px;" />
-               </div>
-               <div class="table-responsive" style="max-height: 340px; overflow-x: auto; overflow-y: auto;">
-                   <table style="margin-top: 0;">
-                       <thead>
-                           <tr>
-                               <th>Nº Doc</th>
-                               <th>Tipo</th>
-                               <th>Data</th>
-                               <th>Cliente</th>
-                               <th>Total</th>
-                               <th>Previsto</th>
-                               <th style="min-width: 400px;">Ações</th>
-                           </tr>
-                       </thead>
-                       <tbody id="tabelaPendentesCaixa">
-                           <tr><td colspan="7" style="text-align: center; color: #bdc3c7;">Nenhuma conta pendente.</td></tr>
-                       </tbody>
-                   </table>
-               </div>
-           </div>
-
         <div class="caixa-actions-header"> 
     <button class="btn-secundario" onclick="definirCaixaInicial()">💵 Informar Caixa Inicial</button>
     <button class="btn-secundario" style="background-color: #27ae60;" onclick="window.abrirModalCaixaBalcao()">➕ Lançar Entrada</button>
     <button class="btn-danger" onclick="document.getElementById('modalDespesa').style.display='flex'">➖ Lançar Despesa</button>
-    <button class="btn-secundario" style="background-color: #8e44ad;" onclick="gerarRelatorioMensal()">📄 Resumo Mensal PDF</button>
     <button class="btn-secundario" style="background-color: #f39c12;" onclick="fecharCaixa()">🔒 Fechar Caixa do Dia</button>
     <button class="btn-secundario" style="background-color: #c0392b;" onclick="zerarFluxoCaixa()">⚠️ Zerar Caixa</button>
     <button class="btn-secundario" style="background-color: #27ae60;" onclick="window.sincronizarTotaisDoDia()">🔄 Sincronizar Painel</button>
@@ -1882,7 +1942,11 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
                     </tbody>
                 </table>
             </div>
-        </div> <div class="container" style="margin-top: 30px; border: 1px solid #3498db;">
+        </div>
+        </div>
+
+        <div id="subCaixaBanco" class="subtab-content">
+        <div class="container" style="border: 1px solid #3498db;">
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(52, 152, 219, 0.5); padding-bottom: 10px;">
                 <div>
                     <h2 style="border: none; padding: 0; margin: 0; color: #3498db;">Caixa do Banco (Digital / PIX / Cartões)</h2>
@@ -1941,6 +2005,81 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
                     </tbody>
                 </table>
             </div>
+        </div>
+        </div>
+
+        <div id="subCaixaPendentes" class="subtab-content">
+        <div class="container" style="border: 1px solid #f39c12;">
+            <div style="background-color: #2c1f1f; padding: 15px; border-radius: 6px; border: 1px solid #f39c12; margin-bottom: 0;">
+               <h3 style="margin-top: 0; color: #f39c12; font-size: 15px; text-transform: uppercase;">Contas a receber (pendentes)</h3>
+               <p style="margin: 0 0 10px 0; font-size: 13px; color: #ecf0f1;">Total em aberto: <strong id="totalPendentesCaixaHead" style="color: #f1c40f;">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Use <strong>Editar</strong> para alterar a nota antes de receber; <strong>Receber</strong> para informar valor parcial ou total (dinheiro → gaveta; PIX/cartão → banco digital); <strong>Excluir</strong> para cancelar a nota e devolver os produtos ao estoque.</p>
+               <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px;">
+                   <label for="buscaPendentesCaixa" style="color: #bdc3c7; font-size: 12px; white-space: nowrap;">Buscar</label>
+                   <input type="search" id="buscaPendentesCaixa" autocomplete="off" placeholder="Nome, Nº documento, data ou valor…" oninput="if(window.filtrarPendentesCaixa)window.filtrarPendentesCaixa()" style="flex: 1; min-width: 200px; max-width: 480px; padding: 8px 10px; border-radius: 4px; border: 1px solid #7f8c8d; background: #1a252f; color: #ecf0f1; font-size: 13px;" />
+               </div>
+               <div class="table-responsive" style="max-height: 340px; overflow-x: auto; overflow-y: auto;">
+                   <table style="margin-top: 0;">
+                       <thead>
+                           <tr>
+                               <th>Nº Doc</th>
+                               <th>Tipo</th>
+                               <th>Data</th>
+                               <th>Cliente</th>
+                               <th>Total</th>
+                               <th>Previsto</th>
+                               <th style="min-width: 400px;">Ações</th>
+                           </tr>
+                       </thead>
+                       <tbody id="tabelaPendentesCaixa">
+                           <tr><td colspan="7" style="text-align: center; color: #bdc3c7;">Nenhuma conta pendente.</td></tr>
+                       </tbody>
+                   </table>
+               </div>
+            </div>
+        </div>
+        </div>
+
+        <div id="subCaixaResumo" class="subtab-content">
+        <div class="container">
+            <div style="background-color: #ffffff; padding: 18px; border-radius: 6px; border: 1px solid #d0d0d0;">
+               <h3 style="margin-top: 0; color: #2c3e50; font-size: 16px; text-transform: uppercase;">Relatório Caixa</h3>
+               <p style="margin: 0 0 18px 0; font-size: 13px; color: #555;">Escolha o tipo de relatório mensal e o formato. Ao clicar, informe o mês/ano (Ex: 07/2026).</p>
+
+               <div style="display: flex; flex-direction: column; gap: 12px; max-width: 640px;">
+                   <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 1px solid #e0e0e0; border-left: 5px solid #16a085; border-radius: 6px; background: #fafafa;">
+                       <div style="color: #2c3e50;"><strong>💰 Relatório Mensal - Caixa / Balcão</strong><br><small style="color:#777;">Somente entradas em dinheiro (gaveta) e despesas</small></div>
+                       <div style="display: flex; gap: 8px;">
+                           <button class="btn-secundario" style="background-color: #c0392b;" onclick="window._gerarRelatorioMensalPDF('balcao')">📄 PDF</button>
+                           <button class="btn-secundario" style="background-color: #1d7a44;" onclick="window._exportarRelatorioMensalExcel('balcao')">📊 Excel</button>
+                       </div>
+                   </div>
+
+                   <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 1px solid #e0e0e0; border-left: 5px solid #2980b9; border-radius: 6px; background: #fafafa;">
+                       <div style="color: #2c3e50;"><strong>🏦 Relatório Mensal - Caixa Banco</strong><br><small style="color:#777;">Somente PIX, cartões e lançamentos do banco digital</small></div>
+                       <div style="display: flex; gap: 8px;">
+                           <button class="btn-secundario" style="background-color: #c0392b;" onclick="window._gerarRelatorioMensalPDF('banco')">📄 PDF</button>
+                           <button class="btn-secundario" style="background-color: #1d7a44;" onclick="window._exportarRelatorioMensalExcel('banco')">📊 Excel</button>
+                       </div>
+                   </div>
+
+                   <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 1px solid #e0e0e0; border-left: 5px solid #f39c12; border-radius: 6px; background: #fafafa;">
+                       <div style="color: #2c3e50;"><strong>⏳ Relatório Mensal - Contas a Receber</strong><br><small style="color:#777;">Somente contas pendentes (a receber)</small></div>
+                       <div style="display: flex; gap: 8px;">
+                           <button class="btn-secundario" style="background-color: #c0392b;" onclick="window._gerarRelatorioMensalPDF('pendentes')">📄 PDF</button>
+                           <button class="btn-secundario" style="background-color: #1d7a44;" onclick="window._exportarRelatorioMensalExcel('pendentes')">📊 Excel</button>
+                       </div>
+                   </div>
+
+                   <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 1px solid #e0e0e0; border-left: 5px solid #2c3e50; border-radius: 6px; background: #fafafa;">
+                       <div style="color: #2c3e50;"><strong>📊 Relatório Mensal Geral</strong><br><small style="color:#777;">Tudo: balcão + banco + contas a receber</small></div>
+                       <div style="display: flex; gap: 8px;">
+                           <button class="btn-secundario" style="background-color: #c0392b;" onclick="window._gerarRelatorioMensalPDF('geral')">📄 PDF</button>
+                           <button class="btn-secundario" style="background-color: #1d7a44;" onclick="window._exportarRelatorioMensalExcel('geral')">📊 Excel</button>
+                       </div>
+                   </div>
+               </div>
+            </div>
+        </div>
         </div> </div> <div id="tabConfig" class="tab-content">
        
        <div class="container">
@@ -2006,6 +2145,145 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
            <button class="btn-danger" style="padding: 10px; font-size: 13px;" onclick="restaurarBackupLocal()">⚠️ RESTAURAR DE ARQUIVO</button>
        </div>
    </div>
+<!-- ================= MÓDULO DESPESAS (OBRAS) — dados locais (localStorage) ================= -->
+<div id="tabDespCadastrar" class="tab-content">
+   <div class="container">
+       <h2 style="color: #e67e22; border-bottom: 1px solid #e67e22;">➕ Adicionar Despesas</h2>
+       <p style="font-size: 12px; color: #bdc3c7; margin-top: 4px;">Cadastre uma despesa de obra/serviço. Os dados ficam salvos apenas neste computador (localStorage), sem afetar o restante do sistema.</p>
+       <div class="bloco-lancamento">
+           <div class="row form-group">
+               <div class="col"><label>Nome da Obra ou Local</label><input type="text" id="d-obra" list="dl-obras" autocomplete="off" placeholder="Onde o material foi usado?"></div>
+               <div class="col"><label>Loja / Fornecedor</label><input type="text" id="d-loja" list="dl-lojas" autocomplete="off" placeholder="Onde foi comprado?"></div>
+           </div>
+           <div class="row form-group">
+               <div class="col"><label>Nº Nota Fiscal / Recibo</label><input type="text" id="d-nf" placeholder="Ex: 123456 (opcional)"></div>
+               <div class="col"><label>Valor da Fatura (R$)</label><input type="text" id="d-valor" placeholder="0,00" oninput="window.despMascaraMoeda(this)"></div>
+               <div class="col"><label>Data de Vencimento</label><input type="date" id="d-vencimento"></div>
+           </div>
+           <div class="row form-group">
+               <div class="col"><label>Descrição / Materiais</label><textarea id="d-desc" rows="2" placeholder="Descreva os materiais adquiridos"></textarea></div>
+           </div>
+           <div class="row form-group">
+               <div class="col"><label>Foto do Recibo / Fatura (opcional)</label><input type="file" id="d-anexo" accept="image/*" capture="environment" onchange="window.despLerAnexo(this,'d-anexo-base64','d-anexo-prev')"><input type="hidden" id="d-anexo-base64"><div id="d-anexo-prev" style="margin-top:6px;"></div></div>
+           </div>
+           <button type="button" class="btn-primary" id="btnSalvarDespesa" style="padding: 10px; background-color:#e67e22;" onclick="window.despSalvarDespesa()">SALVAR DESPESA</button>
+       </div>
+       <datalist id="dl-obras"></datalist>
+       <datalist id="dl-lojas"></datalist>
+   </div>
+</div>
+
+<div id="tabDespRelatorio" class="tab-content">
+   <div class="container">
+       <h2 style="color: #e67e22; border-bottom: 1px solid #e67e22;">🔍 Relatório de Gastos por Obra</h2>
+       <div class="toolbar">
+           <input type="text" id="busca-obra" class="search-bar" placeholder="Nome da obra ou fornecedor..." onkeyup="if(event.key==='Enter')window.despBuscarDespesasObra()">
+           <button class="btn-secundario" style="background-color:#2c3e50;" onclick="window.despBuscarDespesasObra()">Buscar</button>
+           <button class="btn-secundario" style="background-color:#16a085;" onclick="window.despBuscarDespesasObra(true)">Mostrar Todas</button>
+       </div>
+       <div id="resumo-total-despesas" style="display:none; margin-top:15px; background:#1a252f; padding:12px; border-radius:8px; border:1px solid #f39c12; text-align:center;">
+           <span style="color:#bdc3c7;">Total encontrado: </span><strong id="total-gasto-display" style="color:#f1c40f; font-size:18px;">R$ 0,00</strong>
+           <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:12px;">
+               <button class="btn-secundario" style="background-color:#c0392b;" onclick="window.despExportarPDF('obra')">📄 Exportar PDF</button>
+               <button class="btn-secundario" style="background-color:#1d7a44;" onclick="window.despExportarExcel('obra')">📊 Exportar Excel</button>
+               <button class="btn-secundario" style="background-color:#2c3e50;" onclick="window.despGerarResumoFornecedores()">📊 Resumo (Obra x Fornecedor)</button>
+           </div>
+       </div>
+       <div id="lista-despesas-resultados" style="margin-top:15px;"><p style="text-align:center; color:#95a5a6; font-size:13px;">Digite uma obra/fornecedor e clique em Buscar (ou "Mostrar Todas").</p></div>
+       <div id="tabela-resumo-fornecedores" style="margin-top:20px; overflow-x:auto;"></div>
+   </div>
+</div>
+
+<div id="tabDespExportar" class="tab-content">
+   <div class="container">
+       <h2 style="color: #e67e22; border-bottom: 1px solid #e67e22;">📋 Exportar Relatórios</h2>
+       <p style="font-size: 12px; color: #bdc3c7; margin-top: 4px;">Tabela independente das despesas por obra: só mostra linhas criadas aqui. Inclui cheque/boleto, lançamento, vencimento, valor, pago/pendente e observação.</p>
+       <details style="margin-bottom: 16px;">
+           <summary style="cursor:pointer; color:#f1c40f; font-weight:bold; padding:8px 0;">➕ Adicionar linha ao relatório</summary>
+           <div class="bloco-lancamento" style="margin-top:8px;">
+               <div class="row form-group">
+                   <div class="col"><label>Obra / Local</label><input type="text" id="rd-obra" list="dl-obras" autocomplete="off" placeholder="Onde foi usado?"></div>
+                   <div class="col"><label>Fornecedor / Loja</label><input type="text" id="rd-loja" list="dl-lojas" autocomplete="off" placeholder="Nome ou loja"></div>
+               </div>
+               <div class="row form-group">
+                   <div class="col"><label>Nº cheque / boleto (opcional)</label><input type="text" id="rd-cheque-boleto" placeholder="Ex.: chq. 1234 / boleto"></div>
+                   <div class="col"><label>Nº Nota Fiscal (opcional)</label><input type="text" id="rd-nf" placeholder="Ex.: 123456"></div>
+               </div>
+               <div class="row form-group">
+                   <div class="col"><label>Data de lançamento</label><input type="date" id="rd-lancamento"></div>
+                   <div class="col"><label>Data de vencimento</label><input type="date" id="rd-vencimento"></div>
+                   <div class="col"><label>Valor (R$)</label><input type="text" id="rd-valor" placeholder="0,00" oninput="window.despMascaraMoeda(this)"></div>
+               </div>
+               <div class="row form-group">
+                   <div class="col"><label>Descrição / Materiais</label><textarea id="rd-desc" rows="2" placeholder="Descrição"></textarea></div>
+                   <div class="col"><label>Observação (opcional)</label><textarea id="rd-observacao" rows="2" placeholder="Ex.: explicação p/ contabilidade"></textarea></div>
+               </div>
+               <button type="button" class="btn-primary" style="padding:10px; background-color:#e67e22;" onclick="window.despSalvarLinhaRelatorio()">Guardar linha no relatório</button>
+           </div>
+       </details>
+       <div class="toolbar">
+           <input type="text" id="rel-desp-filtro" class="search-bar" placeholder="Filtrar por obra ou fornecedor..." onkeyup="window.despCarregarRelatorioTabular()">
+           <select id="rel-desp-status" onchange="window.despCarregarRelatorioTabular()" style="padding:8px; border-radius:6px;">
+               <option value="todos">Todos</option>
+               <option value="pendente">Pendentes</option>
+               <option value="pago">Pagos</option>
+               <option value="vencido">Vencidos</option>
+           </select>
+           <button class="btn-secundario" style="background-color:#c0392b;" onclick="window.despExportarPDF('rel')">📄 PDF</button>
+           <button class="btn-secundario" style="background-color:#1d7a44;" onclick="window.despExportarExcel('rel')">📊 Excel</button>
+       </div>
+       <div id="resumo-total-rel-despesas" style="display:none; margin-top:15px; background:#1a252f; padding:12px; border-radius:8px; border:1px solid #f39c12; text-align:center;">
+           <span style="color:#bdc3c7;">Total (filtro atual): </span><strong id="total-gasto-display-rel-desp" style="color:#f1c40f; font-size:18px;">R$ 0,00</strong>
+       </div>
+       <div id="tabela-relatorio-despesas-wrap" style="margin-top:15px; overflow-x:auto;"></div>
+   </div>
+</div>
+
+<div id="tabDespGeral" class="tab-content">
+   <div class="container">
+       <h2 style="color: #e67e22; border-bottom: 1px solid #e67e22;">📊 Relatório Geral de Obras</h2>
+       <p style="font-size: 12px; color: #bdc3c7; margin-top: 4px;">Consolidado de todas as obras: despesas com fornecedores + pagamentos a terceiros. Mostra vencido, a vencer e já pago.</p>
+       <div style="display:flex; flex-wrap:wrap; gap:10px;">
+           <button class="btn-secundario" style="background-color:#2c3e50;" onclick="window.despCarregarRelatorioGeral()">🔄 Atualizar</button>
+           <button class="btn-secundario" style="background-color:#c0392b;" onclick="window.despExportarPDF('geral')">📄 Exportar PDF</button>
+           <button class="btn-secundario" style="background-color:#1d7a44;" onclick="window.despExportarExcel('geral')">📊 Exportar Excel</button>
+       </div>
+       <div id="rel-geral-obras-resumo" style="display:none; margin-top:16px; background:#1a252f; padding:14px; border-radius:8px; border:1px solid #f39c12; text-align:center;">
+           <h4 style="margin:0; color:#f1c40f;">Resumo Geral — Obras</h4>
+           <div id="rel-geral-obras-resumo-totais" style="margin-top:8px; color:#ecf0f1;"></div>
+       </div>
+       <div id="rel-geral-obras-secoes" style="margin-top:15px;"><p style="text-align:center; color:#95a5a6; font-size:13px;">Clique em Atualizar para carregar.</p></div>
+   </div>
+</div>
+
+<div id="tabTerceiros" class="tab-content">
+   <div class="container">
+       <h2 style="color: #e67e22; border-bottom: 1px solid #e67e22;">👷 Terceiros</h2>
+       <div class="bloco-lancamento">
+           <h3 style="margin-top:0; font-size:13px;">Cadastrar Pagamento de Terceiro</h3>
+           <div class="row form-group">
+               <div class="col" style="flex:2;"><label>Nome do Terceiro (Ex: Pintor, Pedreiro)</label><input type="text" id="t-nome" placeholder="Nome do profissional"></div>
+               <div class="col"><label>CPF</label><input type="text" id="t-cpf" placeholder="Apenas números"></div>
+           </div>
+           <div class="row form-group">
+               <div class="col"><label>Telefone / WhatsApp</label><input type="text" id="t-tel" placeholder="Com DDD"></div>
+               <div class="col"><label>Obra / Local</label><input type="text" id="t-obra" list="dl-obras" placeholder="Onde prestou serviço?"></div>
+               <div class="col"><label>Valor Pago (R$)</label><input type="text" id="t-valor" placeholder="0,00" oninput="window.despMascaraMoeda(this)"></div>
+           </div>
+           <div class="row form-group">
+               <div class="col"><label>Descrição do Serviço</label><textarea id="t-desc" rows="2" placeholder="Ex: Pintura da fachada"></textarea></div>
+           </div>
+           <button type="button" class="btn-primary" id="btnSalvarTerceiro" style="padding:10px; background-color:#e67e22;" onclick="window.despSalvarTerceiro()">SALVAR PAGAMENTO</button>
+       </div>
+       <div class="toolbar" style="margin-top:15px;">
+           <input type="text" id="busca-terceiro" class="search-bar" placeholder="Nome da obra ou do profissional..." onkeyup="if(event.key==='Enter')window.despBuscarTerceiros()">
+           <button class="btn-secundario" style="background-color:#2c3e50;" onclick="window.despBuscarTerceiros()">Buscar</button>
+           <button class="btn-secundario" style="background-color:#16a085;" onclick="window.despBuscarTerceiros(true)">Mostrar Todos</button>
+       </div>
+       <div id="lista-terceiros-resultados" style="margin-top:15px;"></div>
+   </div>
+</div>
+
 <div id="tabAssistente" class="tab-content">
        <div class="container">
            <h2 style="color: #1abc9c; border-bottom: 1px solid #1abc9c;">💬 Assistente do sistema</h2>
@@ -2021,13 +2299,7 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
 </div>
 <div id="tabRegistro" class="tab-content">
        <div class="container">
-           <h2 style="color: #ffffff; border-bottom: 2px solid #ffffff;">🗂️ Registro Total do Sistema</h2>
-           
-           <div style="display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;">
-               <button class="btn-secundario" id="btnSubBusca" style="background-color: #3498db; color: #ffffff;" onclick="window.mudarSubAbaRegistro('busca')">🔍 1. Busca Geral</button>
-               <button class="btn-secundario" id="btnSubPastas" style="background-color: #34495e; color: #ffffff;" onclick="window.mudarSubAbaRegistro('pastas')">📁 2. Arquivo em Pastas</button>
-               <button class="btn-secundario" id="btnSubGraficos" style="background-color: #34495e; color: #ffffff;" onclick="window.mudarSubAbaRegistro('graficos')">📊 3. Gráficos de Fluxo</button>
-           </div>
+           <h2 style="color: #ffffff; border-bottom: 2px solid #ffffff;">🗂️ Registro Geral do Sistema</h2>
 
            <div id="subRegistroBusca" style="display: block;">
                <h3 style="color: #ffffff;">Localizar Documentos</h3>
@@ -2327,8 +2599,32 @@ window.mudarPaginaProd = function(direcao) {
    window.abrirAba = function(idAba, elementoBotao) {
        document.querySelectorAll('.tab-content').forEach(function(tab) { tab.classList.remove('active'); });
        document.querySelectorAll('.menu-btn').forEach(function(btn) { btn.classList.remove('active'); });
+       document.querySelectorAll('.submenu-btn').forEach(function(btn) { btn.classList.remove('active'); });
        document.getElementById(idAba).classList.add('active');
        if(elementoBotao) elementoBotao.classList.add('active');
+
+       // Expande o grupo do menu lateral ao qual a aba pertence; recolhe os demais
+       var gruposMap = {
+           tabCadastroCliente: 'submenuClientes', tabClientesCad: 'submenuClientes',
+           tabCadastroProd: 'submenuVendas', tabControleEstoque: 'submenuVendas',
+           tabVendas: 'submenuVendas', tabOS: 'submenuVendas',
+           tabCaixa: 'submenuCaixa',
+           tabRegistro: 'submenuRegistro',
+           tabDespCadastrar: 'submenuDespesas', tabDespRelatorio: 'submenuDespesas',
+           tabDespExportar: 'submenuDespesas', tabDespGeral: 'submenuDespesas',
+           tabTerceiros: 'submenuDespesas'
+       };
+       var grupoAlvo = gruposMap[idAba] || null;
+       [['submenuClientes','btnGrupoClientes'], ['submenuVendas','btnGrupoVendas'], ['submenuCaixa','btnTabCaixa'], ['submenuRegistro','btnTabRegistro'], ['submenuDespesas','btnGrupoDespesas']].forEach(function(par){
+           var grupo = document.getElementById(par[0]);
+           var botaoPai = document.getElementById(par[1]);
+           var aberto = (par[0] === grupoAlvo);
+           if (grupo) grupo.style.display = aberto ? 'flex' : 'none';
+           if (botaoPai) {
+               botaoPai.classList.toggle('grupo-aberto', aberto);
+               if (aberto) botaoPai.classList.add('active');
+           }
+       });
 
        if (idAba === 'tabVendas') {
            window.carregarSelectsGerais();
@@ -2345,6 +2641,38 @@ window.mudarPaginaProd = function(direcao) {
            }
            window.calcularDeslocamentoOS(); 
        }
+   };
+
+   // Abre/fecha um grupo de menu lateral (Vendas, Caixa). Só um fica aberto por vez.
+   window.toggleGrupoMenu = function(idSubmenu, botao) {
+       var alvo = document.getElementById(idSubmenu);
+       if (!alvo) return;
+       var estaAberto = alvo.style.display !== 'none';
+       ['submenuClientes', 'submenuVendas', 'submenuCaixa', 'submenuRegistro', 'submenuDespesas'].forEach(function(gid){
+           var g = document.getElementById(gid);
+           if (g) g.style.display = 'none';
+       });
+       ['btnGrupoClientes', 'btnGrupoVendas', 'btnTabCaixa', 'btnTabRegistro', 'btnGrupoDespesas'].forEach(function(bid){
+           var b = document.getElementById(bid);
+           if (b) b.classList.remove('grupo-aberto');
+       });
+       if (!estaAberto) {
+           alvo.style.display = 'flex';
+           if (botao) botao.classList.add('grupo-aberto');
+       }
+   };
+
+   // Subtópicos dentro de Caixa / Relatórios (Balcão, Banco, Pendentes)
+   window.abrirSubCaixa = function(idSub, botao) {
+       window.abrirAba('tabCaixa', document.getElementById('btnTabCaixa'));
+       document.querySelectorAll('#tabCaixa .subtab-content').forEach(function(s){ s.classList.remove('active'); });
+       document.querySelectorAll('#submenuCaixa .submenu-btn').forEach(function(b){ b.classList.remove('active'); });
+       var alvo = document.getElementById(idSub);
+       if (alvo) alvo.classList.add('active');
+       if (botao) botao.classList.add('active');
+       if (idSub === 'subCaixaBalcao' && window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
+       if (idSub === 'subCaixaBanco' && window.renderizarTabelaBanco) window.renderizarTabelaBanco();
+       if (idSub === 'subCaixaPendentes' && window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
    };
 
    document.addEventListener('keydown', function(evento) { 
@@ -5304,6 +5632,10 @@ window.editarDocumentoCaixa = function(id) {
             } else {
                 document.getElementById('btnTabConfig').style.display = 'block';
                 window.abrirAba('tabCaixa', document.getElementById('btnTabCaixa'));
+                // Mantém o menu Caixa / Relatórios recolhido ao entrar
+                var subCx = document.getElementById('submenuCaixa');
+                if (subCx) subCx.style.display = 'none';
+                document.getElementById('btnTabCaixa').classList.remove('grupo-aberto');
             }
         };
 
@@ -5435,58 +5767,88 @@ window.editarDocumentoCaixa = function(id) {
             });
         };
 
-        // --- RELATÓRIO MENSAL EM PDF ---
-window.gerarRelatorioMensal = function() {
-    let mesPadrao = new Date().toLocaleDateString('pt-BR').substring(3); // Pega MM/AAAA
-    let mesAno = prompt("Digite o mês e ano para o EXTRATO COMPLETO (Ex: 04/2026):", mesPadrao);
-    if(!mesAno) return;
-    
-    // 1. Coleta dados do Caixa Geral (Balcão + Vendas Digitais) — data efetiva (recebimento se houver)
+        // --- RELATÓRIO MENSAL (PDF / EXCEL) ---
+const RELATORIO_TITULOS = {
+    geral:     'RELATÓRIO MENSAL GERAL (BALCÃO + BANCO + CONTAS A RECEBER)',
+    balcao:    'RELATÓRIO MENSAL - CAIXA / BALCÃO',
+    banco:     'RELATÓRIO MENSAL - CAIXA BANCO (DIGITAL / PIX / CARTÕES)',
+    pendentes: 'RELATÓRIO MENSAL - CONTAS A RECEBER'
+};
+const RELATORIO_PREFIXO_ARQ = {
+    geral: 'Relatorio-Geral', balcao: 'Relatorio-Balcao',
+    banco: 'Relatorio-Banco', pendentes: 'Relatorio-ContasReceber'
+};
+
+// Coleta, filtra e ordena os lançamentos do período conforme o filtro escolhido
+window._coletarItensRelatorio = function(filtro, mesAno) {
+    filtro = filtro || 'geral';
+
+    // Caixa Geral (Balcão + Vendas Digitais) — data efetiva (recebimento se houver)
     let dadosCaixa = caixaGlobal.filter(doc => window.dataEfetivaCaixaInclui(doc, mesAno));
-    
-    // 2. Coleta dados do Extrato do Banco (Lançamentos Manuais)
+    // Extrato do Banco (Lançamentos Manuais)
     let dadosBancoManual = window.extratoBanco.filter(doc => doc.dataStr && doc.dataStr.includes(mesAno));
 
-    // 3. Unifica tudo em uma lista para o relatório
-    let extratoUnificado = [];
-    
-    // Processa vendas e despesas do caixa geral
+    let itens = [];
     dadosCaixa.forEach(v => {
         let status = v.statusPagamento || 'PAGO';
         if (v.tipo === 'ORCAMENTO' || v.tipo === 'FECHAMENTO') return; // Ignora simulações e fechamentos de tela
-
-        extratoUnificado.push({
+        itens.push({
             data: window.dataEfetivaCaixaDia(v),
             doc: v.os || '-',
             tipo: v.tipo,
             descricao: v.clienteNome,
             forma: v.formaPagamento || 'Dinheiro',
             valor: parseFloat(v.total) || 0,
-            natureza: (v.tipo === 'DESPESA') ? 'SAIDA' : (status === 'PAGO' ? 'ENTRADA' : 'PENDENTE')
+            natureza: (v.tipo === 'DESPESA') ? 'SAIDA' : (status === 'PAGO' ? 'ENTRADA' : 'PENDENTE'),
+            // canal: dinheiro/gaveta = balcão; PIX/cartão/boleto = banco
+            canal: window.formaPagamentoEhDigital(v.formaPagamento) ? 'banco' : 'balcao'
         });
     });
-
-    // Processa lançamentos manuais do banco
     dadosBancoManual.forEach(b => {
-        extratoUnificado.push({
+        itens.push({
             data: b.dataStr.split(' ')[0],
             doc: 'BANCO',
             tipo: 'LANÇ. BANCO',
             descricao: `[BANCO] ${b.descricao}`,
             forma: 'Transferência/Taxa',
             valor: parseFloat(b.valor) || 0,
-            natureza: b.tipo // 'ENTRADA' ou 'SAIDA'
+            natureza: b.tipo, // 'ENTRADA' ou 'SAIDA'
+            canal: 'banco'
         });
     });
 
-    if(extratoUnificado.length === 0) return alert("Nenhum registro encontrado para o período: " + mesAno);
-    
+    // Aplica o filtro escolhido no menu lateral
+    itens = itens.filter(function(it){
+        if (filtro === 'pendentes') return it.natureza === 'PENDENTE';
+        if (filtro === 'balcao')    return it.canal === 'balcao' && it.natureza !== 'PENDENTE';
+        if (filtro === 'banco')     return it.canal === 'banco'  && it.natureza !== 'PENDENTE';
+        return true; // geral: tudo
+    });
+
     // Ordena por data (mais antigos primeiro)
-    extratoUnificado.sort((a, b) => {
+    itens.sort((a, b) => {
         let dataA = a.data.split('/').reverse().join('');
         let dataB = b.data.split('/').reverse().join('');
         return dataA.localeCompare(dataB);
     });
+    return itens;
+};
+
+// Mantém compatibilidade: chamada antiga gera o relatório GERAL
+window.gerarRelatorioMensal = function() { window._gerarRelatorioMensalPDF('geral'); };
+
+// filtro: 'balcao' | 'banco' | 'pendentes' | 'geral'
+window._gerarRelatorioMensalPDF = function(filtro) {
+    filtro = filtro || 'geral';
+    const TITULOS = RELATORIO_TITULOS;
+    const PREFIXO_ARQ = RELATORIO_PREFIXO_ARQ;
+
+    let mesPadrao = new Date().toLocaleDateString('pt-BR').substring(3); // Pega MM/AAAA
+    let mesAno = prompt("Digite o mês e ano para o relatório (Ex: 04/2026):", mesPadrao);
+    if(!mesAno) return;
+
+    let extratoUnificado = window._coletarItensRelatorio(filtro, mesAno);
+    if(extratoUnificado.length === 0) return alert("Nenhum registro encontrado para o período: " + mesAno);
 
     let totEntradas = 0;
     let totSaidas = 0;
@@ -5538,6 +5900,62 @@ window.gerarRelatorioMensal = function() {
     if (linhasEntradas === '') linhasEntradas = `<tr><td colspan="5" style="padding: 10px; text-align: center; color: #777;">Nenhuma entrada/recebimento neste período.</td></tr>`;
     if (linhasSaidas === '') linhasSaidas = `<tr><td colspan="5" style="padding: 10px; text-align: center; color: #777;">Nenhuma saída/despesa neste período.</td></tr>`;
     if (linhasPendentes === '') linhasPendentes = `<tr><td colspan="5" style="padding: 10px; text-align: center; color: #777;">Nenhum pagamento pendente neste período.</td></tr>`;
+
+    // Monta o RESUMO (topo) conforme o filtro
+    let resumoHtml;
+    if (filtro === 'pendentes') {
+        resumoHtml = `
+            <div class="resumo">
+                <div class="resumo-box" style="color: #f39c12;">TOTAL A RECEBER<b>R$ ${totPendentes.toFixed(2)}</b></div>
+            </div>`;
+    } else {
+        resumoHtml = `
+            <div class="resumo">
+                <div class="resumo-box" style="color: #27ae60;">RECEBIMENTOS TOTAL<b>R$ ${totEntradas.toFixed(2)}</b></div>
+                <div class="resumo-box" style="color: #e74c3c;">PAGAMENTOS/SAÍDAS<b>R$ ${totSaidas.toFixed(2)}</b></div>
+                <div class="resumo-box" style="color: #2980b9;">SALDO LÍQUIDO DO MÊS<b>R$ ${saldoMes.toFixed(2)}</b></div>
+            </div>`;
+    }
+
+    // Monta os blocos de seção conforme o filtro
+    const secEntradas = `
+            <div class="section-title entrada">
+                <span>✅ ENTRADAS (RECEBIMENTOS REALIZADOS)</span>
+                <span>TOTAL: R$ ${totEntradas.toFixed(2)}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Descrição / Forma Pgto</th><th style="text-align: right;">Valor</th></tr>
+                </thead>
+                <tbody>${linhasEntradas}</tbody>
+            </table>`;
+    const secSaidas = `
+            <div class="section-title saida">
+                <span>🔻 SAÍDAS E DESPESAS (PAGAMENTOS REALIZADOS)</span>
+                <span>TOTAL: R$ ${totSaidas.toFixed(2)}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Descrição / Motivo</th><th style="text-align: right;">Valor</th></tr>
+                </thead>
+                <tbody>${linhasSaidas}</tbody>
+            </table>`;
+    const secPendentes = `
+            <div class="section-title pendente">
+                <span>⏳ PAGAMENTOS PENDENTES (A RECEBER)</span>
+                <span>TOTAL: R$ ${totPendentes.toFixed(2)}</span>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Cliente / Forma Pgto Prevista</th><th style="text-align: right;">Valor</th></tr>
+                </thead>
+                <tbody>${linhasPendentes}</tbody>
+            </table>`;
+
+    let secoesHtml;
+    if (filtro === 'pendentes') secoesHtml = secPendentes;
+    else if (filtro === 'geral') secoesHtml = secEntradas + secSaidas + secPendentes;
+    else secoesHtml = secEntradas + secSaidas; // balcao ou banco
     
     let htmlPDF = `
         <html>
@@ -5567,61 +5985,97 @@ window.gerarRelatorioMensal = function() {
         <body style="padding-bottom: 90px;">
             <div id="pdf-export-root">
             <div class="header">
-                <h2 style="margin:0;">RELATÓRIO MENSAL UNIFICADO (BALCÃO + BANCO)</h2>
+                <h2 style="margin:0;">${TITULOS[filtro] || TITULOS.geral}</h2>
                 <h3 style="margin:5px 0; color: #7f8c8d;">${empresaGlobal.nome} - Competência: ${mesAno}</h3>
             </div>
             
-            <div class="resumo">
-                <div class="resumo-box" style="color: #27ae60;">RECEBIMENTOS TOTAL<b>R$ ${totEntradas.toFixed(2)}</b></div>
-                <div class="resumo-box" style="color: #e74c3c;">PAGAMENTOS/SAÍDAS<b>R$ ${totSaidas.toFixed(2)}</b></div>
-                <div class="resumo-box" style="color: #2980b9;">SALDO LÍQUIDO DO MÊS<b>R$ ${saldoMes.toFixed(2)}</b></div>
-            </div>
+            ${resumoHtml}
             
-            <div class="section-title entrada">
-                <span>✅ ENTRADAS (RECEBIMENTOS REALIZADOS)</span>
-                <span>TOTAL: R$ ${totEntradas.toFixed(2)}</span>
-            </div>
-            <table>
-                <thead>
-                    <tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Descrição / Forma Pgto</th><th style="text-align: right;">Valor</th></tr>
-                </thead>
-                <tbody>${linhasEntradas}</tbody>
-            </table>
-
-            <div class="section-title saida">
-                <span>🔻 SAÍDAS E DESPESAS (PAGAMENTOS REALIZADOS)</span>
-                <span>TOTAL: R$ ${totSaidas.toFixed(2)}</span>
-            </div>
-            <table>
-                <thead>
-                    <tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Descrição / Motivo</th><th style="text-align: right;">Valor</th></tr>
-                </thead>
-                <tbody>${linhasSaidas}</tbody>
-            </table>
-
-            <div class="section-title pendente">
-                <span>⏳ PAGAMENTOS PENDENTES (A RECEBER)</span>
-                <span>TOTAL: R$ ${totPendentes.toFixed(2)}</span>
-            </div>
-            <table>
-                <thead>
-                    <tr><th>Data</th><th>Doc</th><th>Tipo</th><th>Cliente / Forma Pgto Prevista</th><th style="text-align: right;">Valor</th></tr>
-                </thead>
-                <tbody>${linhasPendentes}</tbody>
-            </table>
+            ${secoesHtml}
 
             <div style="text-align: center; margin-top: 30px; font-size: 9px; color: #999;">
                 Este relatório contempla todas as entradas (Dinheiro, PIX, Cartões) e despesas lançadas no período.<br>
                 Documento gerado pelo sistema FH CONSTRUÇÕES CIVIS LTDA em ${new Date().toLocaleString()}.
             </div>
             </div>
-            ${window._rodapeBotoesPdf('loja', 'Extrato-' + String(mesAno).replace(/\//g, '-'))}
+            ${window._rodapeBotoesPdf('loja', (PREFIXO_ARQ[filtro] || 'Relatorio') + '-' + String(mesAno).replace(/\//g, '-'))}
         </body>
         </html>
     `;
     let j = window.open('', '', 'width=900,height=750');
     j.document.write(htmlPDF);
     j.document.close();
+};
+
+// Exporta o mesmo relatório (conforme o filtro) para um arquivo Excel (.xls)
+window._exportarRelatorioMensalExcel = function(filtro) {
+    filtro = filtro || 'geral';
+    let mesPadrao = new Date().toLocaleDateString('pt-BR').substring(3);
+    let mesAno = prompt("Digite o mês e ano para exportar em Excel (Ex: 04/2026):", mesPadrao);
+    if(!mesAno) return;
+
+    let itens = window._coletarItensRelatorio(filtro, mesAno);
+    if(itens.length === 0) return alert("Nenhum registro encontrado para o período: " + mesAno);
+
+    const fmt = function(n){ return (Number(n)||0).toFixed(2).replace('.', ','); };
+
+    let totEntradas = 0, totSaidas = 0, totPendentes = 0;
+    let linhas = itens.map(function(it){
+        if (it.natureza === 'ENTRADA') totEntradas += it.valor;
+        else if (it.natureza === 'SAIDA') totSaidas += it.valor;
+        else if (it.natureza === 'PENDENTE') totPendentes += it.valor;
+        let natLabel = it.natureza === 'ENTRADA' ? 'ENTRADA' : (it.natureza === 'SAIDA' ? 'SAÍDA' : 'PENDENTE');
+        let canalLabel = it.canal === 'banco' ? 'Banco (Digital)' : 'Balcão (Dinheiro)';
+        return `<tr>
+            <td>${it.data}</td>
+            <td>${it.doc}</td>
+            <td>${it.tipo}</td>
+            <td>${it.descricao}</td>
+            <td>${it.forma}</td>
+            <td>${canalLabel}</td>
+            <td>${natLabel}</td>
+            <td>${fmt(it.valor)}</td>
+        </tr>`;
+    }).join('');
+
+    let saldo = totEntradas - totSaidas;
+    let resumo;
+    if (filtro === 'pendentes') {
+        resumo = `<tr><td colspan="7"><b>TOTAL A RECEBER</b></td><td><b>${fmt(totPendentes)}</b></td></tr>`;
+    } else {
+        resumo = `
+            <tr><td colspan="7"><b>RECEBIMENTOS</b></td><td><b>${fmt(totEntradas)}</b></td></tr>
+            <tr><td colspan="7"><b>SAÍDAS / DESPESAS</b></td><td><b>${fmt(totSaidas)}</b></td></tr>
+            <tr><td colspan="7"><b>SALDO LÍQUIDO DO MÊS</b></td><td><b>${fmt(saldo)}</b></td></tr>`;
+        if (filtro === 'geral') {
+            resumo += `<tr><td colspan="7"><b>A RECEBER (PENDENTES)</b></td><td><b>${fmt(totPendentes)}</b></td></tr>`;
+        }
+    }
+
+    let tabela = `
+        <table border="1">
+            <thead>
+                <tr><th colspan="8">${RELATORIO_TITULOS[filtro] || RELATORIO_TITULOS.geral} — ${empresaGlobal.nome} — Competência: ${mesAno}</th></tr>
+                <tr>
+                    <th>Data</th><th>Doc</th><th>Tipo</th><th>Descrição</th>
+                    <th>Forma Pgto</th><th>Canal</th><th>Natureza</th><th>Valor (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${linhas}
+                <tr><td colspan="8"></td></tr>
+                ${resumo}
+            </tbody>
+        </table>`;
+
+    let html = `<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body>${tabela}</body></html>`;
+    let blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    let a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (RELATORIO_PREFIXO_ARQ[filtro] || 'Relatorio') + '-' + String(mesAno).replace(/\//g, '-') + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 100);
 };
 
       // --- IMPORTAÇÃO DIRETA (COM PROTEÇÃO CONTRA ERRO SILENCIOSO E TYPEERROR) ---
@@ -5727,17 +6181,20 @@ window.importarJSON = async function() {
            document.getElementById('subRegistroBusca').style.display = aba === 'busca' ? 'block' : 'none';
            document.getElementById('subRegistroPastas').style.display = aba === 'pastas' ? 'block' : 'none';
            document.getElementById('subRegistroGraficos').style.display = aba === 'graficos' ? 'block' : 'none';
-           
-           // Reseta a cor de todos para neutro
-           ['btnSubBusca', 'btnSubPastas', 'btnSubGraficos'].forEach(id => {
-               document.getElementById(id).style.backgroundColor = '#34495e';
-               document.getElementById(id).style.color = '#ffffff';
-           });
-           
-           // Pinta só o selecionado de Azul
-           if(aba === 'busca') document.getElementById('btnSubBusca').style.backgroundColor = '#3498db';
-           if(aba === 'pastas') document.getElementById('btnSubPastas').style.backgroundColor = '#3498db';
-           if(aba === 'graficos') document.getElementById('btnSubGraficos').style.backgroundColor = '#3498db';
+
+           // Marca o botão correspondente no submenu lateral
+           var mapaBtn = { busca: 'subBtnRegBusca', pastas: 'subBtnRegPastas', graficos: 'subBtnRegGraficos' };
+           document.querySelectorAll('#submenuRegistro .submenu-btn').forEach(function(b){ b.classList.remove('active'); });
+           var btnSel = document.getElementById(mapaBtn[aba]);
+           if (btnSel) btnSel.classList.add('active');
+       };
+
+       // Abre a aba de Registro Geral e vai direto para a sub-seção escolhida no menu lateral
+       window.abrirRegistroSub = function(aba, botao) {
+           window.abrirAba('tabRegistro', document.getElementById('btnTabRegistro'));
+           if (window.iniciarRegistroTotal) window.iniciarRegistroTotal();
+           window.mudarSubAbaRegistro(aba);
+           if (botao) botao.classList.add('active');
        };
 
        window.iniciarRegistroTotal = function() {
@@ -7136,6 +7593,553 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
     window._garantirLibsPdf().catch(function () {});
 }
 
+</script>
+
+<!-- ============================================================= -->
+<!-- MÓDULO DESPESAS (OBRAS) — 100% LOCAL (localStorage), sem Firebase -->
+<!-- Lógica recriada a partir do GESTOR 360, isolada do restante do sistema -->
+<!-- ============================================================= -->
+<script>
+(function(){
+    "use strict";
+    var K_OBRAS = 'FH_DESP_OBRAS';
+    var K_TER   = 'FH_DESP_TERCEIROS';
+    var K_REL   = 'FH_DESP_REL';
+
+    // ---------- Armazenamento ----------
+    function load(key){ try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){ return []; } }
+    function save(key, arr){ try { localStorage.setItem(key, JSON.stringify(arr)); } catch(e){ alert('Não foi possível salvar (armazenamento cheio?).'); } }
+    function novoId(){ return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+    // ---------- Helpers ----------
+    function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function norm(n){ return String(n||'').trim().replace(/\s+/g,' ').toLowerCase(); }
+    function canon(n){ return String(n||'').trim().replace(/\s+/g,' ').toUpperCase(); }
+    function parseMoeda(v){
+        if(typeof v === 'number') return v;
+        var s = String(v||'').trim().replace(/[^\d,.-]/g,'');
+        if(!s) return 0;
+        if(s.indexOf(',') > -1){ s = s.replace(/\./g,'').replace(',', '.'); }
+        return parseFloat(s) || 0;
+    }
+    function fmt(n){ return 'R$ ' + (Number(n)||0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+    function brDate(iso){
+        if(!iso) return '';
+        var m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if(m) return m[3] + '/' + m[2] + '/' + m[1];
+        return String(iso);
+    }
+    function hojeIso(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+    function hojeBr(){ var d = new Date(); return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear(); }
+    function vencTs(iso){
+        if(!iso) return null;
+        var m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if(!m) return null;
+        return new Date(Number(m[1]), Number(m[2])-1, Number(m[3])).getTime();
+    }
+    function estaVencida(d){
+        if(!d || d.status === 'pago' || !d.data_vencimento) return false;
+        var t = vencTs(d.data_vencimento);
+        if(!t) return false;
+        var h = new Date(); h.setHours(0,0,0,0);
+        return t < h.getTime();
+    }
+    function statusLabel(d){ return d.status === 'pago' ? 'PAGO' : (estaVencida(d) ? 'VENCIDA' : 'A VENCER'); }
+    function statusCor(d){ return d.status === 'pago' ? '#27ae60' : (estaVencida(d) ? '#e74c3c' : '#f39c12'); }
+    function ordenarPorVenc(arr){
+        arr.sort(function(a,b){
+            var ta = vencTs(a.data_vencimento) || 8.64e15;
+            var tb = vencTs(b.data_vencimento) || 8.64e15;
+            return ta - tb;
+        });
+        return arr;
+    }
+
+    // ---------- Máscara / anexo ----------
+    window.despMascaraMoeda = function(input){
+        var v = input.value.replace(/\D/g,'');
+        v = (parseInt(v||'0',10)/100).toFixed(2);
+        v = v.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        input.value = v;
+    };
+    window.despLerAnexo = function(input, hiddenId, prevId){
+        var f = input.files && input.files[0];
+        var hid = document.getElementById(hiddenId);
+        var prev = prevId ? document.getElementById(prevId) : null;
+        if(!f){ if(hid) hid.value=''; if(prev) prev.innerHTML=''; return; }
+        var r = new FileReader();
+        r.onload = function(e){ if(hid) hid.value = e.target.result; if(prev) prev.innerHTML = '<img src="'+e.target.result+'" style="max-width:120px; border-radius:6px; border:1px solid #7f8c8d;">'; };
+        r.readAsDataURL(f);
+    };
+
+    // ---------- Datalists ----------
+    function atualizarDatalists(){
+        var obras = {}, lojas = {};
+        load(K_OBRAS).forEach(function(d){ if(d.obra_nome) obras[d.obra_nome]=1; if(d.loja_nome) lojas[d.loja_nome]=1; });
+        load(K_REL).forEach(function(d){ if(d.obra_nome) obras[d.obra_nome]=1; if(d.loja_nome) lojas[d.loja_nome]=1; });
+        load(K_TER).forEach(function(d){ if(d.obra) obras[d.obra]=1; });
+        var dlO = document.getElementById('dl-obras');
+        var dlL = document.getElementById('dl-lojas');
+        if(dlO) dlO.innerHTML = Object.keys(obras).sort().map(function(o){ return '<option value="'+esc(o)+'">'; }).join('');
+        if(dlL) dlL.innerHTML = Object.keys(lojas).sort().map(function(o){ return '<option value="'+esc(o)+'">'; }).join('');
+    }
+    window.despRenderCadastro = function(){ atualizarDatalists(); };
+
+    // =====================================================================
+    // 1) ADICIONAR DESPESAS
+    // =====================================================================
+    window.despSalvarDespesa = function(){
+        var obra = canon(document.getElementById('d-obra').value);
+        var loja = canon(document.getElementById('d-loja').value);
+        var nf = (document.getElementById('d-nf').value||'').trim();
+        var venc = document.getElementById('d-vencimento').value || '';
+        var valor = document.getElementById('d-valor').value;
+        var desc = document.getElementById('d-desc').value || '';
+        var foto = document.getElementById('d-anexo-base64').value || '';
+        if(!obra || !loja || !valor){ alert('Preencha a Obra, o Fornecedor/Loja e o Valor!'); return; }
+        var arr = load(K_OBRAS);
+        arr.push({
+            id: novoId(), obra_nome: obra, obra_lower: norm(obra),
+            loja_nome: loja, loja_lower: norm(loja), nota_fiscal: nf,
+            data_vencimento: venc, data_vencimento_ts: vencTs(venc),
+            valor_string: valor, valor_numero: parseMoeda(valor),
+            descricao: desc, foto_recibo: foto,
+            data: hojeBr(), timestamp: Date.now(), status: 'pendente'
+        });
+        save(K_OBRAS, arr);
+        alert('Despesa cadastrada com sucesso!');
+        ['d-obra','d-loja','d-nf','d-vencimento','d-valor','d-desc','d-anexo','d-anexo-base64'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+        var prev=document.getElementById('d-anexo-prev'); if(prev) prev.innerHTML='';
+        atualizarDatalists();
+    };
+
+    // =====================================================================
+    // 2) RELATÓRIO DE GASTOS POR OBRA
+    // =====================================================================
+    window.despInitRelatorio = function(){ atualizarDatalists(); };
+
+    window.despBuscarDespesasObra = function(mostrarTodas){
+        var termo = norm(document.getElementById('busca-obra').value);
+        if(!mostrarTodas && !termo){ alert('Digite o nome da obra ou fornecedor.'); return; }
+        var lista = load(K_OBRAS).filter(function(d){
+            if(mostrarTodas) return true;
+            return (d.obra_lower||'').indexOf(termo) > -1 || (d.loja_lower||'').indexOf(termo) > -1;
+        });
+        ordenarPorVenc(lista);
+        // agrupa por obra
+        lista.sort(function(a,b){ return (a.obra_nome||'').localeCompare(b.obra_nome||''); });
+        window._dpUltimaBuscaObra = lista;
+        var cont = document.getElementById('lista-despesas-resultados');
+        var resumo = document.getElementById('resumo-total-despesas');
+        if(!lista.length){
+            cont.innerHTML = '<p style="text-align:center; color:#e74c3c;">Nenhuma despesa encontrada.</p>';
+            if(resumo) resumo.style.display='none';
+            document.getElementById('tabela-resumo-fornecedores').innerHTML='';
+            return;
+        }
+        var total = 0;
+        var html = '<div class="table-responsive"><table><thead><tr><th>Obra</th><th>Fornecedor</th><th>NF</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+        lista.forEach(function(d){
+            total += (d.valor_numero||0);
+            html += '<tr>'
+                + '<td>'+esc(d.obra_nome)+'</td>'
+                + '<td>'+esc(d.loja_nome)+(d.descricao?'<br><small style="color:#95a5a6;">'+esc(d.descricao)+'</small>':'')+'</td>'
+                + '<td>'+esc(d.nota_fiscal||'-')+'</td>'
+                + '<td>'+(brDate(d.data_vencimento)||'-')+'</td>'
+                + '<td style="font-weight:bold;">'+fmt(d.valor_numero)+'</td>'
+                + '<td><span style="color:'+statusCor(d)+'; font-weight:bold;">'+statusLabel(d)+'</span></td>'
+                + '<td style="white-space:nowrap;">'
+                    + '<button class="btn-secundario" style="padding:4px 8px; font-size:10px; background-color:'+(d.status==='pago'?'#7f8c8d':'#27ae60')+';" onclick="window.despTogglePago(\''+d.id+'\',\'obra\')">'+(d.status==='pago'?'↩ Pendente':'✓ Pago')+'</button> '
+                    + (d.foto_recibo?'<button class="btn-secundario" style="padding:4px 8px; font-size:10px; background-color:#2980b9;" onclick="window.despVerFoto(\''+d.id+'\',\'obra\')">📷</button> ':'')
+                    + '<button class="btn-secundario" style="padding:4px 8px; font-size:10px; background-color:#e67e22;" onclick="window.despEditar(\''+d.id+'\',\'obra\')">✏️</button> '
+                    + '<button class="btn-danger" style="padding:4px 8px; font-size:10px;" onclick="window.despExcluir(\''+d.id+'\',\'obra\')">🗑️</button>'
+                + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        cont.innerHTML = html;
+        document.getElementById('total-gasto-display').textContent = fmt(total);
+        if(resumo) resumo.style.display='block';
+        document.getElementById('tabela-resumo-fornecedores').innerHTML='';
+    };
+
+    window.despGerarResumoFornecedores = function(){
+        var lista = window._dpUltimaBuscaObra || [];
+        if(!lista.length){ alert('Faça uma busca primeiro.'); return; }
+        var obras = [], forn = [], mapa = {};
+        lista.forEach(function(d){
+            var o = d.obra_nome||'-', f = d.loja_nome||'-';
+            if(obras.indexOf(o)<0) obras.push(o);
+            if(forn.indexOf(f)<0) forn.push(f);
+            mapa[f+'||'+o] = (mapa[f+'||'+o]||0) + (d.valor_numero||0);
+        });
+        obras.sort(); forn.sort();
+        var html = '<div class="table-responsive"><table><thead><tr><th>Fornecedor \\ Obra</th>';
+        obras.forEach(function(o){ html += '<th>'+esc(o)+'</th>'; });
+        html += '<th>Total</th></tr></thead><tbody>';
+        var totCol = {};
+        forn.forEach(function(f){
+            var totLin = 0;
+            html += '<tr><td style="font-weight:bold;">'+esc(f)+'</td>';
+            obras.forEach(function(o){
+                var v = mapa[f+'||'+o]||0; totLin += v; totCol[o]=(totCol[o]||0)+v;
+                html += '<td>'+(v?fmt(v):'-')+'</td>';
+            });
+            html += '<td style="font-weight:bold;">'+fmt(totLin)+'</td></tr>';
+        });
+        html += '<tr style="background:#1a252f;"><td style="font-weight:bold;">Total</td>';
+        var totGeral=0;
+        obras.forEach(function(o){ totGeral+=(totCol[o]||0); html += '<td style="font-weight:bold; color:#f1c40f;">'+fmt(totCol[o]||0)+'</td>'; });
+        html += '<td style="font-weight:bold; color:#f1c40f;">'+fmt(totGeral)+'</td></tr>';
+        html += '</tbody></table></div>';
+        document.getElementById('tabela-resumo-fornecedores').innerHTML = '<h3 style="color:#ecf0f1;">Resumo Obra × Fornecedor</h3>' + html;
+    };
+
+    // =====================================================================
+    // 3) EXPORTAR RELATÓRIOS (tabela independente)
+    // =====================================================================
+    window.despInitExportar = function(){
+        atualizarDatalists();
+        var lan = document.getElementById('rd-lancamento');
+        if(lan && !lan.value) lan.value = hojeIso();
+        window.despCarregarRelatorioTabular();
+    };
+
+    window.despSalvarLinhaRelatorio = function(){
+        var obra = canon(document.getElementById('rd-obra').value);
+        var loja = canon(document.getElementById('rd-loja').value);
+        var nf = (document.getElementById('rd-nf').value||'').trim();
+        var cheque = (document.getElementById('rd-cheque-boleto').value||'').trim();
+        var lanc = document.getElementById('rd-lancamento').value || hojeIso();
+        var venc = document.getElementById('rd-vencimento').value || '';
+        var valor = document.getElementById('rd-valor').value;
+        var desc = document.getElementById('rd-desc').value || '';
+        var obs = (document.getElementById('rd-observacao').value||'').trim();
+        if(!obra || !loja || !valor){ alert('Preencha Obra, Fornecedor e Valor.'); return; }
+        var arr = load(K_REL);
+        arr.push({
+            id: novoId(), obra_nome: obra, obra_lower: norm(obra),
+            loja_nome: loja, loja_lower: norm(loja), nota_fiscal: nf,
+            cheque_boleto_num: cheque, data_lancamento: lanc, data: brDate(lanc),
+            data_vencimento: venc, data_vencimento_ts: vencTs(venc),
+            valor_string: valor, valor_numero: parseMoeda(valor),
+            descricao: desc, observacao: obs, timestamp: Date.now(), status: 'pendente'
+        });
+        save(K_REL, arr);
+        alert('Linha guardada no relatório!');
+        ['rd-obra','rd-loja','rd-nf','rd-cheque-boleto','rd-vencimento','rd-valor','rd-desc','rd-observacao'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+        document.getElementById('rd-lancamento').value = hojeIso();
+        atualizarDatalists();
+        window.despCarregarRelatorioTabular();
+    };
+
+    window.despCarregarRelatorioTabular = function(){
+        var termo = norm(document.getElementById('rel-desp-filtro').value);
+        var status = document.getElementById('rel-desp-status').value;
+        var lista = load(K_REL).filter(function(d){
+            if(termo && (d.obra_lower||'').indexOf(termo)<0 && (d.loja_lower||'').indexOf(termo)<0) return false;
+            if(status==='pago') return d.status==='pago';
+            if(status==='pendente') return d.status!=='pago';
+            if(status==='vencido') return estaVencida(d);
+            return true;
+        });
+        ordenarPorVenc(lista);
+        window._dpUltimaRel = lista;
+        var wrap = document.getElementById('tabela-relatorio-despesas-wrap');
+        var resumo = document.getElementById('resumo-total-rel-despesas');
+        if(!lista.length){
+            wrap.innerHTML = '<p style="text-align:center; color:#95a5a6;">Nenhuma linha cadastrada / encontrada.</p>';
+            if(resumo) resumo.style.display='none';
+            return;
+        }
+        var total = 0;
+        var html = '<div class="table-responsive"><table><thead><tr><th>Obra</th><th>Fornecedor</th><th>Cheque/Boleto</th><th>NF</th><th>Lançamento</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Obs.</th><th>Ações</th></tr></thead><tbody>';
+        lista.forEach(function(d){
+            total += (d.valor_numero||0);
+            html += '<tr>'
+                + '<td>'+esc(d.obra_nome)+'</td>'
+                + '<td>'+esc(d.loja_nome)+'</td>'
+                + '<td>'+esc(d.cheque_boleto_num||'-')+'</td>'
+                + '<td>'+esc(d.nota_fiscal||'-')+'</td>'
+                + '<td>'+(brDate(d.data_lancamento)||'-')+'</td>'
+                + '<td>'+(brDate(d.data_vencimento)||'-')+'</td>'
+                + '<td style="font-weight:bold;">'+fmt(d.valor_numero)+'</td>'
+                + '<td><span style="color:'+statusCor(d)+'; font-weight:bold;">'+statusLabel(d)+'</span></td>'
+                + '<td><small style="color:#95a5a6;">'+esc(d.observacao||'')+'</small></td>'
+                + '<td style="white-space:nowrap;">'
+                    + '<button class="btn-secundario" style="padding:4px 8px; font-size:10px; background-color:'+(d.status==='pago'?'#7f8c8d':'#27ae60')+';" onclick="window.despTogglePago(\''+d.id+'\',\'rel\')">'+(d.status==='pago'?'↩':'✓')+'</button> '
+                    + '<button class="btn-secundario" style="padding:4px 8px; font-size:10px; background-color:#e67e22;" onclick="window.despEditar(\''+d.id+'\',\'rel\')">✏️</button> '
+                    + '<button class="btn-danger" style="padding:4px 8px; font-size:10px;" onclick="window.despExcluir(\''+d.id+'\',\'rel\')">🗑️</button>'
+                + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        wrap.innerHTML = html;
+        document.getElementById('total-gasto-display-rel-desp').textContent = fmt(total);
+        if(resumo) resumo.style.display='block';
+    };
+
+    // =====================================================================
+    // 4) RELATÓRIO GERAL DE OBRAS
+    // =====================================================================
+    window.despCarregarRelatorioGeral = function(){
+        var despesas = load(K_OBRAS);
+        var terceiros = load(K_TER).slice().sort(function(a,b){ return (b.timestamp||0)-(a.timestamp||0); });
+        var pendentes = despesas.filter(function(d){ return d.status!=='pago'; });
+        var pagas = despesas.filter(function(d){ return d.status==='pago'; });
+        var vencidas = ordenarPorVenc(pendentes.filter(function(d){ return estaVencida(d); }));
+        var aVencer = ordenarPorVenc(pendentes.filter(function(d){ return !estaVencida(d); }));
+        var sVenc = vencidas.reduce(function(s,d){ return s+(d.valor_numero||0); },0);
+        var sAV = aVencer.reduce(function(s,d){ return s+(d.valor_numero||0); },0);
+        var sPagasForn = pagas.reduce(function(s,d){ return s+(d.valor_numero||0); },0);
+        var sTerc = terceiros.reduce(function(s,d){ return s+(d.valor_numero||0); },0);
+        var sPagas = sPagasForn + sTerc;
+        var emAberto = sVenc + sAV;
+        var totalGeral = emAberto + sPagas;
+        window._dpUltimaGeral = { vencidas: vencidas, aVencer: aVencer, pagasForn: pagas, terceiros: terceiros, sVenc: sVenc, sAV: sAV, sPagasForn: sPagasForn, sTerc: sTerc, sPagas: sPagas, emAberto: emAberto, totalGeral: totalGeral };
+
+        var resumo = document.getElementById('rel-geral-obras-resumo');
+        document.getElementById('rel-geral-obras-resumo-totais').innerHTML =
+            '<div style="display:flex; flex-wrap:wrap; gap:14px; justify-content:center;">'
+            + '<span style="color:#e74c3c;">🔴 Vencido: <b>'+fmt(sVenc)+'</b></span>'
+            + '<span style="color:#f39c12;">🟡 A vencer: <b>'+fmt(sAV)+'</b></span>'
+            + '<span style="color:#27ae60;">🟢 Pago: <b>'+fmt(sPagas)+'</b></span>'
+            + '<span style="color:#f1c40f;">📊 Total: <b>'+fmt(totalGeral)+'</b></span>'
+            + '</div><p style="margin:10px 0 0 0; font-size:12px; color:#bdc3c7;">Em aberto: <b>'+fmt(emAberto)+'</b> · Fornecedores pagos: <b>'+fmt(sPagasForn)+'</b> · Terceiros pagos: <b>'+fmt(sTerc)+'</b> · '+despesas.length+' despesa(s) · '+terceiros.length+' terceiro(s)</p>';
+        if(resumo) resumo.style.display='block';
+
+        function tabela(lista, comObra){
+            if(!lista.length) return '<p style="text-align:center; color:#95a5a6; padding:8px;">Nenhum registro.</p>';
+            var h = '<div class="table-responsive"><table><thead><tr><th>Obra</th><th>Fornecedor/Nome</th><th>Vencimento</th><th>Valor</th></tr></thead><tbody>';
+            lista.forEach(function(d){
+                h += '<tr><td>'+esc(d.obra_nome||d.obra||'-')+'</td><td>'+esc(d.loja_nome||d.nome||'-')+'</td><td>'+(brDate(d.data_vencimento)||d.data||'-')+'</td><td style="font-weight:bold;">'+fmt(d.valor_numero)+'</td></tr>';
+            });
+            return h + '</tbody></table></div>';
+        }
+        var sec = document.getElementById('rel-geral-obras-secoes');
+        if(!despesas.length && !terceiros.length){ sec.innerHTML = '<p style="text-align:center; color:#95a5a6; padding:20px;">Nenhum registro cadastrado.</p>'; return; }
+        sec.innerHTML =
+            '<details open style="margin-bottom:10px;"><summary style="cursor:pointer; color:#e74c3c; font-weight:bold; padding:8px;">🔴 Em aberto — Vencido ('+vencidas.length+') — '+fmt(sVenc)+'</summary>'+tabela(vencidas)+'</details>'
+            + '<details open style="margin-bottom:10px;"><summary style="cursor:pointer; color:#f39c12; font-weight:bold; padding:8px;">🟡 A vencer ('+aVencer.length+') — '+fmt(sAV)+'</summary>'+tabela(aVencer)+'</details>'
+            + '<details style="margin-bottom:10px;"><summary style="cursor:pointer; color:#27ae60; font-weight:bold; padding:8px;">🟢 Já pago — Fornecedores ('+pagas.length+') — '+fmt(sPagasForn)+'</summary>'+tabela(pagas)+'</details>'
+            + '<details style="margin-bottom:10px;"><summary style="cursor:pointer; color:#27ae60; font-weight:bold; padding:8px;">👷 Pagamentos a terceiros ('+terceiros.length+') — '+fmt(sTerc)+'</summary>'+tabela(terceiros)+'</details>';
+    };
+
+    // =====================================================================
+    // 5) TERCEIROS
+    // =====================================================================
+    window.despInitTerceiros = function(){ atualizarDatalists(); window.despBuscarTerceiros(true); };
+
+    window.despSalvarTerceiro = function(){
+        var nome = (document.getElementById('t-nome').value||'').trim();
+        var cpf = (document.getElementById('t-cpf').value||'').trim();
+        var tel = (document.getElementById('t-tel').value||'').trim();
+        var obra = (document.getElementById('t-obra').value||'').trim();
+        var valor = document.getElementById('t-valor').value;
+        var desc = (document.getElementById('t-desc').value||'').trim();
+        if(!nome || !obra || !valor){ alert('Preencha Nome, Obra e Valor!'); return; }
+        var arr = load(K_TER);
+        arr.push({
+            id: novoId(), nome: nome, nome_lower: nome.toLowerCase(), cpf: cpf, tel: tel,
+            obra: obra, obra_lower: obra.toLowerCase(), valor_string: valor, valor_numero: parseMoeda(valor),
+            descricao: desc, data: hojeBr(), timestamp: Date.now()
+        });
+        save(K_TER, arr);
+        alert('Pagamento a terceiro registrado!');
+        ['t-nome','t-cpf','t-tel','t-obra','t-valor','t-desc'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+        atualizarDatalists();
+        window.despBuscarTerceiros(true);
+    };
+
+    window.despBuscarTerceiros = function(mostrarTodos){
+        var termo = norm(document.getElementById('busca-terceiro').value);
+        if(!mostrarTodos && !termo){ alert('Digite o nome da obra ou do profissional.'); return; }
+        var lista = load(K_TER).filter(function(d){
+            if(mostrarTodos) return true;
+            return (d.obra_lower||'').indexOf(termo)>-1 || (d.nome_lower||'').indexOf(termo)>-1;
+        }).sort(function(a,b){ return (b.timestamp||0)-(a.timestamp||0); });
+        var div = document.getElementById('lista-terceiros-resultados');
+        if(!lista.length){ div.innerHTML = '<p style="text-align:center; color:#95a5a6;">Nenhum registro encontrado.</p>'; return; }
+        var total = lista.reduce(function(s,d){ return s+(d.valor_numero||0); },0);
+        var html = '<div style="text-align:center; margin-bottom:12px; padding:10px; background:#1a252f; border-radius:8px; color:#ecf0f1;">Total nesta busca: <b style="color:#f1c40f; font-size:16px;">'+fmt(total)+'</b></div>';
+        html += '<div class="table-responsive"><table><thead><tr><th>Profissional</th><th>CPF</th><th>Contato</th><th>Obra</th><th>Valor</th><th>Data</th><th>Ações</th></tr></thead><tbody>';
+        lista.forEach(function(d){
+            html += '<tr>'
+                + '<td>'+esc(d.nome)+(d.descricao?'<br><small style="color:#95a5a6;">'+esc(d.descricao)+'</small>':'')+'</td>'
+                + '<td>'+esc(d.cpf||'-')+'</td>'
+                + '<td>'+esc(d.tel||'-')+'</td>'
+                + '<td>'+esc(d.obra)+'</td>'
+                + '<td style="font-weight:bold;">'+fmt(d.valor_numero)+'</td>'
+                + '<td>'+esc(d.data||'-')+'</td>'
+                + '<td style="white-space:nowrap;"><button class="btn-secundario" style="padding:4px 8px; font-size:10px; background-color:#e67e22;" onclick="window.despEditar(\''+d.id+'\',\'ter\')">✏️</button> <button class="btn-danger" style="padding:4px 8px; font-size:10px;" onclick="window.despExcluir(\''+d.id+'\',\'ter\')">🗑️</button></td>'
+                + '</tr>';
+        });
+        html += '</tbody></table></div>';
+        div.innerHTML = html;
+    };
+
+    // =====================================================================
+    // AÇÕES COMUNS: pago, excluir, editar, ver foto
+    // =====================================================================
+    function keyDe(tipo){ return tipo==='obra' ? K_OBRAS : (tipo==='rel' ? K_REL : K_TER); }
+    function recarrega(tipo){
+        if(tipo==='obra') window.despBuscarDespesasObra(!norm(document.getElementById('busca-obra').value));
+        else if(tipo==='rel') window.despCarregarRelatorioTabular();
+        else window.despBuscarTerceiros(true);
+    }
+    window.despTogglePago = function(id, tipo){
+        var key = keyDe(tipo); var arr = load(key);
+        var d = arr.filter(function(x){ return x.id===id; })[0];
+        if(!d) return;
+        if(d.status==='pago'){ d.status='pendente'; delete d.data_pagamento; }
+        else { d.status='pago'; d.data_pagamento = hojeBr(); }
+        save(key, arr); recarrega(tipo);
+    };
+    window.despExcluir = function(id, tipo){
+        if(!confirm('Tem certeza que deseja excluir este registro?')) return;
+        var key = keyDe(tipo);
+        save(key, load(key).filter(function(x){ return x.id!==id; }));
+        recarrega(tipo); atualizarDatalists();
+    };
+    window.despVerFoto = function(id, tipo){
+        var d = load(keyDe(tipo)).filter(function(x){ return x.id===id; })[0];
+        if(!d || !d.foto_recibo){ alert('Sem foto anexada.'); return; }
+        var w = window.open('', '', 'width=700,height=800');
+        w.document.write('<title>Recibo</title><body style="margin:0; background:#111; text-align:center;"><img src="'+d.foto_recibo+'" style="max-width:100%;"></body>');
+        w.document.close();
+    };
+    window.despEditar = function(id, tipo){
+        var key = keyDe(tipo); var arr = load(key);
+        var d = arr.filter(function(x){ return x.id===id; })[0];
+        if(!d) return;
+        abrirModalEdicao(d, tipo, function(){ save(key, arr); recarrega(tipo); atualizarDatalists(); });
+    };
+
+    function campo(label, id, valor, tipoInput){
+        return '<label style="display:block; margin-top:8px; color:#bdc3c7; font-size:12px;">'+label+'</label>'
+            + '<input type="'+(tipoInput||'text')+'" id="'+id+'" value="'+esc(valor==null?'':valor)+'" style="width:100%; padding:8px; border-radius:6px; border:1px solid #7f8c8d; background:#2c3e50; color:#fff;">';
+    }
+    function abrirModalEdicao(d, tipo, onSave){
+        var old = document.getElementById('despModalEdicao'); if(old) old.remove();
+        var campos = '';
+        if(tipo==='ter'){
+            campos += campo('Nome','edt-nome',d.nome)
+                + campo('CPF','edt-cpf',d.cpf)
+                + campo('Telefone','edt-tel',d.tel)
+                + campo('Obra','edt-obra',d.obra)
+                + campo('Valor (R$)','edt-valor',d.valor_string)
+                + campo('Descrição','edt-desc',d.descricao);
+        } else {
+            campos += campo('Obra','edt-obra',d.obra_nome)
+                + campo('Fornecedor','edt-loja',d.loja_nome)
+                + campo('Nota Fiscal','edt-nf',d.nota_fiscal)
+                + (tipo==='rel'?campo('Cheque/Boleto','edt-cheque',d.cheque_boleto_num):'')
+                + (tipo==='rel'?campo('Lançamento','edt-lanc',d.data_lancamento,'date'):'')
+                + campo('Vencimento','edt-venc',d.data_vencimento,'date')
+                + campo('Valor (R$)','edt-valor',d.valor_string)
+                + campo('Descrição','edt-desc',d.descricao)
+                + (tipo==='rel'?campo('Observação','edt-obs',d.observacao):'');
+        }
+        var wrap = document.createElement('div');
+        wrap.id = 'despModalEdicao';
+        wrap.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; display:flex; align-items:center; justify-content:center; padding:16px;';
+        wrap.innerHTML = '<div style="background:#1a252f; border:1px solid #7f8c8d; border-radius:10px; padding:20px; max-width:480px; width:100%; max-height:90vh; overflow:auto;">'
+            + '<h3 style="margin-top:0; color:#e67e22;">✏️ Editar registro</h3>'
+            + campos
+            + '<div style="display:flex; gap:10px; margin-top:16px;">'
+            + '<button class="btn-primary" style="flex:1; padding:10px; background-color:#27ae60;" id="edt-salvar">Salvar</button>'
+            + '<button class="btn-secundario" style="flex:1; padding:10px; background-color:#7f8c8d;" onclick="document.getElementById(\'despModalEdicao\').remove()">Cancelar</button>'
+            + '</div></div>';
+        document.body.appendChild(wrap);
+        document.getElementById('edt-salvar').onclick = function(){
+            function val(id){ var el=document.getElementById(id); return el?el.value:''; }
+            if(tipo==='ter'){
+                d.nome = (val('edt-nome')||'').trim(); d.nome_lower = d.nome.toLowerCase();
+                d.cpf = val('edt-cpf'); d.tel = val('edt-tel');
+                d.obra = (val('edt-obra')||'').trim(); d.obra_lower = d.obra.toLowerCase();
+                d.valor_string = val('edt-valor'); d.valor_numero = parseMoeda(d.valor_string);
+                d.descricao = val('edt-desc');
+            } else {
+                d.obra_nome = canon(val('edt-obra')); d.obra_lower = norm(d.obra_nome);
+                d.loja_nome = canon(val('edt-loja')); d.loja_lower = norm(d.loja_nome);
+                d.nota_fiscal = val('edt-nf');
+                d.data_vencimento = val('edt-venc'); d.data_vencimento_ts = vencTs(d.data_vencimento);
+                d.valor_string = val('edt-valor'); d.valor_numero = parseMoeda(d.valor_string);
+                d.descricao = val('edt-desc');
+                if(tipo==='rel'){
+                    d.cheque_boleto_num = val('edt-cheque');
+                    d.data_lancamento = val('edt-lanc'); d.data = brDate(d.data_lancamento);
+                    d.observacao = val('edt-obs');
+                }
+            }
+            document.getElementById('despModalEdicao').remove();
+            if(onSave) onSave();
+        };
+    }
+
+    // =====================================================================
+    // EXPORTAÇÃO PDF / EXCEL
+    // =====================================================================
+    function datasetExport(tipo){
+        if(tipo==='obra'){
+            var l = window._dpUltimaBuscaObra || [];
+            return { titulo:'Relatório de Gastos por Obra',
+                cols:['Obra','Fornecedor','NF','Vencimento','Valor','Status'],
+                linhas: l.map(function(d){ return [d.obra_nome, d.loja_nome, d.nota_fiscal||'-', brDate(d.data_vencimento)||'-', fmt(d.valor_numero), statusLabel(d)]; }),
+                total: l.reduce(function(s,d){ return s+(d.valor_numero||0); },0) };
+        }
+        if(tipo==='rel'){
+            var r = window._dpUltimaRel || [];
+            return { titulo:'Relatório de Despesas',
+                cols:['Obra','Fornecedor','Cheque/Boleto','NF','Lançamento','Vencimento','Valor','Status','Observação'],
+                linhas: r.map(function(d){ return [d.obra_nome, d.loja_nome, d.cheque_boleto_num||'-', d.nota_fiscal||'-', brDate(d.data_lancamento)||'-', brDate(d.data_vencimento)||'-', fmt(d.valor_numero), statusLabel(d), d.observacao||'']; }),
+                total: r.reduce(function(s,d){ return s+(d.valor_numero||0); },0) };
+        }
+        // geral
+        var g = window._dpUltimaGeral;
+        if(!g){ window.despCarregarRelatorioGeral(); g = window._dpUltimaGeral; }
+        var linhas = [];
+        g.vencidas.forEach(function(d){ linhas.push(['VENCIDO', d.obra_nome, d.loja_nome, brDate(d.data_vencimento)||'-', fmt(d.valor_numero)]); });
+        g.aVencer.forEach(function(d){ linhas.push(['A VENCER', d.obra_nome, d.loja_nome, brDate(d.data_vencimento)||'-', fmt(d.valor_numero)]); });
+        g.pagasForn.forEach(function(d){ linhas.push(['PAGO (Fornecedor)', d.obra_nome, d.loja_nome, d.data_pagamento||d.data||'-', fmt(d.valor_numero)]); });
+        g.terceiros.forEach(function(d){ linhas.push(['PAGO (Terceiro)', d.obra, d.nome, d.data||'-', fmt(d.valor_numero)]); });
+        return { titulo:'Relatório Geral de Obras',
+            cols:['Categoria','Obra','Fornecedor/Nome','Data','Valor'],
+            linhas: linhas, total: g.totalGeral };
+    }
+
+    window.despExportarPDF = function(tipo){
+        var ds = datasetExport(tipo);
+        if(!ds.linhas.length){ alert('Nada para exportar. Faça uma busca/carregue os dados primeiro.'); return; }
+        var thead = ds.cols.map(function(c){ return '<th>'+esc(c)+'</th>'; }).join('');
+        var tbody = ds.linhas.map(function(row){ return '<tr>'+row.map(function(c){ return '<td>'+esc(c)+'</td>'; }).join('')+'</tr>'; }).join('');
+        var html = '<html><head><meta charset="UTF-8"><title>'+esc(ds.titulo)+'</title><style>'
+            + '@page{size:A4 landscape; margin:10mm;} body{font-family:sans-serif; font-size:11px; color:#222;} h2{margin:0 0 4px 0;} table{width:100%; border-collapse:collapse; margin-top:10px;} th,td{border:1px solid #ccc; padding:6px; text-align:left;} th{background:#2c3e50; color:#fff; text-transform:uppercase; font-size:10px;} .tot{margin-top:14px; font-size:14px; font-weight:bold; text-align:right;} .no-print{margin-top:14px;} @media print{.no-print{display:none;}}'
+            + '</style></head><body>'
+            + '<h2>'+esc(ds.titulo)+'</h2><div style="color:#666;">Gerado em '+new Date().toLocaleString('pt-BR')+'</div>'
+            + '<table><thead><tr>'+thead+'</tr></thead><tbody>'+tbody+'</tbody></table>'
+            + '<div class="tot">TOTAL: '+fmt(ds.total)+'</div>'
+            + '<div class="no-print"><button onclick="window.print()" style="padding:10px 16px; font-size:13px; font-weight:bold; background:#2980b9; color:#fff; border:none; border-radius:6px; cursor:pointer;">🖨️ Imprimir / Salvar PDF</button></div>'
+            + '</body></html>';
+        var w = window.open('', '', 'width=1000,height=750');
+        w.document.write(html); w.document.close();
+    };
+
+    window.despExportarExcel = function(tipo){
+        var ds = datasetExport(tipo);
+        if(!ds.linhas.length){ alert('Nada para exportar. Faça uma busca/carregue os dados primeiro.'); return; }
+        var thead = ds.cols.map(function(c){ return '<th>'+esc(c)+'</th>'; }).join('');
+        var tbody = ds.linhas.map(function(row){ return '<tr>'+row.map(function(c){ return '<td>'+esc(c)+'</td>'; }).join('')+'</tr>'; }).join('');
+        var tabela = '<table border="1"><thead><tr><th colspan="'+ds.cols.length+'">'+esc(ds.titulo)+' — '+new Date().toLocaleString('pt-BR')+'</th></tr><tr>'+thead+'</tr></thead><tbody>'+tbody
+            + '<tr><td colspan="'+(ds.cols.length-1)+'"><b>TOTAL</b></td><td><b>'+fmt(ds.total)+'</b></td></tr>'
+            + '</tbody></table>';
+        var html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body>'+tabela+'</body></html>';
+        var blob = new Blob(['\ufeff'+html], {type:'application/vnd.ms-excel;charset=utf-8'});
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = ds.titulo.replace(/[^\w]+/g,'-') + '-' + hojeIso() + '.xls';
+        document.body.appendChild(a); a.click();
+        setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 100);
+    };
+})();
 </script>
 </body>
 </html>
