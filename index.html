@@ -1434,6 +1434,14 @@ window._timestampDeDataStrBr = function (dataStr) {
 };
 window.dataEfetivaCaixa = function (doc) {
     if (!doc) return '';
+    // Se houve recebimento parcial, usa a data do recebimento mais recente
+    const parciais = window._listaRecebimentosParciais(doc);
+    if (parciais.length) {
+        const ultimo = parciais.slice().sort(function (a, b) {
+            return (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0);
+        })[0];
+        if (ultimo && ultimo.dataStr) return String(ultimo.dataStr);
+    }
     const st = doc.statusPagamento || 'PAGO';
     if (st === 'PAGO') {
         if (doc.dataRecebimentoStr) return String(doc.dataRecebimentoStr);
@@ -1462,10 +1470,39 @@ window.aplicarCamposRecebimentoAoDoc = function (doc, statusNovo, original) {
     return doc;
 };
 window.dataEfetivaCaixaDia = function (doc) {
-    return (window.dataEfetivaCaixa(doc) || '').split(/\s+/)[0] || '-';
+    return window._dataLancamentoBancoDoc(doc) || '-';
+};
+
+// Data exibida no caixa do banco: SEMPRE prioriza data do RECEBIMENTO, nunca a da emissão da nota
+window._dataLancamentoBancoDoc = function (doc, parcial) {
+    if (!doc && !parcial) return '-';
+    if (parcial && parcial.dataStr) return String(parcial.dataStr).split(/\s+/)[0];
+    const parciais = window._listaRecebimentosParciais(doc);
+    if (parciais.length) {
+        const ult = parciais.slice().sort(function (a, b) {
+            return (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0);
+        })[0];
+        if (ult && ult.dataStr) return String(ult.dataStr).split(/\s+/)[0];
+    }
+    const st = doc.statusPagamento || 'PAGO';
+    if (st === 'PAGO') {
+        if (doc.dataRecebimentoStr) return String(doc.dataRecebimentoStr).split(/\s+/)[0];
+        if (doc.timestampRecebimento) return new Date(Number(doc.timestampRecebimento)).toLocaleDateString('pt-BR');
+    }
+    return String(doc.dataStr || '').split(/\s+/)[0] || '-';
 };
 window.timestampEfetivoCaixa = function (doc) {
     if (!doc) return 0;
+    // Recebimentos parciais (PIX/cartão/dinheiro): usa o timestamp mais recente
+    const parciais = window._listaRecebimentosParciais(doc);
+    if (parciais.length) {
+        let maxTs = 0;
+        parciais.forEach(function (p) {
+            const ts = Number(p.timestamp) || window._timestampDeDataStrBr(p.dataStr) || 0;
+            if (ts > maxTs) maxTs = ts;
+        });
+        if (maxTs) return maxTs;
+    }
     const st = doc.statusPagamento || 'PAGO';
     if (st === 'PAGO' && doc.timestampRecebimento) return Number(doc.timestampRecebimento) || 0;
     return Number(doc.timestamp) || 0;
@@ -1531,14 +1568,16 @@ window._montarLinhasDigitaisBanco = function () {
                 isLinhaParcial: true,
                 parcialInfo: p,
                 parcialIdx: idx,
-                _sortTs: Number(p.timestamp) || 0,
+                _sortTs: Number(p.timestamp) || window._timestampDeDataStrBr(p.dataStr) || 0,
                 id: v.id
             });
         });
         const formaDig = window.formaPagamentoEhDigital(v.formaPagamento);
         const quitado = window._docQuitado(v);
         const saldo = window._saldoDevedorDoc(v);
-        if (parciais.length === 0 && formaDig) {
+        const statusDoc = v.statusPagamento || 'PAGO';
+        // Só mostra linha "principal" se for digital já quitado SEM histórico de parciais
+        if (parciais.length === 0 && formaDig && statusDoc === 'PAGO' && quitado) {
             linhas.push({
                 docPai: v,
                 isManual: false,
@@ -4060,13 +4099,18 @@ window.confirmarRecebimentoPendente = async function () {
             saldoDevedor: saldoRestante,
             formaPagamento: forma,
             autoLancamentoBanco: false,
-            statusPagamento: quitado ? 'PAGO' : 'PENDENTE'
+            statusPagamento: quitado ? 'PAGO' : 'PENDENTE',
+            // SEMPRE grava data do RECEBIMENTO (ignora data de emissão da nota)
+            dataRecebimentoStr: dataRecebimentoStr,
+            timestampRecebimento: agora
         };
-        if (quitado) {
-            payload.dataRecebimentoStr = dataRecebimentoStr;
-            payload.timestampRecebimento = agora;
-        }
         await update(ref(window.meuBanco, 'caixa/' + id), payload);
+        // Atualiza memória local na hora (não espera o Firebase devolver)
+        const idxLocal = caixaGlobal.findIndex(function (x) { return String(x.id) === String(id); });
+        if (idxLocal >= 0) {
+            Object.assign(caixaGlobal[idxLocal], payload);
+            window.caixaGlobal = caixaGlobal;
+        }
         if (!isDig) {
             window.registrarMovimentoCaixa('entrada', valorReceber);
         }
@@ -4178,6 +4222,75 @@ window.excluirNotaPendente = async function (id) {
         else if (acao === 'estornar' && window.estornarPagamento) window.estornarPagamento(id);
     }, true);
 })();
+
+window.corrigirDataRecebimentoParaHoje = async function (id) {
+    const listaCx = window._listaCaixaSincronizada();
+    const doc = listaCx.find(function (x) { return String(x.id) === String(id); });
+    if (!doc) return alert('Documento não encontrado.');
+    if ((doc.statusPagamento || 'PAGO') !== 'PAGO') {
+        return alert('Só é possível corrigir notas já quitadas (PAGO).');
+    }
+    if (!window.formaPagamentoEhDigital(doc.formaPagamento)) {
+        return alert('Esta correção é para recebimentos PIX/cartão/boleto no banco digital.');
+    }
+    const parciais = window._listaRecebimentosParciais(doc);
+    if (parciais.length) {
+        return alert('Esta nota já tem histórico de recebimentos parciais. Se a data estiver errada, use Estornar e receba novamente.');
+    }
+    const diaAtual = window._diaBrDeString(window.dataEfetivaCaixa(doc));
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    if (diaAtual === hoje) {
+        return alert('A data de recebimento desta nota já está em hoje (' + hoje + ').');
+    }
+    const msg =
+        'Corrigir data de recebimento para HOJE (' + hoje + ')?\n\n' +
+        'Nota Nº ' + (doc.os || '-') + ' — ' + (doc.clienteNome || '') + '\n' +
+        'Valor: R$ ' + (parseFloat(doc.total) || 0).toFixed(2) + '\n' +
+        'Data atual no sistema: ' + diaAtual + '\n\n' +
+        'O valor passará a contar no caixa do banco a partir de hoje.';
+    if (!confirm(msg)) return;
+    try {
+        const { ref, update } = await import('https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js');
+        const agora = Date.now();
+        const dataRecebimentoStr = new Date(agora).toLocaleString('pt-BR');
+        const payload = {
+            dataRecebimentoStr: dataRecebimentoStr,
+            timestampRecebimento: agora,
+            recebimentosParciais: [{
+                valor: parseFloat(doc.total) || 0,
+                formaPagamento: doc.formaPagamento || 'PIX',
+                dataStr: dataRecebimentoStr,
+                timestamp: agora
+            }],
+            valorRecebidoParcial: parseFloat(doc.total) || 0,
+            saldoDevedor: 0,
+            statusPagamento: 'PAGO'
+        };
+        await update(ref(window.meuBanco, 'caixa/' + id), payload);
+        const idxLocal = caixaGlobal.findIndex(function (x) { return String(x.id) === String(id); });
+        if (idxLocal >= 0) {
+            Object.assign(caixaGlobal[idxLocal], payload);
+            window.caixaGlobal = caixaGlobal;
+        }
+        alert('✅ Data de recebimento corrigida para hoje. O valor já deve aparecer nas entradas do banco.');
+        if (window.atualizarPainelBanco) window.atualizarPainelBanco();
+        if (window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
+        if (window.renderizarTabelaBanco) window.renderizarTabelaBanco();
+        if (window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
+        if (window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
+    } catch (e) {
+        alert('Erro ao corrigir: ' + e.message);
+    }
+};
+
+window._precisaCorrigirDataRecebimentoBanco = function (doc) {
+    if (!doc || (doc.statusPagamento || 'PAGO') !== 'PAGO') return false;
+    if (!window.formaPagamentoEhDigital(doc.formaPagamento)) return false;
+    if (window._listaRecebimentosParciais(doc).length) return false;
+    if (!doc.timestampRecebimento) return true;
+    const hoje = new Date().toLocaleDateString('pt-BR');
+    return window._diaBrDeString(window.dataEfetivaCaixa(doc)) !== hoje;
+};
 
 window.estornarPagamento = async function(id) {
     const listaCx = window._listaCaixaSincronizada();
@@ -6843,17 +6956,19 @@ window.renderizarTabelaBanco = function() {
             const p = v.parcialInfo;
             const valorParc = parseFloat(p.valor) || 0;
             const formaPgto = (p.formaPagamento || '').replace('Cartão de ', '');
-            const dataParc = (p.dataStr || '').split(' ')[0] || '-';
+            const dataParc = window._dataLancamentoBancoDoc(doc, p);
             const corTipo = doc.tipo === 'VENDA' ? '#3498db' : '#f39c12';
             const sigla = doc.tipo === 'VENDA' ? 'VENDA' : 'ORDEM.SERV.';
-            const txtBadge = `<span class="badge-pago" style="background-color: #2980b9; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">💰 RECEBIDO PARCIAL — ${formaPgto.toUpperCase()}</span>`;
+            const quitadoLinha = window._docQuitado(doc);
+            const lblReceb = quitadoLinha ? '✅ RECEBIDO' : '💰 RECEBIDO PARCIAL';
+            const txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${lblReceb} — ${formaPgto.toUpperCase()}</span>`;
             let acoesHtml = `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${doc.id}','loja')" title="Ver nota completa">📄 PDF</button>`;
             acoesHtml += `<button class="btn-acao" onclick="gerarPDFparaCliente('${doc.id}')" title="PDF cliente">📤 PDF Cliente</button>`;
             acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${doc.id}')">🧾 Cupom</button>`;
             tr.innerHTML = `
                 <td style="font-weight: bold; color: #ffffff;">${doc.os || '-'}</td>
-                <td><span style="background-color: #2980b9; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">RECEB.PARC</span></td>
-                <td style="font-weight: bold; color: #5dade2;">${dataParc}</td>
+                <td><span style="background-color: #27ae60; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">ENTRADA</span></td>
+                <td style="font-weight: bold; color: #2ecc71;">${dataParc}</td>
                 <td style="font-weight: bold; color: #3498db;">${doc.clienteNome} <span style="font-size:10px;color:#95a5a6;">(${sigla} Nº ${doc.os || '-'})</span></td>
                 <td>-</td>
                 <td style="color:#5dade2; font-weight:bold;">+ R$ ${valorParc.toFixed(2)}</td>
@@ -6894,6 +7009,9 @@ window.renderizarTabelaBanco = function() {
                 acoesHtml += `<button class="btn-acao receber" style="border-color:#27ae60; color:#27ae60;" onclick="marcarComoPago('${doc.id}')">💰 Receber</button>`;
             } else {
                 acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${doc.id}')">🔄 Estornar</button>`;
+                if (window._precisaCorrigirDataRecebimentoBanco(doc)) {
+                    acoesHtml += `<button class="btn-acao" style="border-color:#f39c12; color:#f39c12;" onclick="window.corrigirDataRecebimentoParaHoje('${doc.id}')" title="Contabilizar recebimento na data de hoje">📅 Data hoje</button>`;
+                }
             }
             
             acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${doc.id}')" title="Cancelar Documento">🗑️</button>`;
@@ -6907,7 +7025,7 @@ window.renderizarTabelaBanco = function() {
             tr.innerHTML = `
                 <td style="font-weight: bold; color: #ffffff;">${doc.os || '-'}</td>
                 <td><span style="background-color: ${corTipo}; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">${sigla}</span></td>
-                <td style="font-weight: bold;">${window.dataEfetivaCaixaDia(doc)}</td>
+                <td style="font-weight: bold; color: #2ecc71;">${window._dataLancamentoBancoDoc(doc)}</td>
                 <td style="font-weight: bold; color: #3498db;">${doc.clienteNome}</td>
                 <td style="font-weight: bold;">${vencForm}</td>
                 <td style="color:#2ecc71; font-weight:bold;">${colValor}</td>
