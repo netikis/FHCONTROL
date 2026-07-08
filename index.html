@@ -1375,10 +1375,10 @@ window.calcularDisponivelEstoque = function (p, carrinho, modo) {
     return { cadastro: cad, reservado: res, creditoDoc: creditoDoc, creditoLinha: creditoLinha, livre: livre };
 };
 
-// PIX / cartão / boleto → não entra na gaveta física; entra no extrato do banco quando marcado
+// PIX / cartão / boleto / transferência → não entra na gaveta física; entra no extrato do banco quando marcado
 window.formaPagamentoEhDigital = function(formaPag) {
     let f = String(formaPag || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return f.includes('pix') || f.includes('cartao') || f.includes('cartoes') || f.includes('debito') || f.includes('credito') || f.includes('boleto');
+    return f.includes('pix') || f.includes('cartao') || f.includes('cartoes') || f.includes('debito') || f.includes('credito') || f.includes('boleto') || f.includes('transfer') || f.includes('ted') || f.includes('doc');
 };
 
 // Data para caixa / resumo do dia: se foi recebido depois (conta pendente), usa a data do recebimento, não a da venda.
@@ -1555,10 +1555,11 @@ window._reverterRecebimentosGavetaDoc = function (doc) {
 // Monta linhas da tabela do banco: cada recebimento parcial digital vira uma linha própria
 window._montarLinhasDigitaisBanco = function () {
     const linhas = [];
-    const cx = typeof caixaGlobal !== 'undefined' ? caixaGlobal : [];
-    const tiposOk = { VENDA: true, VD: true, 'ORDEM DE SERVIÇO': true };
+    const cx = window._listaCaixaSincronizada ? window._listaCaixaSincronizada() : (typeof caixaGlobal !== 'undefined' ? caixaGlobal : []);
+    const tiposOk = { VENDA: true, VD: true, 'ORDEM DE SERVIÇO': true, OS: true };
     cx.forEach(function (v) {
         if (!tiposOk[v.tipo]) return;
+        const linhasAntes = linhas.length;
         const parciais = window._listaRecebimentosParciais(v);
         const parciaisDig = parciais.filter(function (p) { return window.formaPagamentoEhDigital(p.formaPagamento); });
         parciaisDig.forEach(function (p, idx) {
@@ -1593,6 +1594,18 @@ window._montarLinhasDigitaisBanco = function () {
                 isLinhaParcial: false,
                 isNotaEmAberto: true,
                 _sortTs: Number(v.timestamp) || 0,
+                id: v.id
+            });
+        }
+        // Nota quitada que não aparece no balcão nem gerou linha no banco — evita "sumir" após receber
+        if (linhas.length === linhasAntes && statusDoc === 'PAGO' && quitado && !window.linhaEhCaixaBalcaoVisivel(v)) {
+            linhas.push({
+                docPai: v,
+                isManual: false,
+                isLinhaParcial: false,
+                isNotaEmAberto: false,
+                isLinhaFallback: true,
+                _sortTs: window.timestampEfetivoCaixa(v),
                 id: v.id
             });
         }
@@ -2016,7 +2029,8 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
             </div>
 
             <div class="toolbar" style="margin-top: 15px;">
-                <input type="text" id="buscaBanco" class="search-bar" placeholder="Buscar no extrato..." onkeyup="filtrarBanco()">
+                <input type="text" id="buscaBanco" class="search-bar" placeholder="Buscar por nº da nota (ex: 1205), cliente..." onkeyup="filtrarBanco()">
+                <p style="font-size: 11px; color: #95a5a6; margin: 6px 0 0 0;">Nota recebida some dos Pendentes e vai para cá (PIX/cartão) ou para o <strong>Caixa Balcão</strong> (dinheiro). Não achou? Use <strong>Registro Geral → Busca Geral</strong>.</p>
                 <div class="pagination">
                     <button onclick="mudarPaginaBanco(-1)">◀ Ant</button>
                     <span id="infoPaginaBanco" style="color: #3498db; margin: 0 10px;">Pág 1</span>
@@ -2036,7 +2050,7 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
                             <th>Total</th>
                             <th>Status Pgto</th>
                             <th>Assinatura</th>
-                            <th style="min-width: 380px;">Ações</th>
+                            <th style="min-width: 460px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tabelaCaixaBanco">
@@ -3896,26 +3910,84 @@ window._escPendTxt = function (s) {
     return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 };
 
+window._urlSebraeNfe = 'https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e';
+window._urlNfeGov = 'https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional';
+
+// Botões Ed, Whats, Link, Sebrae, NFE, PDF, PDF Cliente, Cupom, Receber/Estornar, Excluir — compartilhado entre balcão, banco e pendentes.
+window.montarAcoesDocCaixaHtml = function (doc, opts) {
+    opts = opts || {};
+    const id = doc.id;
+    const idEnc = encodeURIComponent(String(id || ''));
+    const tipoDoc = doc.tipo || '';
+    const statusStr = doc.statusPagamento || 'PAGO';
+    const isVendaOuOS = tipoDoc === 'VENDA' || tipoDoc === 'ORDEM DE SERVIÇO' || tipoDoc === 'VD';
+    const recebidoParc = window._totalRecebidoDoc(doc);
+    const isNotaEmAberto = !!opts.isNotaEmAberto;
+    const ctx = opts.contexto || 'balcao';
+    const del = !!opts.useDelegacao;
+
+    if (tipoDoc === 'DESPESA' || tipoDoc === 'FECHAMENTO' || tipoDoc === 'ENTRADA_CAIXA') {
+        if (del) {
+            return `<button type="button" class="btn-acao del btn-pend-acao" data-pend-id="${idEnc}" data-acao="excluir" title="Cancelar Registro">🗑️</button>`;
+        }
+        return `<button class="btn-acao del" onclick="cancelarVenda('${id}')" title="Cancelar Registro">🗑️</button>`;
+    }
+
+    const mkBtn = function (cls, label, acaoOnclick, acaoDel, title, style) {
+        const sty = style ? ` style="${style}"` : '';
+        if (del) {
+            return `<button type="button" class="btn-acao ${cls} btn-pend-acao"${sty} data-pend-id="${idEnc}" data-acao="${acaoDel}" title="${title || ''}">${label}</button>`;
+        }
+        return `<button class="btn-acao ${cls}"${sty} onclick="${acaoOnclick}" title="${title || ''}">${label}</button>`;
+    };
+
+    let h = '';
+    const edStyle = ctx === 'balcao' ? 'border-color:#ffffff;' : '';
+    h += mkBtn('edit', '✏️ Ed', `editarDocumentoCaixa('${id}')`, 'editar', 'Editar Documento', edStyle);
+    h += mkBtn('whats', '📱 Whats', `enviarOSWhatsApp('${id}')`, 'whats', 'WhatsApp', '');
+    if (!doc.assinaturaBase64) {
+        h += mkBtn('', '🔗 Link', `copiarLinkAssinatura('${id}')`, 'link', 'Copiar Link para Cliente', '');
+    }
+    h += `<a href="${window._urlSebraeNfe}" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
+    h += `<a href="${window._urlNfeGov}" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
+    h += mkBtn('pdf', '📄 PDF', `gerarPDF_Historico('${id}','loja')`, 'pdf', 'Visualizar e imprimir na loja', '');
+    h += mkBtn('', '📤 PDF Cliente', `gerarPDFparaCliente('${id}')`, 'pdf-cliente', 'PDF protegido para enviar ao cliente', '');
+    h += mkBtn('', '🧾 Cupom', `imprimirCupom('${id}')`, 'cupom', 'Imprimir Cupom 80mm', '');
+
+    if (ctx === 'balcao') {
+        if (isVendaOuOS && statusStr === 'PENDENTE') {
+            h += mkBtn('receber', '💰 Receber', `marcarComoPago('${id}')`, 'receber', 'Registrar Pagamento', 'border-color:#27ae60; color:#27ae60;');
+        } else if (isVendaOuOS && statusStr === 'PAGO') {
+            h += mkBtn('', '🔄 Estornar', `estornarPagamento('${id}')`, 'estornar', 'Desfazer Pagamento', 'color:#e74c3c;');
+        }
+    } else if (ctx === 'banco') {
+        if (statusStr === 'PENDENTE' || isNotaEmAberto) {
+            h += mkBtn('receber', '💰 Receber', `marcarComoPago('${id}')`, 'receber', 'Registrar Pagamento', 'border-color:#27ae60; color:#27ae60;');
+        }
+        if (recebidoParc > 0 || statusStr === 'PAGO') {
+            h += mkBtn('', '🔄 Estornar', `estornarPagamento('${id}')`, 'estornar', 'Desfazer pagamento — volta para Contas a Receber', 'color:#e74c3c;');
+            if (window._precisaCorrigirDataRecebimentoBanco && window._precisaCorrigirDataRecebimentoBanco(doc)) {
+                h += `<button class="btn-acao" style="border-color:#f39c12; color:#f39c12;" onclick="window.corrigirDataRecebimentoParaHoje('${id}')" title="Contabilizar recebimento na data de hoje">📅 Data hoje</button>`;
+            }
+        }
+    } else if (ctx === 'pendente') {
+        h += mkBtn('receber', '💰 Receber', '', 'receber', 'Registrar Pagamento', 'border-color:#27ae60; color:#27ae60;');
+        if (recebidoParc > 0 && !window._docQuitado(doc)) {
+            h += mkBtn('', '🔄 Estornar', '', 'estornar', 'Estornar todos os recebimentos parciais', 'color:#e74c3c;');
+        }
+    }
+
+    if (del) {
+        h += mkBtn('del', '🗑️ Excluir', '', 'excluir', 'Excluir nota e devolver produtos ao estoque', '');
+    } else {
+        h += `<button class="btn-acao del" onclick="cancelarVenda('${id}')" title="Cancelar Documento">🗑️</button>`;
+    }
+    return h;
+};
+
 // Mesmas ações do caixa balcão, para a tabela de contas a receber (pendentes).
 window.montarAcoesCelulaPendente = function (v) {
-    const enc = encodeURIComponent(String(v.id || ''));
-    const idAttr = `data-pend-id="${enc}"`;
-    let h = '<td class="acoes-flex" style="min-width:460px;">';
-    h += `<button type="button" class="btn-acao edit btn-pend-acao" ${idAttr} data-acao="editar" title="Editar Documento">✏️ Ed</button>`;
-    h += `<button type="button" class="btn-acao whats btn-pend-acao" ${idAttr} data-acao="whats" title="WhatsApp">📱 Whats</button>`;
-    if (!v.assinaturaBase64) {
-        h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="link" title="Copiar Link para Cliente">🔗 Link</button>`;
-    }
-    h += `<button type="button" class="btn-acao pdf btn-pend-acao" ${idAttr} data-acao="pdf" title="Visualizar e imprimir na loja">📄 PDF</button>`;
-    h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="pdf-cliente" title="PDF protegido para enviar ao cliente">📤 PDF Cliente</button>`;
-    h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="cupom" title="Imprimir Cupom 80mm">🧾 Cupom</button>`;
-    h += `<button type="button" class="btn-acao receber btn-pend-acao" ${idAttr} data-acao="receber" title="Registrar Pagamento">💰 Receber</button>`;
-    if (window._totalRecebidoDoc(v) > 0 && !window._docQuitado(v)) {
-        h += `<button type="button" class="btn-acao btn-pend-acao" ${idAttr} data-acao="estornar" title="Estornar todos os recebimentos parciais" style="color:#e74c3c;">🔄 Estornar</button>`;
-    }
-    h += `<button type="button" class="btn-acao del btn-pend-acao" ${idAttr} data-acao="excluir" title="Excluir nota e devolver produtos ao estoque">🗑️ Excluir</button>`;
-    h += '</td>';
-    return h;
+    return '<td class="acoes-flex" style="min-width:460px;">' + window.montarAcoesDocCaixaHtml(v, { contexto: 'pendente', useDelegacao: true }) + '</td>';
 };
 
 window._pendNormBusca = function (s) {
@@ -3927,20 +3999,35 @@ window._pendenteMatchBusca = function (v, qNorm) {
     const valor = parseFloat(v.total) || 0;
     const venc = v.vencimento ? String(v.vencimento) : '';
     const vencBR = venc && venc.indexOf('-') > 0 ? venc.split('-').reverse().join('/') : venc;
+    const parciais = window._listaRecebimentosParciais(v);
+    const formasParc = parciais.map(function (p) { return p.formaPagamento || ''; }).join(' ');
     const partes = [
         v.clienteNome || '',
         String(v.os ?? ''),
         v.dataStr || '',
         (v.dataStr || '').split(/\s+/)[0] || '',
+        v.dataRecebimentoStr || '',
         venc,
         vencBR,
         valor.toFixed(2),
         valor.toFixed(2).replace('.', ','),
         String(valor),
-        v.id || ''
+        v.id || '',
+        v.formaPagamento || '',
+        formasParc,
+        v.statusPagamento || ''
     ];
     const hay = window._pendNormBusca(partes.join(' '));
     return hay.indexOf(qNorm) !== -1;
+};
+
+window._bancoMatchBusca = function (v, qNorm) {
+    if (!qNorm) return true;
+    if (v.isManual) {
+        return window._pendNormBusca(v.descricao || '').indexOf(qNorm) !== -1;
+    }
+    const doc = v.docPai || v;
+    return window._pendenteMatchBusca(doc, qNorm);
 };
 
 window.filtrarPendentesCaixa = function () {
@@ -4300,11 +4387,19 @@ window.estornarPagamento = async function(id) {
         return alert('Este documento já está como PENDENTE (sem recebimentos).');
     }
     const recebido = window._totalRecebidoDoc(doc);
-    if (!confirm(`🔄 ESTORNAR PAGAMENTO\n\nDeseja desfazer o(s) recebimento(s) desta nota?\nValor a estornar: R$ ${recebido.toFixed(2)}\nOs valores serão ajustados nos painéis (gaveta e/ou banco digital).`)) return;
+    const msgEstorno =
+        '🔄 ESTORNAR PAGAMENTO\n\n' +
+        'Nota Nº ' + (doc.os || '-') + '\n' +
+        'Cliente: ' + (doc.clienteNome || '') + '\n\n' +
+        'Deseja desfazer o(s) recebimento(s) desta nota?\n' +
+        'Valor a estornar: R$ ' + recebido.toFixed(2) + '\n\n' +
+        '✓ O valor sairá do caixa do banco/gaveta\n' +
+        '✓ A nota voltará para Contas a Receber (Pendentes)';
+    if (!confirm(msgEstorno)) return;
     try {
         const { ref, update } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js");
         window._reverterRecebimentosGavetaDoc(doc);
-        await update(ref(window.meuBanco, 'caixa/' + id), {
+        const payloadEstorno = {
             statusPagamento: 'PENDENTE',
             autoLancamentoBanco: false,
             dataRecebimentoStr: null,
@@ -4312,8 +4407,13 @@ window.estornarPagamento = async function(id) {
             recebimentosParciais: null,
             valorRecebidoParcial: null,
             saldoDevedor: null
-        });
-        alert('Pagamento estornado com sucesso.');
+        };
+        await update(ref(window.meuBanco, 'caixa/' + id), payloadEstorno);
+        if (typeof caixaGlobal !== 'undefined') {
+            const idxLocal = caixaGlobal.findIndex(function (x) { return String(x.id) === String(id); });
+            if (idxLocal >= 0) Object.assign(caixaGlobal[idxLocal], payloadEstorno);
+        }
+        alert('Pagamento estornado! A nota voltou para Contas a Receber (Pendentes).');
         if (window.atualizarPainelBanco) window.atualizarPainelBanco();
         if (window.atualizarResumoPagamentosHoje) window.atualizarResumoPagamentosHoje();
         if (window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
@@ -6318,11 +6418,12 @@ window.importarJSON = async function() {
 
      // 1. LÓGICA DE BUSCA E REIMPRESSÃO
       window.buscarNoRegistro = function() {
-    const termo = document.getElementById('inputBuscaRegistro').value.trim().toLowerCase();
+    const termoRaw = document.getElementById('inputBuscaRegistro').value.trim();
+    const termo = window._pendNormBusca ? window._pendNormBusca(termoRaw) : termoRaw.toLowerCase();
     const tabela = document.getElementById('tabelaBuscaRegistro');
     tabela.innerHTML = '';
     
-    let baseDados = typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || [];
+    let baseDados = window._listaCaixaSincronizada ? window._listaCaixaSincronizada() : (typeof caixaGlobal !== 'undefined' ? caixaGlobal : window.caixaGlobal || []);
 
     if(baseDados.length === 0) {
         tabela.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #f1c40f;">Nenhum histórico no sistema ainda.</td></tr>';
@@ -6353,13 +6454,7 @@ window.importarJSON = async function() {
         }
     } else {
         // MODO 2: COM BUSCA (Ignora o mês e busca no sistema TODO desde o início)
-        resultados = baseDados.filter(v => {
-            let numOs = String(v.os || '').toLowerCase();
-            let cliente = String(v.clienteNome || '').toLowerCase();
-            let data = String(v.dataStr || '').toLowerCase();
-            let tipo = String(v.tipo || '').toLowerCase();
-            return numOs.includes(termo) || cliente.includes(termo) || data.includes(termo) || tipo.includes(termo);
-        });
+        resultados = baseDados.filter(v => window._pendenteMatchBusca(v, termo));
         
         if (resultados.length === 0) {
             tabela.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #e74c3c;">Nenhum registro encontrado em todo o sistema.</td></tr>';
@@ -6371,23 +6466,33 @@ window.importarJSON = async function() {
     resultados.slice(0, 50).forEach(v => {
         let cor = v.tipo === 'DESPESA' ? '#e74c3c' : '#2ecc71';
         let formaPgtoRegistro = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '').toUpperCase() : '';
+        const st = v.statusPagamento || 'PAGO';
+        let onde = '';
+        if (st === 'PAGO' && (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO' || v.tipo === 'VD')) {
+            onde = window.formaPagamentoEhDigital(v.formaPagamento) ? ' · 📍 Banco' : ' · 📍 Balcão';
+        } else if (st === 'PENDENTE') {
+            onde = ' · 📍 Pendentes';
+        }
         let statusTxt = v.tipo === 'FECHAMENTO'
             ? 'FECHADO'
-            : (v.statusPagamento || 'PAGO') + (formaPgtoRegistro ? ` (${formaPgtoRegistro})` : '');
-        let btnImprimir = '';
-        if (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO') {
-        btnImprimir = `<button onclick="window.reimprimirDocumentoRegistro('${v.id}')" style="background-color: #f39c12; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">🖨️ Imprimir</button>`;
+            : st + (formaPgtoRegistro ? ` (${formaPgtoRegistro})` : '') + onde;
+        let acoesHtml = '';
+        if (v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO' || v.tipo === 'VD') {
+            acoesHtml = `<button onclick="window.reimprimirDocumentoRegistro('${v.id}')" style="background-color: #f39c12; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 4px;">🖨️ PDF</button>`;
+            if (window._totalRecebidoDoc(v) > 0 || st === 'PAGO') {
+                acoesHtml += `<button onclick="estornarPagamento('${v.id}')" style="background-color: #c0392b; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">🔄 Estornar</button>`;
+            }
         }
 
         tabela.innerHTML += `
             <tr>
-                <td>${v.dataStr.split(' ')[0].replace(',', '')}</td>
+                <td>${(v.dataRecebimentoStr || v.dataStr || '').split(' ')[0].replace(',', '')}</td>
                 <td style="font-weight: bold;">${v.os || '-'}</td>
                 <td>${v.tipo}</td>
                 <td>${v.clienteNome || '-'}</td>
                 <td style="color: ${cor}; font-weight: bold;">R$ ${Number(v.total).toFixed(2)}</td>
                 <td>${statusTxt}</td>
-                <td>${btnImprimir}</td>
+                <td class="acoes-flex" style="min-width:200px;">${acoesHtml}</td>
             </tr>
         `;
     });
@@ -6758,7 +6863,8 @@ window.itensPorPaginaBanco = 15;
 window.termoBuscaBanco = "";
 
 window.filtrarBanco = function() {
-    window.termoBuscaBanco = document.getElementById('buscaBanco').value.toLowerCase();
+    const raw = document.getElementById('buscaBanco') ? document.getElementById('buscaBanco').value.trim() : '';
+    window.termoBuscaBanco = window._pendNormBusca(raw);
     window.paginaAtualBanco = 1;
     window.renderizarTabelaBanco();
 };
@@ -6905,21 +7011,13 @@ window.renderizarTabelaBanco = function() {
 
     let dadosUnidos = [...manuais, ...digitais].sort((a, b) => (b._sortTs || 0) - (a._sortTs || 0));
 
-    let dadosFiltrados = dadosUnidos.filter(v => {
-        if (v.isManual) {
-            const desc = (v.descricao || '').toLowerCase();
-            return desc.includes(window.termoBuscaBanco);
-        }
-        const doc = v.docPai || v;
-        const desc = (doc.clienteNome || '').toLowerCase();
-        const osBusca = (doc.os || '').toString();
-        const buscaParc = v.isLinhaParcial ? 'recebido parcial receb.parc parcial' : '';
-        const hay = (desc + ' ' + osBusca + ' ' + buscaParc).toLowerCase();
-        return hay.includes(window.termoBuscaBanco);
-    });
+    let dadosFiltrados = dadosUnidos.filter(v => window._bancoMatchBusca(v, window.termoBuscaBanco));
 
     if (dadosFiltrados.length === 0) {
-        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum movimento bancário encontrado.</td></tr>';
+        const dica = window.termoBuscaBanco
+            ? '<br><span style="font-size:11px;color:#95a5a6;">Dica: se recebeu em dinheiro, a nota pode estar no <strong>Caixa Balcão</strong>. Use também <strong>Registro Geral → Busca Geral</strong> para localizar e estornar.</span>'
+            : '';
+        tabela.innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhum movimento bancário encontrado.' + dica + '</td></tr>';
         return;
     }
 
@@ -6962,9 +7060,7 @@ window.renderizarTabelaBanco = function() {
             const quitadoLinha = window._docQuitado(doc);
             const lblReceb = quitadoLinha ? '✅ RECEBIDO' : '💰 RECEBIDO PARCIAL';
             const txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">${lblReceb} — ${formaPgto.toUpperCase()}</span>`;
-            let acoesHtml = `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${doc.id}','loja')" title="Ver nota completa">📄 PDF</button>`;
-            acoesHtml += `<button class="btn-acao" onclick="gerarPDFparaCliente('${doc.id}')" title="PDF cliente">📤 PDF Cliente</button>`;
-            acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${doc.id}')">🧾 Cupom</button>`;
+            const acoesHtml = window.montarAcoesDocCaixaHtml(doc, { contexto: 'banco', isNotaEmAberto: !quitadoLinha });
             tr.innerHTML = `
                 <td style="font-weight: bold; color: #ffffff;">${doc.os || '-'}</td>
                 <td><span style="background-color: #27ae60; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 10px; font-weight: bold;">ENTRADA</span></td>
@@ -6996,25 +7092,7 @@ window.renderizarTabelaBanco = function() {
                 txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">⏳ PENDENTE - ${formaPgto.toUpperCase()}</span>`;
             }
 
-            let acoesHtml = `<button class="btn-acao edit" onclick="editarDocumentoCaixa('${doc.id}')" title="Editar Documento">✏️ Ed</button>`;
-            acoesHtml += `<button class="btn-acao whats" onclick="enviarOSWhatsApp('${doc.id}')">📱 Whats</button>`;
-            if (!doc.assinaturaBase64) { acoesHtml += `<button class="btn-acao" onclick="copiarLinkAssinatura('${doc.id}')">🔗 Link</button>`; }
-            acoesHtml += `<a href="https://amei.sebrae.com.br/auth/realms/externo/protocol/openid-connect/auth?client_id=emissor-nfe-frontend&redirect_uri=https%3A%2F%2Femissornfe.sebrae.com.br%2F&state=8d2bc86c-0e59-4ece-85a1-37899762e0da&response_mode=fragment&response_type=code&scope=openid&nonce=42ceb5f7-4211-498c-9b29-53626699c44e" target="_blank" class="btn-acao nota" style="text-decoration:none;">🏢 Sebrae</a>`;
-            acoesHtml += `<a href="https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional" target="_blank" class="btn-acao nota" style="text-decoration:none;">📄 NFE</a>`;
-            acoesHtml += `<button class="btn-acao pdf" onclick="gerarPDF_Historico('${doc.id}','loja')" title="Visualizar e imprimir na loja">📄 PDF</button>`;
-            acoesHtml += `<button class="btn-acao" onclick="gerarPDFparaCliente('${doc.id}')" title="PDF protegido para enviar ao cliente">📤 PDF Cliente</button>`;
-            acoesHtml += `<button class="btn-acao" onclick="imprimirCupom('${doc.id}')">🧾 Cupom</button>`;
-            
-            if (statusStr === 'PENDENTE' || v.isNotaEmAberto) {
-                acoesHtml += `<button class="btn-acao receber" style="border-color:#27ae60; color:#27ae60;" onclick="marcarComoPago('${doc.id}')">💰 Receber</button>`;
-            } else {
-                acoesHtml += `<button class="btn-acao" style="color:#e74c3c;" onclick="estornarPagamento('${doc.id}')">🔄 Estornar</button>`;
-                if (window._precisaCorrigirDataRecebimentoBanco(doc)) {
-                    acoesHtml += `<button class="btn-acao" style="border-color:#f39c12; color:#f39c12;" onclick="window.corrigirDataRecebimentoParaHoje('${doc.id}')" title="Contabilizar recebimento na data de hoje">📅 Data hoje</button>`;
-                }
-            }
-            
-            acoesHtml += `<button class="btn-acao del" onclick="cancelarVenda('${doc.id}')" title="Cancelar Documento">🗑️</button>`;
+            let acoesHtml = window.montarAcoesDocCaixaHtml(doc, { contexto: 'banco', isNotaEmAberto: !!v.isNotaEmAberto });
 
             let corTipo = doc.tipo === 'VENDA' ? '#3498db' : '#f39c12';
             let sigla = doc.tipo === 'VENDA' ? 'VENDA' : 'ORDEM.SERV.';
