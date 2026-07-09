@@ -2403,8 +2403,7 @@
 
    <button class="menu-btn" id="btnGrupoVendas" onclick="toggleGrupoMenu('submenuVendas', this)">🛒 Vendas</button>
    <div id="submenuVendas" class="submenu-lateral" style="display: none;">
-       <button class="submenu-btn" id="btnTabCadastroProd" onclick="abrirAba('tabCadastroProd', this)">🏷️ Cadastro de Produtos</button>
-       <button class="submenu-btn" id="btnTabControleEstoque" onclick="abrirAba('tabControleEstoque', this)">📦 Controle de Estoque</button>
+       <button class="submenu-btn" id="btnTabCadastroProd" onclick="abrirAba('tabCadastroProd', this); if(window.renderizarTabelaEstoque) window.renderizarTabelaEstoque();">🏷️ Cadastro de Produtos</button>
        <button class="submenu-btn" id="btnTabVendas" onclick="abrirAba('tabVendas', this)">🧾 Venda / Orçamento</button>
        <button class="submenu-btn" id="btnTabOS" onclick="abrirAba('tabOS', this)">📝 Ordem de Serviço em Campo</button>
    </div>
@@ -2543,59 +2542,44 @@
                     <button type="button" class="btn-secundario" style="margin-top: 8px; display: none; padding: 10px;" id="btnCancelarProd" onclick="cancelarEdicaoProd()">Cancelar Edição (ESC)</button>
                 </div>
             </form>
+
+            <hr style="margin: 28px 0 18px 0; border: none; border-top: 2px solid #adb5bd;">
+
+            <h2 style="margin-top: 0;">Produtos no Estoque</h2>
+            <div class="toolbar">
+                <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar nome ou código..." onkeyup="filtrarProdutos()">
+                <button type="button" class="btn-acao" style="background-color: #ffffff; color: #000000; font-weight: bold; border: 2px solid #000000; padding: 6px 12px; font-size: 11px; text-transform: uppercase;" onclick="window.imprimirEtiquetasEstoque()">🖨️ Imprimir Etiquetas</button>
+                <button type="button" class="btn-danger" onclick="excluirTodosProdutos()">🗑️ ZERAR ESTOQUE</button>
+                <input type="file" id="campoUploadTXT_Novo" accept=".txt" style="display: none" onchange="iniciarImportacao(this)">
+                <button type="button" class="btn-success" onclick="document.getElementById('campoUploadTXT_Novo').click()">📥 IMPORTAR ARQUIVO TXT</button>
+            </div>
+            <div class="pagination">
+                <button onclick="mudarPaginaProd(-1)">◀ Ant</button>
+                <span id="infoPaginaProd">Pág 1</span>
+                <button onclick="mudarPaginaProd(1)">Próx ▶</button>
+            </div>
+            <p style="font-size: 11px; color: #e74c3c; margin-top: 0;">Atenção: Qtd ≤ 3 piscará vermelho. Marque as caixinhas na tabela para imprimir as etiquetas.</p>
+            <div class="table-responsive">
+                <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px; text-align: center; padding: 5px;"><input type="checkbox" title="Selecionar Todos" onclick="window.toggleTodasEtiquetas(this)"></th>
+                            <th style="width: 90px; text-align: left; padding: 5px;">Código</th>
+                            <th style="text-align: left; padding: 5px; cursor: pointer;" onclick="window.ordenarEstoquePor && window.ordenarEstoquePor('nome')" title="Ordenar por Nome (A→Z / Z→A)">Nome ⇅</th>
+                            <th style="width: 90px; text-align: left; padding: 5px;">Categoria</th>
+                            <th style="width: 70px; text-align: center; padding: 5px; cursor: pointer;" onclick="window.ordenarEstoquePor && window.ordenarEstoquePor('quantidade')" title="Ordenar por Quantidade (0→1→2… / inverso)">Qtd / un. ⇅</th>
+                            <th style="width: 90px; text-align: left; padding: 5px;">Custo</th>
+                            <th style="width: 90px; text-align: left; padding: 5px;">Venda</th>
+                            <th style="width: 90px; text-align: left; padding: 5px;">NCM</th>
+                            <th style="width: 100px; text-align: center; padding: 5px;">Ações</th>
+                            <th style="width: 55px; text-align: center; padding: 5px;">Foto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaEstoque"></tbody>
+                </table>
+            </div>
         </div>
    </div>
-
-   <div id="tabControleEstoque" class="tab-content">
-        <div class="container">
-            <h2>Produtos no Estoque</h2>
-            
-                  
-         <div class="toolbar"> 
-    <input type="text" id="buscaProduto" class="search-bar" placeholder="Buscar Nome..." onkeyup="filtrarProdutos()"> 
-    
-    <button type="button" class="btn-acao" style="background-color: #ffffff; color: #000000; font-weight: bold; border: 2px solid #000000; padding: 6px 12px; font-size: 11px; text-transform: uppercase;" onclick="window.imprimirEtiquetasEstoque()">
-        🖨️ Imprimir Etiquetas
-    </button>
-
-    <button type="button" class="btn-danger" onclick="excluirTodosProdutos()">🗑️ ZERAR ESTOQUE</button>
-    
-    <input type="file" id="campoUploadTXT_Novo" accept=".txt" style="display: none" onchange="iniciarImportacao(this)">
-    <button type="button" class="btn-success" onclick="document.getElementById('campoUploadTXT_Novo').click()">
-        📥 IMPORTAR ARQUIVO TXT
-    </button>
-</div>
-
-<div class="pagination">
-    <button onclick="mudarPaginaProd(-1)">◀ Ant</button>
-    <span id="infoPaginaProd">Pág 1</span>
-    <button onclick="mudarPaginaProd(1)">Próx ▶</button>
-</div>
-
-<p style="font-size: 11px; color: #e74c3c; margin-top: 0;">Atenção: Qtd ≤ 3 piscará vermelho. Marque as caixinhas na tabela para imprimir as etiquetas.</p>
-
-<div class="table-responsive">
-    <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
-        <thead>
-            <tr>
-                <th style="width: 30px; text-align: center; padding: 5px;"><input type="checkbox" title="Selecionar Todos" onclick="window.toggleTodasEtiquetas(this)"></th>
-                <th style="width: 90px; text-align: left; padding: 5px;">Código</th>
-                <th style="text-align: left; padding: 5px; cursor: pointer;" onclick="window.ordenarEstoquePor && window.ordenarEstoquePor('nome')" title="Ordenar por Nome (A→Z / Z→A)">Nome ⇅</th>
-                <th style="width: 90px; text-align: left; padding: 5px;">Categoria</th>
-                <th style="width: 70px; text-align: center; padding: 5px; cursor: pointer;" onclick="window.ordenarEstoquePor && window.ordenarEstoquePor('quantidade')" title="Ordenar por Quantidade (0→1→2… / inverso)">Qtd / un. ⇅</th>
-                <th style="width: 90px; text-align: left; padding: 5px;">Custo</th>
-                <th style="width: 90px; text-align: left; padding: 5px;">Venda</th>
-                <th style="width: 90px; text-align: left; padding: 5px;">NCM</th> 
-                <th style="width: 100px; text-align: center; padding: 5px;">Ações</th>
-                <th style="width: 55px; text-align: center; padding: 5px;">Foto</th> 
-            </tr>
-        </thead>
-        <tbody id="tabelaEstoque"></tbody>
-    </table>
-</div>
-
-    </div>
-</div>
 
 <div id="tabVendas" class="tab-content">
     <div class="container">
@@ -3743,46 +3727,36 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
         <div class="container container-pendentes">
             <div class="cabecalho-pendentes">
                <h3>Contas a receber (pendentes)</h3>
-               <p>Total em aberto: <strong id="totalPendentesCaixaHead">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Use <strong>Editar</strong> para alterar a nota antes de receber; <strong>Receber</strong> para informar valor parcial ou total (dinheiro → gaveta; PIX/cartão → banco digital); <strong>Excluir</strong> para cancelar a nota e devolver os produtos ao estoque.</p>
+               <p>Total em aberto: <strong id="totalPendentesCaixaHead">R$ 0,00</strong> — <span id="qtdPendentesCaixaHead">0</span> documento(s). Lista pela <strong>data de criação</strong> (mais recentes primeiro); a busca filtra ao digitar. Use <strong>Editar</strong>, <strong>Receber</strong> ou <strong>Excluir</strong> em cada linha.</p>
                <div class="toolbar-pendentes">
                    <label for="buscaPendentesCaixa">Buscar / Filtrar</label>
                    <input type="search" id="buscaPendentesCaixa" class="search-bar search-pendentes" autocomplete="off" placeholder="Nome, Nº documento, data ou valor…" oninput="if(window.filtrarPendentesCaixa)window.filtrarPendentesCaixa()" />
                </div>
 
-               <div class="painel-baloes-pendentes baloes-fh-gestor">
-                   <p class="desp-baloes-titulo">Clientes: <span id="contagemClientesPendentes" class="desp-cadastro-contagem">0</span></p>
-                   <div id="listaBaloesClientesPendentes" class="desp-baloes-lista">
-                       <p class="cadastro-pend-vazio">Carregando clientes…</p>
+               <div id="paginacaoPendentesWrap" class="paginacao-acima-tabela" style="display:none;">
+                   <div class="pagination pagination-pendentes">
+                       <button type="button" onclick="mudarPaginaPendentes(-1)">◀ Ant</button>
+                       <span id="infoPaginaPendentes">Pág 1 de 1</span>
+                       <button type="button" onclick="mudarPaginaPendentes(1)">Próx ▶</button>
                    </div>
-                   <p class="texto-baloes-pendentes">Clique no balão para ver as notas. Use o <strong>×</strong> vermelho para excluir todas as notas pendentes daquele cliente.</p>
                </div>
-
-               <div id="painelNotasClientePendente" class="painel-notas-cliente-pendente" style="display:none;">
-                   <p class="desp-baloes-titulo">Notas de <strong id="nomeClienteSelecionadoPendentes">—</strong> <span id="resumoClienteSelecionadoPendentes" class="resumo-saldo-cliente"></span></p>
-                   <div id="paginacaoPendentesWrap" class="paginacao-acima-tabela" style="display:none;">
-                       <div class="pagination pagination-pendentes">
-                           <button type="button" onclick="mudarPaginaPendentes(-1)">◀ Ant</button>
-                           <span id="infoPaginaPendentes">Pág 1 de 1</span>
-                           <button type="button" onclick="mudarPaginaPendentes(1)">Próx ▶</button>
-                       </div>
-                   </div>
-                   <div class="table-responsive tabela-pendentes-wrap">
-                       <table class="tabela-pendentes">
-                           <thead>
-                               <tr>
-                                   <th>Nº Doc</th>
-                                   <th>Tipo</th>
-                                   <th>Data</th>
-                                   <th>Total</th>
-                                   <th>Previsto</th>
-                                   <th style="min-width: 460px;">Ações</th>
-                               </tr>
-                           </thead>
-                           <tbody id="tabelaPendentesCaixa">
-                               <tr><td colspan="6" style="text-align: center;">Selecione um cliente acima.</td></tr>
-                           </tbody>
-                       </table>
-                   </div>
+               <div class="table-responsive tabela-pendentes-wrap">
+                   <table class="tabela-pendentes">
+                       <thead>
+                           <tr>
+                               <th>Cliente</th>
+                               <th>Nº Doc</th>
+                               <th>Tipo</th>
+                               <th>Data</th>
+                               <th>Total</th>
+                               <th>Previsto</th>
+                               <th style="min-width: 460px;">Ações</th>
+                           </tr>
+                       </thead>
+                       <tbody id="tabelaPendentesCaixa">
+                           <tr><td colspan="7" style="text-align: center;">Carregando contas pendentes…</td></tr>
+                       </tbody>
+                   </table>
                </div>
             </div>
         </div>
@@ -4354,7 +4328,7 @@ window.mudarPaginaProd = function(direcao) {
        // Expande o grupo do menu lateral ao qual a aba pertence; recolhe os demais
        var gruposMap = {
            tabCadastroCliente: 'submenuClientes', tabClientesCad: 'submenuClientes',
-           tabCadastroProd: 'submenuVendas', tabControleEstoque: 'submenuVendas',
+           tabCadastroProd: 'submenuVendas',
            tabVendas: 'submenuVendas', tabOS: 'submenuVendas',
            tabCaixa: 'submenuCaixa',
            tabRegistro: 'submenuRegistro',
@@ -5732,7 +5706,6 @@ window._bancoMatchBusca = function (v, qNorm) {
 
 window.paginaAtualPendentes = 1;
 window.itensPorPaginaPendentes = 30;
-window._clienteSelecionadoPendentes = null;
 
 window._pendChaveCliente = function (nome) {
     return String(nome ?? '').trim().replace(/\s+/g, ' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -5800,6 +5773,7 @@ window._montarLinhaNotaPendenteHtml = function (v) {
         colTotal = '<span class="valor-saldo-pendente">R$ ' + totalNota.toFixed(2) + '</span>';
     }
     return '<tr>'
+        + '<td style="font-weight:800;color:#000000;">' + window._escPendTxt(v.clienteNome || '-') + '</td>'
         + '<td style="font-weight:800;color:#000000;">' + badgeParc + window._escPendTxt(String(v.os || '-')) + '</td>'
         + '<td>' + window._escPendTxt(v.tipo || '') + '</td>'
         + '<td>' + window._escPendTxt((v.dataStr || '').split(' ')[0]) + '</td>'
@@ -5825,17 +5799,14 @@ window._obterListaPendentesVisiveis = function () {
 
 window.filtrarPendentesCaixa = function () {
     window.paginaAtualPendentes = 1;
-    window._clienteSelecionadoPendentes = null;
     if (window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
 };
 
 window.mudarPaginaPendentes = function (direcao) {
     const dados = window._obterListaPendentesVisiveis();
-    const grupos = window._agruparPendentesPorCliente(dados.listaVis);
-    const max = Math.ceil(grupos.length / window.itensPorPaginaPendentes);
-    if (window.paginaAtualPendentes + direcao >= 1 && window.paginaAtualPendentes + direcao <= Math.max(1, max)) {
+    const max = Math.max(1, Math.ceil(dados.listaVis.length / window.itensPorPaginaPendentes));
+    if (window.paginaAtualPendentes + direcao >= 1 && window.paginaAtualPendentes + direcao <= max) {
         window.paginaAtualPendentes += direcao;
-        window._clienteSelecionadoPendentes = null;
         if (window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
     }
 };
@@ -5845,66 +5816,32 @@ window.renderizarTabelaPendentesCaixa = function () {
     const hTot = document.getElementById('totalPendentesCaixaHead');
     const hQtd = document.getElementById('qtdPendentesCaixaHead');
     const infoPag = document.getElementById('infoPaginaPendentes');
-    const divBaloes = document.getElementById('listaBaloesClientesPendentes');
-    const lblClientes = document.getElementById('contagemClientesPendentes');
-    const painelNotas = document.getElementById('painelNotasClientePendente');
-    const lblNomeCli = document.getElementById('nomeClienteSelecionadoPendentes');
-    const lblResumoCli = document.getElementById('resumoClienteSelecionadoPendentes');
     const wrapPag = document.getElementById('paginacaoPendentesWrap');
     if (!tbody) return;
     const dados = window._obterListaPendentesVisiveis();
     const lista = dados.lista;
     const listaVis = dados.listaVis;
-    const grupos = window._agruparPendentesPorCliente(listaVis);
     const tot = listaVis.reduce(function (s, v) { return s + window._saldoDevedorDoc(v); }, 0);
     if (hTot) hTot.textContent = 'R$ ' + tot.toFixed(2);
     if (hQtd) hQtd.textContent = String(listaVis.length);
-    if (lblClientes) lblClientes.textContent = String(grupos.length);
-    const totalPaginas = Math.max(1, Math.ceil(grupos.length / window.itensPorPaginaPendentes));
+    const totalPaginas = Math.max(1, Math.ceil(listaVis.length / window.itensPorPaginaPendentes));
     if (window.paginaAtualPendentes > totalPaginas) window.paginaAtualPendentes = totalPaginas;
     if (window.paginaAtualPendentes < 1) window.paginaAtualPendentes = 1;
-    if (infoPag) infoPag.textContent = 'Pág ' + window.paginaAtualPendentes + ' de ' + totalPaginas + ' (clientes)';
+    if (infoPag) infoPag.textContent = 'Pág ' + window.paginaAtualPendentes + ' de ' + totalPaginas;
     if (!lista.length) {
-        if (divBaloes) divBaloes.innerHTML = '<p class="cadastro-pend-vazio">Nenhuma conta pendente.</p>';
         if (wrapPag) wrapPag.style.display = 'none';
-        if (painelNotas) painelNotas.style.display = 'none';
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #343a40; font-weight: 600;">Nenhuma conta pendente.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #343a40; font-weight: 600;">Nenhuma conta pendente.</td></tr>';
         return;
     }
     if (!listaVis.length) {
-        if (divBaloes) divBaloes.innerHTML = '<p class="cadastro-pend-vazio">Nenhum resultado para essa busca.</p>';
         if (wrapPag) wrapPag.style.display = 'none';
-        if (painelNotas) painelNotas.style.display = 'none';
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #343a40; font-weight: 600;">Nenhum resultado para essa busca. Limpe o campo para ver todas.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #343a40; font-weight: 600;">Nenhum resultado para essa busca. Limpe o campo para ver todas.</td></tr>';
         return;
     }
+    if (wrapPag) wrapPag.style.display = totalPaginas > 1 ? 'flex' : 'none';
     const inicio = (window.paginaAtualPendentes - 1) * window.itensPorPaginaPendentes;
-    const paginaGrupos = grupos.slice(inicio, inicio + window.itensPorPaginaPendentes);
-    let grupoAtivo = grupos.find(function (g) { return g.chave === window._clienteSelecionadoPendentes; });
-    if (!grupoAtivo && paginaGrupos.length) {
-        grupoAtivo = paginaGrupos[0];
-        window._clienteSelecionadoPendentes = grupoAtivo.chave;
-    }
-    if (divBaloes) {
-        divBaloes.innerHTML = paginaGrupos.length
-            ? paginaGrupos.map(function (g) {
-                return window._htmlBalaoClientePendente(g, grupoAtivo && g.chave === grupoAtivo.chave);
-            }).join('')
-            : '<p class="cadastro-pend-vazio">Nenhum cliente nesta página.</p>';
-    }
-    if (!grupoAtivo) {
-        if (painelNotas) painelNotas.style.display = 'none';
-        if (wrapPag) wrapPag.style.display = 'none';
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #343a40; font-weight: 600;">Selecione um cliente acima.</td></tr>';
-        return;
-    }
-    if (painelNotas) painelNotas.style.display = 'block';
-    if (wrapPag) wrapPag.style.display = 'flex';
-    if (lblNomeCli) lblNomeCli.textContent = grupoAtivo.nome;
-    if (lblResumoCli) {
-        lblResumoCli.innerHTML = '— ' + grupoAtivo.qtd + ' nota' + (grupoAtivo.qtd === 1 ? '' : 's') + ' · saldo <span class="valor-saldo-pendente">R$ ' + grupoAtivo.saldo.toFixed(2) + '</span>';
-    }
-    tbody.innerHTML = grupoAtivo.notas.map(function (v) {
+    const paginaItens = listaVis.slice(inicio, inicio + window.itensPorPaginaPendentes);
+    tbody.innerHTML = paginaItens.map(function (v) {
         return window._montarLinhaNotaPendenteHtml(v);
     }).join('');
 };
@@ -6126,7 +6063,6 @@ window.excluirGrupoClientePendente = async function (chave) {
         if (feito) ok++;
     }
     if (window._recalcularPainelGavetaHoje) await window._recalcularPainelGavetaHoje(true);
-    window._clienteSelecionadoPendentes = null;
     if (window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
     if (window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
     if (window.renderizarTabelaBanco) window.renderizarTabelaBanco();
@@ -6146,17 +6082,9 @@ window.excluirGrupoClientePendente = async function (chave) {
             ev.stopPropagation();
             const chaveDel = btnDel.getAttribute('data-chave');
             const tipoDel = btnDel.getAttribute('data-tipo');
-            if (chaveDel && tipoDel === 'pendente' && window.excluirGrupoClientePendente) {
-                window.excluirGrupoClientePendente(chaveDel);
-            } else if (chaveDel && tipoDel === 'obra-desp' && window.excluirGrupoObraDesp) {
+            if (chaveDel && tipoDel === 'obra-desp' && window.excluirGrupoObraDesp) {
                 window.excluirGrupoObraDesp(chaveDel);
             }
-            return;
-        }
-        const badge = t.closest('.badge-tag-pend');
-        if (badge && badge.closest('#listaBaloesClientesPendentes')) {
-            const chave = badge.getAttribute('data-chave');
-            if (chave && window.selecionarClientePendente) window.selecionarClientePendente(chave);
             return;
         }
         const badgeObra = t.closest('.badge-tag-desp-obra');
