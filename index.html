@@ -648,6 +648,86 @@
            background: #1a5c38;
        }
 
+       .modal-prazo-export .modal-content {
+           background: #ffffff;
+           color: #212529;
+           border: 2px solid #1a2a43;
+           max-width: 520px;
+       }
+
+       .modal-prazo-export .modal-content h3 {
+           margin: 0 0 8px 0;
+           color: #000000;
+           font-weight: 800;
+           font-size: 16px;
+       }
+
+       .modal-prazo-export .modal-prazo-intro {
+           margin: 0 0 14px 0;
+           font-size: 13px;
+           color: #495057;
+           font-weight: 600;
+           line-height: 1.45;
+       }
+
+       .modal-prazo-export .modal-prazo-opcao {
+           display: block;
+           text-align: left;
+           margin: 8px 0;
+           padding: 12px;
+           border: 2px solid #dee2e6;
+           border-radius: 8px;
+           cursor: pointer;
+           background: #f8f9fa;
+       }
+
+       .modal-prazo-export .modal-prazo-opcao:hover {
+           border-color: #adb5bd;
+           background: #ffffff;
+       }
+
+       .modal-prazo-export .modal-prazo-opcao input {
+           margin-right: 8px;
+           vertical-align: middle;
+       }
+
+       .modal-prazo-export .modal-prazo-opcao b {
+           color: #000000;
+           font-weight: 800;
+       }
+
+       .modal-prazo-export .modal-prazo-opcao span {
+           font-size: 12px;
+           color: #666666;
+           font-weight: 600;
+       }
+
+       .modal-prazo-export .modal-prazo-acoes {
+           display: flex;
+           gap: 10px;
+           margin-top: 16px;
+       }
+
+       .modal-prazo-export .modal-prazo-acoes button {
+           flex: 1;
+           height: 42px;
+           font-size: 13px;
+           font-weight: 800;
+           border: none;
+           border-radius: 6px;
+           cursor: pointer;
+       }
+
+       .modal-prazo-export .btn-prazo-export-confirmar {
+           background: #1a2a43;
+           color: #ffffff;
+       }
+
+       .modal-prazo-export .btn-prazo-export-cancelar {
+           background: #6c757d;
+           color: #ffffff;
+       }
+
        .painel-exportar-relatorios #resumo-total-rel-despesas {
            margin-top: 15px;
            background: #fff3cd !important;
@@ -1216,6 +1296,71 @@
        .main-content #resumo-total-despesas span {
            color: #343a40 !important;
            font-weight: 700 !important;
+       }
+
+       .main-content #resumo-total-despesas .desp-obra-acoes-export {
+           display: flex;
+           flex-wrap: wrap;
+           gap: 10px;
+           justify-content: center;
+           margin-top: 12px;
+       }
+
+       .main-content #resumo-total-despesas .btn-desp-obra-export {
+           flex: 1 1 220px;
+           min-width: 200px;
+           max-width: 100%;
+           height: 44px;
+           padding: 0 18px;
+           margin: 0;
+           font-size: 13px !important;
+           font-weight: 800 !important;
+           color: #ffffff !important;
+           border: 2px solid transparent;
+           border-radius: 6px;
+           cursor: pointer;
+           display: inline-flex;
+           align-items: center;
+           justify-content: center;
+           line-height: 1.2;
+           white-space: nowrap;
+           box-sizing: border-box;
+           text-transform: uppercase;
+           letter-spacing: 0.3px;
+       }
+
+       .main-content #resumo-total-despesas .btn-desp-obra-export-pdf {
+           background-color: #c0392b !important;
+           border-color: #922b21 !important;
+       }
+
+       .main-content #resumo-total-despesas .btn-desp-obra-export-pdf:hover {
+           background-color: #922b21 !important;
+       }
+
+       .main-content #resumo-total-despesas .btn-desp-obra-export-excel {
+           background-color: #1d7a44 !important;
+           border-color: #145a32 !important;
+       }
+
+       .main-content #resumo-total-despesas .btn-desp-obra-export-excel:hover {
+           background-color: #145a32 !important;
+       }
+
+       .main-content #resumo-total-despesas .btn-desp-obra-export-resumo {
+           background-color: #1a2a43 !important;
+           border-color: #0f1a2a !important;
+       }
+
+       .main-content #resumo-total-despesas .btn-desp-obra-export-resumo:hover {
+           background-color: #0f1a2a !important;
+       }
+
+       .main-content #tabela-resumo-fornecedores h3 {
+           color: #000000 !important;
+           font-weight: 800 !important;
+           margin: 16px 0 10px 0;
+           font-size: 15px;
        }
 
        .main-content #resumo-total-rel-despesas span,
@@ -1801,16 +1946,16 @@
            align-items: stretch;
            border-radius: 15px;
            overflow: hidden;
-           border: 1px solid #003d80;
-           background: #0056b3;
+           border: 2px solid #495057;
+           background: #ffffff;
        }
 
        .baloes-fh-azul .badge-tag-desp-obra {
            border: none;
            border-radius: 15px 0 0 15px;
-           background: #0056b3 !important;
-           color: #ffffff !important;
-           -webkit-text-fill-color: #ffffff !important;
+           background: #ffffff !important;
+           color: #000000 !important;
+           -webkit-text-fill-color: #000000 !important;
            padding: 7px 12px;
            font-size: 11px;
            font-weight: 800 !important;
@@ -1823,31 +1968,31 @@
        }
 
        .baloes-fh-azul .badge-tag-desp-obra small {
-           color: #ffffff !important;
-           -webkit-text-fill-color: #ffffff !important;
+           color: #000000 !important;
+           -webkit-text-fill-color: #000000 !important;
            font-weight: 800 !important;
            text-transform: none;
-           opacity: 0.95 !important;
+           opacity: 1 !important;
        }
 
        .baloes-fh-azul .badge-tag-wrap:hover .badge-tag-desp-obra,
        .baloes-fh-azul .badge-tag-wrap:hover .badge-tag-desp-obra small {
-           background: #003d80 !important;
-           color: #ffffff !important;
-           -webkit-text-fill-color: #ffffff !important;
+           background: #f1f3f5 !important;
+           color: #000000 !important;
+           -webkit-text-fill-color: #000000 !important;
        }
 
        .baloes-fh-azul .badge-tag-wrap.badge-tag-selecionado {
            border-color: #f39c12;
-           box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.4);
-           background: #003d80;
+           box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.45);
+           background: #ffffff;
        }
 
        .baloes-fh-azul .badge-tag-wrap.badge-tag-selecionado .badge-tag-desp-obra,
        .baloes-fh-azul .badge-tag-wrap.badge-tag-selecionado .badge-tag-desp-obra small {
-           background: #003d80 !important;
-           color: #ffffff !important;
-           -webkit-text-fill-color: #ffffff !important;
+           background: #fff8e6 !important;
+           color: #000000 !important;
+           -webkit-text-fill-color: #000000 !important;
        }
 
        .baloes-fh-azul .badge-tag-excluir {
@@ -2281,7 +2426,7 @@
    <div id="submenuDespesas" class="submenu-lateral" style="display: none;">
        <button class="submenu-btn" id="btnTabDespCadastrar" onclick="abrirAba('tabDespCadastrar', this); window.despRenderCadastro();">➕ Adicionar Despesas</button>
        <button class="submenu-btn" id="btnTabDespRelatorio" onclick="abrirAba('tabDespRelatorio', this); window.despInitRelatorio();">🔍 Relatório de Gastos por Obra</button>
-       <button class="submenu-btn" id="btnTabDespExportar" onclick="abrirAba('tabDespExportar', this); window.despInitExportar();">📋 Exportar Relatórios</button>
+       <button class="submenu-btn" id="btnTabDespExportar" onclick="abrirAba('tabDespRelatorio', this); window.despInitRelatorio(); window.despBuscarDespesasObra(true);">📋 Exportar Relatórios</button>
        <button class="submenu-btn" id="btnTabDespGeral" onclick="abrirAba('tabDespGeral', this); window.despCarregarRelatorioGeral();">📊 Relatório Geral de Obras</button>
        <button class="submenu-btn" id="btnTabTerceiros" onclick="abrirAba('tabTerceiros', this); window.despInitTerceiros();">👷 Terceiros</button>
    </div>
@@ -3765,28 +3910,33 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
 <div id="tabDespCadastrar" class="tab-content">
    <div class="container">
        <h2 style="color: #e67e22; border-bottom: 1px solid #e67e22;">➕ Adicionar Despesas</h2>
-       <p style="font-size: 12px; color: #bdc3c7; margin-top: 4px;">Cadastre uma despesa de obra/serviço. Os dados ficam salvos apenas neste computador (localStorage), sem afetar o restante do sistema.</p>
+       <p class="texto-explicacao-desp" style="margin-top:4px;">Cadastre despesas de obra/serviço com fornecedor, cheque/boleto, lançamento, vencimento e observações. Os dados ficam salvos neste computador (localStorage).</p>
        <div class="bloco-lancamento">
            <div class="row form-group">
-               <div class="col"><label>Nome da Obra / Local / Cliente</label><input type="text" id="d-obra" list="dl-obras" autocomplete="off" placeholder="Ex.: obra, local do serviço ou nome do cliente" onchange="window.despAutofillEnderecoPorCliente(this.value,'d')" onblur="window.despAutofillEnderecoPorCliente(this.value,'d')"></div>
-               <div class="col"><label>Loja / Fornecedor</label><input type="text" id="d-loja" list="dl-lojas" autocomplete="off" placeholder="Onde foi comprado?"></div>
+               <div class="col"><label>Obra / Local / Cliente</label><input type="text" id="d-obra" list="dl-obras" autocomplete="off" placeholder="Obra, local ou cliente" onchange="window.despAutofillEnderecoPorCliente(this.value,'d')" onblur="window.despAutofillEnderecoPorCliente(this.value,'d')"></div>
+               <div class="col"><label>Fornecedor / Loja</label><input type="text" id="d-loja" list="dl-lojas" autocomplete="off" placeholder="Nome ou loja"></div>
            </div>
            <div class="row form-group">
-               <div class="col"><label>CPF / CNPJ (opcional)</label><input type="text" id="d-cpf-cnpj" placeholder="Documento do cliente ou obra"></div>
+               <div class="col"><label>CPF / CNPJ (opcional)</label><input type="text" id="d-cpf-cnpj" placeholder="Documento"></div>
                <div class="col"><label>CEP (opcional)</label><input type="text" id="d-cep" maxlength="9" placeholder="00000-000" oninput="window.despMascaraCep(this)"></div>
-               <div class="col" style="flex: 2;"><label>Endereço (opcional)</label><input type="text" id="d-endereco" placeholder="Rua / avenida / logradouro"></div>
+               <div class="col" style="flex: 2;"><label>Endereço (opcional)</label><input type="text" id="d-endereco" placeholder="Rua / avenida"></div>
                <div class="col" style="flex: 0.55;"><label>Número</label><input type="text" id="d-numero" placeholder="Nº"></div>
            </div>
            <div class="row form-group">
                <div class="col"><label>Bairro (opcional)</label><input type="text" id="d-bairro" placeholder="Bairro"></div>
            </div>
            <div class="row form-group">
-               <div class="col"><label>Nº Nota Fiscal / Recibo</label><input type="text" id="d-nf" placeholder="Ex: 123456 (opcional)"></div>
-               <div class="col"><label>Valor da Fatura (R$)</label><input type="text" id="d-valor" placeholder="0,00" oninput="window.despMascaraMoeda(this)"></div>
-               <div class="col"><label>Data de Vencimento</label><input type="date" id="d-vencimento"></div>
+               <div class="col"><label>Nº cheque / boleto (opcional)</label><input type="text" id="d-cheque-boleto" placeholder="Ex.: chq. 1234 / boleto"></div>
+               <div class="col"><label>Nº Nota Fiscal (opcional)</label><input type="text" id="d-nf" placeholder="Ex.: 123456"></div>
            </div>
            <div class="row form-group">
-               <div class="col"><label>Descrição / Materiais</label><textarea id="d-desc" rows="2" placeholder="Descreva os materiais adquiridos"></textarea></div>
+               <div class="col"><label>Data de lançamento</label><input type="date" id="d-lancamento"></div>
+               <div class="col"><label>Data de vencimento</label><input type="date" id="d-vencimento"></div>
+               <div class="col"><label>Valor (R$)</label><input type="text" id="d-valor" placeholder="0,00" oninput="window.despMascaraMoeda(this)"></div>
+           </div>
+           <div class="row form-group">
+               <div class="col"><label>Descrição / Materiais</label><textarea id="d-desc" rows="2" placeholder="Descrição"></textarea></div>
+               <div class="col"><label>Observação (opcional)</label><textarea id="d-observacao" rows="2" placeholder="Ex.: explicação p/ contabilidade"></textarea></div>
            </div>
            <div class="row form-group">
                <div class="col"><label>Foto do Recibo / Fatura (opcional)</label><input type="file" id="d-anexo" accept="image/*" capture="environment" onchange="window.despLerAnexo(this,'d-anexo-base64','d-anexo-prev')"><input type="hidden" id="d-anexo-base64"><div id="d-anexo-prev" style="margin-top:6px;"></div></div>
@@ -3801,6 +3951,7 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
 <div id="tabDespRelatorio" class="tab-content">
    <div class="container">
        <h2 style="color: #e67e22; border-bottom: 1px solid #e67e22;">🔍 Relatório de Gastos por Obra</h2>
+       <p class="texto-explicacao-desp" style="margin-top:4px;">Busque despesas por obra ou fornecedor, visualize por balões e exporte <b>PDF</b>, <b>Excel</b> ou o <b>Resumo Obra × Fornecedor</b>. Também acessível pelo menu <b>Exportar Relatórios</b>.</p>
        <div class="toolbar toolbar-desp-relatorio">
            <input type="text" id="busca-obra" class="search-bar" placeholder="Obra, local, cliente ou fornecedor..." onkeyup="if(event.key==='Enter')window.despBuscarDespesasObra()">
            <button type="button" class="btn-desp-relatorio-buscar" onclick="window.despBuscarDespesasObra()">🔍 Buscar</button>
@@ -3808,10 +3959,10 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
        </div>
        <div id="resumo-total-despesas" style="display:none; margin-top:15px; background:#ffffff; padding:12px; border-radius:8px; border:2px solid #6c757d; text-align:center;">
            <span style="color:#212529; font-weight:700;">Total encontrado: </span><strong id="total-gasto-display" style="color:#000000; font-size:18px; font-weight:800;">R$ 0,00</strong>
-           <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:12px;">
-               <button class="btn-secundario" style="background-color:#c0392b; font-weight:800;" onclick="window.despExportarPDF('obra')">📄 Exportar PDF</button>
-               <button class="btn-secundario" style="background-color:#1d7a44; font-weight:800;" onclick="window.despExportarExcel('obra')">📊 Exportar Excel</button>
-               <button class="btn-secundario" style="background-color:#2c3e50; font-weight:800;" onclick="window.despGerarResumoFornecedores()">📊 Resumo (Obra x Fornecedor)</button>
+           <div class="desp-obra-acoes-export">
+               <button type="button" class="btn-desp-obra-export btn-desp-obra-export-pdf" onclick="window.despExportarPDF('obra')">📄 Exportar PDF</button>
+               <button type="button" class="btn-desp-obra-export btn-desp-obra-export-excel" onclick="window.despExportarExcel('obra')">📊 Exportar Excel</button>
+               <button type="button" class="btn-desp-obra-export btn-desp-obra-export-resumo" onclick="window.despGerarResumoFornecedores()">📊 Resumo (Obra x Fornecedor)</button>
            </div>
        </div>
        <div id="painel-baloes-desp-obra" class="painel-baloes-desp baloes-fh-azul" style="display:none; margin-top:15px;">
@@ -3828,87 +3979,9 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
    </div>
 </div>
 
-<div id="tabDespExportar" class="tab-content">
-   <div class="container painel-exportar-relatorios">
-       <details open class="desp-exportar-details">
-           <summary>📋 Relatório de despesas</summary>
-           <div class="desp-exportar-corpo">
-               <p class="texto-explicacao-desp">Esta tabela é <b>independente</b> das despesas por obra: só mostra linhas criadas aqui. Inclui cheque/boleto, lançamento, vencimento, valor, pago/pendente, observação, editar e excluir.</p>
-
-               <details class="desp-exportar-add-linha">
-                   <summary>Adicionar linha ao relatório</summary>
-                   <div class="bloco-lancamento" style="margin-top:0;">
-                       <div class="row form-group">
-                           <div class="col"><label>Obra / Local / Cliente</label><input type="text" id="rd-obra" list="dl-obras" autocomplete="off" placeholder="Obra, local ou cliente" onchange="window.despAutofillEnderecoPorCliente(this.value,'rd')" onblur="window.despAutofillEnderecoPorCliente(this.value,'rd')"></div>
-                           <div class="col"><label>Fornecedor / Loja</label><input type="text" id="rd-loja" list="dl-lojas" autocomplete="off" placeholder="Nome ou loja"></div>
-                       </div>
-                       <div class="row form-group">
-                           <div class="col"><label>CPF / CNPJ (opcional)</label><input type="text" id="rd-cpf-cnpj" placeholder="Documento"></div>
-                           <div class="col"><label>CEP (opcional)</label><input type="text" id="rd-cep" maxlength="9" placeholder="00000-000" oninput="window.despMascaraCep(this)"></div>
-                           <div class="col" style="flex: 2;"><label>Endereço (opcional)</label><input type="text" id="rd-endereco" placeholder="Rua / avenida"></div>
-                           <div class="col" style="flex: 0.55;"><label>Número</label><input type="text" id="rd-numero" placeholder="Nº"></div>
-                       </div>
-                       <div class="row form-group">
-                           <div class="col"><label>Bairro (opcional)</label><input type="text" id="rd-bairro" placeholder="Bairro"></div>
-                       </div>
-                       <div class="row form-group">
-                           <div class="col"><label>Nº cheque / boleto (opcional)</label><input type="text" id="rd-cheque-boleto" placeholder="Ex.: chq. 1234 / boleto"></div>
-                           <div class="col"><label>Nº Nota Fiscal (opcional)</label><input type="text" id="rd-nf" placeholder="Ex.: 123456"></div>
-                       </div>
-                       <div class="row form-group">
-                           <div class="col"><label>Data de lançamento</label><input type="date" id="rd-lancamento"></div>
-                           <div class="col"><label>Data de vencimento</label><input type="date" id="rd-vencimento"></div>
-                           <div class="col"><label>Valor (R$)</label><input type="text" id="rd-valor" placeholder="0,00" oninput="window.despMascaraMoeda(this)"></div>
-                       </div>
-                       <div class="row form-group">
-                           <div class="col"><label>Descrição / Materiais</label><textarea id="rd-desc" rows="2" placeholder="Descrição"></textarea></div>
-                           <div class="col"><label>Observação (opcional)</label><textarea id="rd-observacao" rows="2" placeholder="Ex.: explicação p/ contabilidade"></textarea></div>
-                       </div>
-                       <button type="button" class="btn-primary" style="padding:10px; background-color:#e67e22;" onclick="window.despSalvarLinhaRelatorio()">Guardar linha no relatório</button>
-                   </div>
-               </details>
-
-               <div class="desp-exportar-filtros">
-                   <div class="busca-despesas-wrap">
-                       <label for="rel-desp-filtro">Filtrar por texto (obra ou fornecedor)</label>
-                       <input type="text" id="rel-desp-filtro" class="search-bar" placeholder="Digite para buscar..." autocomplete="off" onkeydown="if(event.key==='Enter')window.despCarregarRelatorioTabular()">
-                   </div>
-                   <div class="desp-exportar-estado-wrap">
-                       <label for="rel-desp-status">Estado</label>
-                       <select id="rel-desp-status">
-                           <option value="todos">Todos</option>
-                           <option value="pendente">Pendentes</option>
-                           <option value="pago">Pagos</option>
-                           <option value="vencido">Vencidos</option>
-                       </select>
-                   </div>
-               </div>
-
-               <button type="button" class="btn-desp-carregar-tabela" onclick="window.despCarregarRelatorioTabular()">Carregar tabela</button>
-
-               <p class="texto-explicacao-desp" style="margin-top:8px;">Itens com vencimento já passado aparecem em <b>VENCIDA</b>. O PDF e o Excel usam o mesmo resultado da tabela abaixo.</p>
-
-               <div class="desp-exportar-acoes-export">
-                   <button type="button" class="btn-desp-exportar-pdf-full" onclick="window.despExportarPDF('rel')">🖨️ Exportar PDF (resultado da tabela)</button>
-                   <button type="button" class="btn-desp-exportar-excel-full" onclick="window.despExportarExcel('rel')">📊 Exportar Excel (resultado da tabela)</button>
-               </div>
-
-               <div id="resumo-total-rel-despesas" style="display:none;">
-                   <h4 class="resumo-rel-desp-titulo">Total Gasto (Pesquisa Atual):</h4>
-                   <p id="resumo-rel-desp-subtitulo" class="resumo-rel-desp-subtitulo" style="display:none;"></p>
-                   <div id="total-gasto-display-rel-desp"></div>
-               </div>
-               <div id="tabela-relatorio-despesas-wrap" style="margin-top:15px; overflow-x:auto;">
-                   <p style="text-align:center; color:#212529; font-weight:700; padding:12px 0;">Clique em <b>Carregar tabela</b> para ver os registros.</p>
-               </div>
-           </div>
-       </details>
-   </div>
-</div>
-
 <div id="tabDespGeral" class="tab-content">
    <div class="container painel-relatorio-geral-obras">
-       <p class="texto-explicacao-desp" style="margin-top:0;">Consolidado de <b>todas as obras</b>: despesas com fornecedores (materiais/obras) + pagamentos a terceiros. Mostra o que está <b>vencido</b>, <b>a vencer</b> e <b>já pago</b>.</p>
+       <p class="texto-explicacao-desp" style="margin-top:0;">Consolidado de <b>todas as obras</b>: despesas com fornecedores (materiais/obras) + pagamentos a terceiros. Mostra o que está <b>vencido</b>, <b>a vencer</b> e <b>já pago</b>. Ao exportar PDF/Excel, escolha <b>10 D</b>, <b>30 D</b> ou <b>TOTAL</b>.</p>
 
        <button type="button" class="btn-rel-geral-atualizar" onclick="window.despCarregarRelatorioGeral()">🔄 ATUALIZAR RELATÓRIO GERAL</button>
 
@@ -4286,7 +4359,7 @@ window.mudarPaginaProd = function(direcao) {
            tabCaixa: 'submenuCaixa',
            tabRegistro: 'submenuRegistro',
            tabDespCadastrar: 'submenuDespesas', tabDespRelatorio: 'submenuDespesas',
-           tabDespExportar: 'submenuDespesas', tabDespGeral: 'submenuDespesas',
+           tabDespGeral: 'submenuDespesas',
            tabTerceiros: 'submenuDespesas'
        };
        var grupoAlvo = gruposMap[idAba] || null;
@@ -10132,7 +10205,11 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
         if(dlO) dlO.innerHTML = Object.keys(obras).sort().map(function(o){ return '<option value="'+esc(o)+'">'; }).join('');
         if(dlL) dlL.innerHTML = Object.keys(lojas).sort().map(function(o){ return '<option value="'+esc(o)+'">'; }).join('');
     }
-    window.despRenderCadastro = function(){ atualizarDatalists(); };
+    window.despRenderCadastro = function(){
+        atualizarDatalists();
+        var lan = document.getElementById('d-lancamento');
+        if (lan && !lan.value) lan.value = hojeIso();
+    };
 
     // =====================================================================
     // 1) ADICIONAR DESPESAS
@@ -10141,9 +10218,12 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
         var obra = canon(document.getElementById('d-obra').value);
         var loja = canon(document.getElementById('d-loja').value);
         var nf = (document.getElementById('d-nf').value||'').trim();
+        var cheque = (document.getElementById('d-cheque-boleto').value||'').trim();
+        var lanc = document.getElementById('d-lancamento').value || hojeIso();
         var venc = document.getElementById('d-vencimento').value || '';
         var valor = document.getElementById('d-valor').value;
         var desc = document.getElementById('d-desc').value || '';
+        var obs = (document.getElementById('d-observacao').value||'').trim();
         var foto = document.getElementById('d-anexo-base64').value || '';
         var end = window.despLerCamposEndereco('d');
         if(!obra || !loja || !valor){ alert('Preencha Obra/Local/Cliente, Fornecedor/Loja e Valor!'); return; }
@@ -10151,17 +10231,19 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
         arr.push({
             id: novoId(), obra_nome: obra, obra_lower: norm(obra),
             loja_nome: loja, loja_lower: norm(loja), nota_fiscal: nf,
+            cheque_boleto_num: cheque, data_lancamento: lanc, data: brDate(lanc),
             data_vencimento: venc, data_vencimento_ts: vencTs(venc),
             valor_string: valor, valor_numero: parseMoeda(valor),
-            descricao: desc, foto_recibo: foto,
+            descricao: desc, observacao: obs, foto_recibo: foto,
             endereco: end.endereco, bairro: end.bairro, numero: end.numero,
             cep: end.cep, cpf_cnpj: end.cpf_cnpj, endereco_busca: end.endereco_busca,
-            data: hojeBr(), timestamp: Date.now(), status: 'pendente'
+            timestamp: Date.now(), status: 'pendente'
         });
         save(K_OBRAS, arr);
         alert('Despesa cadastrada com sucesso!');
-        ['d-obra','d-loja','d-nf','d-vencimento','d-valor','d-desc','d-anexo','d-anexo-base64'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+        ['d-obra','d-loja','d-nf','d-cheque-boleto','d-vencimento','d-valor','d-desc','d-observacao','d-anexo','d-anexo-base64'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
         window.despLimparCamposEndereco('d');
+        document.getElementById('d-lancamento').value = hojeIso();
         var prev=document.getElementById('d-anexo-prev'); if(prev) prev.innerHTML='';
         atualizarDatalists();
     };
@@ -10336,64 +10418,12 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
         obras.forEach(function(o){ totGeral+=(totCol[o]||0); html += '<td style="font-weight:bold; color:#f1c40f;">'+fmt(totCol[o]||0)+'</td>'; });
         html += '<td style="font-weight:bold; color:#f1c40f;">'+fmt(totGeral)+'</td></tr>';
         html += '</tbody></table></div>';
-        document.getElementById('tabela-resumo-fornecedores').innerHTML = '<h3 style="color:#ecf0f1;">Resumo Obra × Fornecedor</h3>' + html;
+        document.getElementById('tabela-resumo-fornecedores').innerHTML = '<h3>Resumo Obra × Fornecedor</h3>' + html;
     };
 
     // =====================================================================
-    // 3) EXPORTAR RELATÓRIOS (tabela independente)
+    // 3) EXPORTAR RELATÓRIOS → mesma tela do Relatório de Gastos por Obra
     // =====================================================================
-    window.despInitExportar = function(){
-        atualizarDatalists();
-        var lan = document.getElementById('rd-lancamento');
-        if(lan && !lan.value) lan.value = hojeIso();
-    };
-
-    window.despSalvarLinhaRelatorio = function(){
-        var obra = canon(document.getElementById('rd-obra').value);
-        var loja = canon(document.getElementById('rd-loja').value);
-        var nf = (document.getElementById('rd-nf').value||'').trim();
-        var cheque = (document.getElementById('rd-cheque-boleto').value||'').trim();
-        var lanc = document.getElementById('rd-lancamento').value || hojeIso();
-        var venc = document.getElementById('rd-vencimento').value || '';
-        var valor = document.getElementById('rd-valor').value;
-        var desc = document.getElementById('rd-desc').value || '';
-        var obs = (document.getElementById('rd-observacao').value||'').trim();
-        var end = window.despLerCamposEndereco('rd');
-        if(!obra || !loja || !valor){ alert('Preencha Obra, Fornecedor e Valor.'); return; }
-        var arr = load(K_REL);
-        arr.push({
-            id: novoId(), obra_nome: obra, obra_lower: norm(obra),
-            loja_nome: loja, loja_lower: norm(loja), nota_fiscal: nf,
-            cheque_boleto_num: cheque, data_lancamento: lanc, data: brDate(lanc),
-            data_vencimento: venc, data_vencimento_ts: vencTs(venc),
-            valor_string: valor, valor_numero: parseMoeda(valor),
-            descricao: desc, observacao: obs,
-            endereco: end.endereco, bairro: end.bairro, numero: end.numero,
-            cep: end.cep, cpf_cnpj: end.cpf_cnpj, endereco_busca: end.endereco_busca,
-            timestamp: Date.now(), status: 'pendente'
-        });
-        save(K_REL, arr);
-        alert('Linha guardada no relatório!');
-        ['rd-obra','rd-loja','rd-nf','rd-cheque-boleto','rd-vencimento','rd-valor','rd-desc','rd-observacao'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-        window.despLimparCamposEndereco('rd');
-        document.getElementById('rd-lancamento').value = hojeIso();
-        atualizarDatalists();
-        window.despCarregarRelatorioTabular();
-    };
-
-    window.despCarregarRelatorioTabular = function(){
-        var termo = norm(document.getElementById('rel-desp-filtro').value);
-        var status = document.getElementById('rel-desp-status').value;
-        var lista = load(K_REL).filter(function(d){
-            if(termo && (d.obra_lower||'').indexOf(termo)<0 && (d.loja_lower||'').indexOf(termo)<0 && (d.endereco_busca||'').indexOf(termo)<0) return false;
-            if(status==='pago') return despStatusPago(d);
-            if(status==='pendente') return !despStatusPago(d);
-            if(status==='vencido') return estaVencida(d);
-            return true;
-        });
-        window._relDespDadosFiltrados = lista.slice();
-        window.despRenderizarTabelaRelDespesas(lista);
-    };
 
     // =====================================================================
     // 4) RELATÓRIO GERAL DE OBRAS
@@ -10583,7 +10613,7 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
         if (divAcoes) divAcoes.style.display = 'flex';
 
         if (!despesas.length && !terceiros.length) {
-            divSecoes.innerHTML = '<p style="text-align:center;color:#212529;font-weight:700;padding:20px;">Nenhum registro cadastrado.<br><span style="font-size:12px;font-weight:600;color:#666;">Cadastre em <b>Adicionar Despesas</b>, em <b>Exportar Relatórios</b> ou em <b>Terceiros</b>.</span></p>';
+            divSecoes.innerHTML = '<p style="text-align:center;color:#212529;font-weight:700;padding:20px;">Nenhum registro cadastrado.<br><span style="font-size:12px;font-weight:600;color:#666;">Cadastre em <b>Adicionar Despesas</b> ou em <b>Terceiros</b>.</span></p>';
             if (divResumo) divResumo.style.display = 'none';
             if (divAcoes) divAcoes.style.display = 'none';
             return;
@@ -10678,7 +10708,7 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
     function keyDe(tipo){ return tipo==='obra' ? K_OBRAS : (tipo==='rel' ? K_REL : K_TER); }
     function recarrega(tipo){
         if(tipo==='obra') window.despBuscarDespesasObra(!norm(document.getElementById('busca-obra').value), true);
-        else if(tipo==='rel') window.despCarregarRelatorioTabular();
+        else if(tipo==='rel') window.despBuscarDespesasObra(true);
         else window.despBuscarTerceiros(true);
     }
     window.despTogglePago = function(id, tipo){
@@ -10744,12 +10774,12 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
                 + camposEnderecoEdicao(d)
                 + campo('Fornecedor','edt-loja',d.loja_nome)
                 + campo('Nota Fiscal','edt-nf',d.nota_fiscal)
-                + (tipo==='rel'?campo('Cheque/Boleto','edt-cheque',d.cheque_boleto_num):'')
-                + (tipo==='rel'?campo('Lançamento','edt-lanc',d.data_lancamento,'date'):'')
+                + campo('Cheque/Boleto','edt-cheque',d.cheque_boleto_num)
+                + campo('Lançamento','edt-lanc',d.data_lancamento,'date')
                 + campo('Vencimento','edt-venc',d.data_vencimento,'date')
                 + campo('Valor (R$)','edt-valor',d.valor_string)
                 + campo('Descrição','edt-desc',d.descricao)
-                + (tipo==='rel'?campo('Observação','edt-obs',d.observacao):'');
+                + campo('Observação','edt-obs',d.observacao);
         }
         var wrap = document.createElement('div');
         wrap.id = 'despModalEdicao';
@@ -10778,11 +10808,9 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
                 d.data_vencimento = val('edt-venc'); d.data_vencimento_ts = vencTs(d.data_vencimento);
                 d.valor_string = val('edt-valor'); d.valor_numero = parseMoeda(d.valor_string);
                 d.descricao = val('edt-desc');
-                if(tipo==='rel'){
-                    d.cheque_boleto_num = val('edt-cheque');
-                    d.data_lancamento = val('edt-lanc'); d.data = brDate(d.data_lancamento);
-                    d.observacao = val('edt-obs');
-                }
+                d.cheque_boleto_num = val('edt-cheque');
+                d.data_lancamento = val('edt-lanc'); d.data = brDate(d.data_lancamento);
+                d.observacao = val('edt-obs');
             }
             document.getElementById('despModalEdicao').remove();
             if(onSave) onSave();
@@ -10792,7 +10820,113 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
     // =====================================================================
     // EXPORTAÇÃO PDF / EXCEL
     // =====================================================================
-    function datasetExport(tipo){
+    function rotuloPrazoExportDespesas(prazo) {
+        if (prazo === '10') return 'Próximos 10 dias';
+        if (prazo === '30') return 'Próximos 30 dias';
+        return 'Total';
+    }
+
+    function sufixoPrazoExportDespesas(prazo) {
+        if (prazo === '10') return '_10D';
+        if (prazo === '30') return '_30D';
+        return '_TOTAL';
+    }
+
+    function filtrarDespesasPorPrazoExportacao(arr, prazo) {
+        var lista = (arr || []).slice();
+        if (!prazo || prazo === 'total') return lista;
+        var dias = prazo === '10' ? 10 : 30;
+        var hoje = new Date();
+        hoje.setHours(12, 0, 0, 0);
+        var limite = new Date(hoje.getTime());
+        limite.setDate(limite.getDate() + dias);
+        var tsLimite = limite.getTime();
+        return lista.filter(function(d) {
+            if (despStatusPago(d)) return false;
+            var ts = vencimentoTsDespesa(d);
+            if (ts == null) return false;
+            return ts <= tsLimite;
+        });
+    }
+
+    function filtrarPackGeralPorPrazoExportacao(g, prazo) {
+        if (!g) return null;
+        if (!prazo || prazo === 'total') return g;
+        var dias = prazo === '10' ? 10 : 30;
+        var hoje = new Date();
+        hoje.setHours(12, 0, 0, 0);
+        var limite = new Date(hoje.getTime());
+        limite.setDate(limite.getDate() + dias);
+        var tsLimite = limite.getTime();
+        function passaFiltroVenc(d) {
+            if (despStatusPago(d)) return false;
+            var ts = vencimentoTsDespesa(d);
+            if (ts == null) return false;
+            return ts <= tsLimite;
+        }
+        var vencidas = (g.vencidas || []).filter(passaFiltroVenc);
+        var aVencer = (g.aVencer || []).filter(passaFiltroVenc);
+        var somaVencidas = vencidas.reduce(function(s, d) { return s + (d.valor_numero || 0); }, 0);
+        var somaAVencer = aVencer.reduce(function(s, d) { return s + (d.valor_numero || 0); }, 0);
+        return {
+            vencidas: vencidas,
+            aVencer: aVencer,
+            pagasForn: [],
+            terceiros: [],
+            somaVencidas: somaVencidas,
+            somaAVencer: somaAVencer,
+            somaPagasForn: 0,
+            somaPagasTerc: 0,
+            somaPagas: 0,
+            emAberto: somaVencidas + somaAVencer,
+            totalGeral: somaVencidas + somaAVencer
+        };
+    }
+
+    function perguntarPrazoExportDespesas(tipo) {
+        return new Promise(function(resolve) {
+            var old = document.getElementById('despModalPrazoExport');
+            if (old) old.remove();
+            var wrap = document.createElement('div');
+            wrap.id = 'despModalPrazoExport';
+            wrap.className = 'modal modal-prazo-export';
+            wrap.style.display = 'flex';
+            var intro = (tipo === 'geral')
+                ? 'Escolha o período para o espelho do Relatório Geral (com base na data de vencimento das pendências):'
+                : 'Escolha quais vencimentos incluir no PDF/Excel (com base na data de vencimento):';
+            wrap.innerHTML = ''
+                + '<div class="modal-content">'
+                + '<h3>📅 Período para exportar</h3>'
+                + '<p class="modal-prazo-intro">' + intro + '</p>'
+                + '<label class="modal-prazo-opcao"><input type="radio" name="prazo-export-rel" value="10" checked> <b>10 D</b> <span>— pendentes/vencidas com vencimento até 10 dias</span></label>'
+                + '<label class="modal-prazo-opcao"><input type="radio" name="prazo-export-rel" value="30"> <b>30 D</b> <span>— pendentes/vencidas com vencimento até 30 dias</span></label>'
+                + '<label class="modal-prazo-opcao"><input type="radio" name="prazo-export-rel" value="total"> <b>TOTAL</b> <span>— tudo carregado no relatório</span></label>'
+                + '<div class="modal-prazo-acoes">'
+                + '<button type="button" class="btn-prazo-export-cancelar">Cancelar</button>'
+                + '<button type="button" class="btn-prazo-export-confirmar">Exportar</button>'
+                + '</div></div>';
+            document.body.appendChild(wrap);
+            wrap.addEventListener('click', function(e) {
+                if (e.target === wrap) { wrap.remove(); resolve(null); }
+            });
+            wrap.querySelector('.btn-prazo-export-cancelar').onclick = function() {
+                wrap.remove();
+                resolve(null);
+            };
+            wrap.querySelector('.btn-prazo-export-confirmar').onclick = function() {
+                var sel = wrap.querySelector('input[name="prazo-export-rel"]:checked');
+                if (!sel) {
+                    alert('Selecione um período: 10 D, 30 D ou TOTAL.');
+                    return;
+                }
+                var valor = sel.value;
+                wrap.remove();
+                resolve(valor);
+            };
+        });
+    }
+
+    function datasetExport(tipo, prazo){
         if(tipo==='obra'){
             var l = window._dpUltimaBuscaObra || [];
             return { titulo:'Relatório de Gastos por Obra',
@@ -10801,28 +10935,40 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
                 total: l.reduce(function(s,d){ return s+(d.valor_numero||0); },0) };
         }
         if(tipo==='rel'){
-            var r = window._dpUltimaRel || [];
-            return { titulo:'Relatório de Despesas',
+            var r = filtrarDespesasPorPrazoExportacao(window._dpUltimaRel || [], prazo);
+            var tituloRel = 'Relatório de Despesas';
+            if (prazo && prazo !== 'total') tituloRel += ' — ' + rotuloPrazoExportDespesas(prazo);
+            return { titulo: tituloRel,
                 cols:['Obra / Local / Cliente','Fornecedor','Cheque/Boleto','NF','Lançamento','Vencimento','Valor','Status','Observação'],
                 linhas: r.map(function(d){ return [d.obra_nome, d.loja_nome, d.cheque_boleto_num||'-', d.nota_fiscal||'-', brDate(d.data_lancamento)||'-', brDate(d.data_vencimento)||'-', fmt(d.valor_numero), statusLabel(d), d.observacao||'']; }),
-                total: r.reduce(function(s,d){ return s+(d.valor_numero||0); },0) };
+                total: r.reduce(function(s,d){ return s+(d.valor_numero||0); },0),
+                sufixo: sufixoPrazoExportDespesas(prazo || 'total') };
         }
         // geral
         var g = window._dpUltimaGeral;
         if(!g){ window.despCarregarRelatorioGeral(); g = window._dpUltimaGeral; }
+        g = filtrarPackGeralPorPrazoExportacao(g, prazo);
         var linhas = [];
         g.vencidas.forEach(function(d){ linhas.push(['VENCIDO', d.obra_nome, d.loja_nome, brDate(d.data_vencimento)||'-', fmt(d.valor_numero)]); });
         g.aVencer.forEach(function(d){ linhas.push(['A VENCER', d.obra_nome, d.loja_nome, brDate(d.data_vencimento)||'-', fmt(d.valor_numero)]); });
-        g.pagasForn.forEach(function(d){ linhas.push(['PAGO (Fornecedor)', d.obra_nome, d.loja_nome, d.data_pagamento||d.data||'-', fmt(d.valor_numero)]); });
-        g.terceiros.forEach(function(d){ linhas.push(['PAGO (Terceiro)', d.obra, d.nome, d.data||'-', fmt(d.valor_numero)]); });
-        return { titulo:'Relatório Geral de Obras',
+        if (!prazo || prazo === 'total') {
+            g.pagasForn.forEach(function(d){ linhas.push(['PAGO (Fornecedor)', d.obra_nome, d.loja_nome, d.data_pagamento||d.data||'-', fmt(d.valor_numero)]); });
+            g.terceiros.forEach(function(d){ linhas.push(['PAGO (Terceiro)', d.obra, d.nome, d.data||'-', fmt(d.valor_numero)]); });
+        }
+        var tituloGeral = 'Relatório Geral de Obras';
+        if (prazo && prazo !== 'total') tituloGeral += ' — ' + rotuloPrazoExportDespesas(prazo);
+        return { titulo: tituloGeral,
             cols:['Categoria','Obra / Local / Cliente','Fornecedor/Nome','Data','Valor'],
-            linhas: linhas, total: g.totalGeral };
+            linhas: linhas, total: g.totalGeral,
+            sufixo: sufixoPrazoExportDespesas(prazo || 'total') };
     }
 
-    window.despExportarPDF = function(tipo){
-        var ds = datasetExport(tipo);
-        if(!ds.linhas.length){ alert('Nada para exportar. Faça uma busca/carregue os dados primeiro.'); return; }
+    function executarDespExportarPDF(tipo, prazo) {
+        var ds = datasetExport(tipo, prazo);
+        if(!ds.linhas.length){
+            alert('Nenhum registro para exportar no período "' + rotuloPrazoExportDespesas(prazo || 'total') + '".');
+            return;
+        }
         var thead = ds.cols.map(function(c){ return '<th>'+esc(c)+'</th>'; }).join('');
         var tbody = ds.linhas.map(function(row){ return '<tr>'+row.map(function(c){ return '<td>'+esc(c)+'</td>'; }).join('')+'</tr>'; }).join('');
         var html = '<html><head><meta charset="UTF-8"><title>'+esc(ds.titulo)+'</title><style>'
@@ -10835,11 +10981,14 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
             + '</body></html>';
         var w = window.open('', '', 'width=1000,height=750');
         w.document.write(html); w.document.close();
-    };
+    }
 
-    window.despExportarExcel = function(tipo){
-        var ds = datasetExport(tipo);
-        if(!ds.linhas.length){ alert('Nada para exportar. Faça uma busca/carregue os dados primeiro.'); return; }
+    function executarDespExportarExcel(tipo, prazo) {
+        var ds = datasetExport(tipo, prazo);
+        if(!ds.linhas.length){
+            alert('Nenhum registro para exportar no período "' + rotuloPrazoExportDespesas(prazo || 'total') + '".');
+            return;
+        }
         var thead = ds.cols.map(function(c){ return '<th>'+esc(c)+'</th>'; }).join('');
         var tbody = ds.linhas.map(function(row){ return '<tr>'+row.map(function(c){ return '<td>'+esc(c)+'</td>'; }).join('')+'</tr>'; }).join('');
         var tabela = '<table border="1"><thead><tr><th colspan="'+ds.cols.length+'">'+esc(ds.titulo)+' — '+new Date().toLocaleString('pt-BR')+'</th></tr><tr>'+thead+'</tr></thead><tbody>'+tbody
@@ -10849,9 +10998,61 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
         var blob = new Blob(['\ufeff'+html], {type:'application/vnd.ms-excel;charset=utf-8'});
         var a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = ds.titulo.replace(/[^\w]+/g,'-') + '-' + hojeIso() + '.xls';
+        a.download = ds.titulo.replace(/[^\w]+/g,'-') + (ds.sufixo || '') + '-' + hojeIso() + '.xls';
         document.body.appendChild(a); a.click();
         setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(a.href); }, 100);
+    }
+
+    window.despExportarPDF = function(tipo){
+        if (tipo === 'rel') {
+            if (!(window._dpUltimaRel || []).length) {
+                alert('Nada para exportar. Clique em "Carregar tabela" primeiro.');
+                return;
+            }
+            perguntarPrazoExportDespesas('rel').then(function(prazo) {
+                if (!prazo) return;
+                executarDespExportarPDF('rel', prazo);
+            });
+            return;
+        }
+        if (tipo === 'geral') {
+            if (!window._dpUltimaGeral) {
+                alert('Nada para exportar. Clique em "Atualizar Relatório Geral" primeiro.');
+                return;
+            }
+            perguntarPrazoExportDespesas('geral').then(function(prazo) {
+                if (!prazo) return;
+                executarDespExportarPDF('geral', prazo);
+            });
+            return;
+        }
+        executarDespExportarPDF(tipo, 'total');
+    };
+
+    window.despExportarExcel = function(tipo){
+        if (tipo === 'rel') {
+            if (!(window._dpUltimaRel || []).length) {
+                alert('Nada para exportar. Clique em "Carregar tabela" primeiro.');
+                return;
+            }
+            perguntarPrazoExportDespesas('rel').then(function(prazo) {
+                if (!prazo) return;
+                executarDespExportarExcel('rel', prazo);
+            });
+            return;
+        }
+        if (tipo === 'geral') {
+            if (!window._dpUltimaGeral) {
+                alert('Nada para exportar. Clique em "Atualizar Relatório Geral" primeiro.');
+                return;
+            }
+            perguntarPrazoExportDespesas('geral').then(function(prazo) {
+                if (!prazo) return;
+                executarDespExportarExcel('geral', prazo);
+            });
+            return;
+        }
+        executarDespExportarExcel(tipo, 'total');
     };
 })();
 </script>
