@@ -2235,6 +2235,117 @@
     padding: 10px 0;
 }
 
+/* Painel flutuante de vencimentos (despesas — igual Gestor 360) */
+#alerta-stack-global {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-end;
+    max-height: 88vh;
+    pointer-events: none;
+}
+#alerta-stack-global > div { pointer-events: auto; }
+#alerta-container-global { --alerta-painel-largura: 380px; }
+#alerta-container-global .alerta-painel-wrapper,
+#alerta-container-global .alerta-barra-minimizada {
+    width: var(--alerta-painel-largura);
+    max-width: calc(100vw - 32px);
+    box-sizing: border-box;
+}
+#alerta-container-global .alerta-painel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    padding: 10px 14px;
+    margin: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    width: 100%;
+    box-sizing: border-box;
+}
+#alerta-container-global .alerta-painel-header-titulo {
+    font-weight: 800;
+    font-size: 13px;
+    color: #1a2a43;
+    white-space: nowrap;
+}
+#alerta-container-global .alerta-painel-header-acoes {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    align-items: center;
+}
+#alerta-container-global .alerta-painel-corpo {
+    width: 100%;
+    box-sizing: border-box;
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable;
+    padding: 8px 14px 12px;
+    background: #f3f5f8;
+    border: 1px solid #e0e0e0;
+    border-top: 1px solid #ececec;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+#alerta-container-global .card-alerta-venc {
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    margin-bottom: 10px;
+    padding: 14px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    transition: opacity 0.4s, transform 0.4s;
+}
+#alerta-container-global .card-alerta-venc:last-child { margin-bottom: 0; }
+#alerta-container-global .alerta-btn-fechar {
+    background: #d9534f;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-weight: 700;
+    font-size: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+#alerta-container-global .alerta-btn-imprimir {
+    background: #1a2a43;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-weight: 700;
+    font-size: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+#alerta-container-global .alerta-btn-minimizar {
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1;
+}
+
  </style>
 </head>
 <body>
@@ -3123,6 +3234,22 @@ window._listaRecebimentosParciais = function (doc) {
     if (!doc || !doc.recebimentosParciais) return [];
     return Array.isArray(doc.recebimentosParciais) ? doc.recebimentosParciais : Object.values(doc.recebimentosParciais);
 };
+window._docTemRecebimentoGaveta = function (doc) {
+    if (!doc) return false;
+    const parciais = window._listaRecebimentosParciais(doc);
+    if (parciais.length) {
+        return parciais.some(function (p) { return window._recebimentoContaGaveta(p.formaPagamento); });
+    }
+    return window._recebimentoContaGaveta(doc.formaPagamento);
+};
+window._docTemRecebimentoDigital = function (doc) {
+    if (!doc) return false;
+    const parciais = window._listaRecebimentosParciais(doc);
+    if (parciais.length) {
+        return parciais.some(function (p) { return window.formaPagamentoEhDigital(p.formaPagamento); });
+    }
+    return window.formaPagamentoEhDigital(doc.formaPagamento);
+};
 window._totalRecebidoDoc = function (doc) {
     if (!doc) return 0;
     const lista = window._listaRecebimentosParciais(doc);
@@ -3249,7 +3376,8 @@ window._montarLinhasDigitaisBanco = function () {
                 _sortTs: window.timestampEfetivoCaixa(v),
                 id: v.id
             });
-        } else if (parciais.length > 0 && !quitado && saldo > 0.009) {
+        } else if (parciaisDig.length > 0 && !quitado && saldo > 0.009) {
+            // Só mostra "nota em aberto" no banco se houve recebimento digital (PIX/cartão)
             linhas.push({
                 docPai: v,
                 isManual: false,
@@ -3303,12 +3431,15 @@ window._htmlPagamentoNotaDoc = function (doc) {
     return html;
 };
 
-// Linhas que entram na tabela do caixa físico (balcão): sem PIX/cartão/boleto; vendas/OS pendentes ficam só em "Contas a receber".
+// Linhas que entram na tabela do caixa físico (balcão): sem PIX/cartão/boleto; pendentes sem recebimento em dinheiro ficam só em "Contas a receber".
 window.linhaEhCaixaBalcaoVisivel = function (v) {
-    let formaLow = (v.formaPagamento || '').toLowerCase();
-    let isDigital = formaLow.includes('pix') || formaLow.includes('cartão') || formaLow.includes('cartao') || formaLow.includes('débito') || formaLow.includes('crédito') || formaLow.includes('boleto');
-    if (isDigital) return false;
-    if ((v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO' || v.tipo === 'VD') && (v.statusPagamento || '') === 'PENDENTE') return false;
+    const tiposVenda = v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO' || v.tipo === 'VD';
+    const parciais = window._listaRecebimentosParciais(v);
+    if (parciais.length && tiposVenda) {
+        return window._docTemRecebimentoGaveta(v);
+    }
+    if (window.formaPagamentoEhDigital(v.formaPagamento)) return false;
+    if (tiposVenda && (v.statusPagamento || '') === 'PENDENTE') return false;
     return true;
 };
 
@@ -3866,6 +3997,15 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
                    <button type="submit" class="btn-primary" style="background-color: #27ae60; padding: 10px;">💾 Salvar Dados da Empresa</button>
                </div>
            </form>
+       </div>
+
+       <div class="container">
+           <h2 style="color:#e74c3c; border-bottom: 1px solid #e74c3c; margin-top: 40px;">4. Alertas de Vencimento (Despesas)</h2>
+           <p style="font-size: 12px; color: #bdc3c7; margin-top: 0;">Painel flutuante no canto da tela quando houver boletos <b>vencidos</b>, <b>vencendo hoje</b> ou nos <b>próximos 3 dias</b> — igual ao Gestor 360.</p>
+           <label style="display:flex; align-items:center; gap:10px; cursor:pointer; color:#ecf0f1; font-size:14px; margin: 12px 0 24px 0;">
+               <input type="checkbox" id="cfgAlertaVencimentoSom" checked onchange="window.fhSalvarCfgAlertaSom(this.checked)">
+               <span>🔔 Apitar (som) ao detectar vencimentos</span>
+           </label>
        </div>
 
        <div class="container">
@@ -5888,9 +6028,8 @@ window.abrirModalReceberPendente = function (id) {
     }
     const sel = document.getElementById('receberFormaPgto');
     if (sel) {
-        const fp = doc.formaPagamento || 'Dinheiro';
-        const ok = [...sel.options].some(o => o.value === fp);
-        sel.value = ok ? fp : 'Dinheiro';
+        // No balcão, padrão é dinheiro físico (evita herdar PIX da nota original por engano)
+        sel.value = 'Dinheiro';
     }
     const m = document.getElementById('modalReceberPendente');
     if (m) m.style.display = 'flex';
@@ -6783,11 +6922,16 @@ window.salvarOrdemDeServico = async function(event) {
         let txtBadge = '';
         let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
         let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
+        const recebidoParc = window._totalRecebidoDoc(v);
+        const saldoParc = window._saldoDevedorDoc(v);
+        const temParcialGaveta = window._listaRecebimentosParciais(v).length > 0 && recebidoParc > 0 && saldoParc > 0.009;
 
         if (v.tipo === 'ENTRADA_CAIXA') {
             txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ ENTRADA MANUAL</span>`;
         } else if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
             txtBadge = '-';
+        } else if (temParcialGaveta) {
+            txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">💵 RECEBIDO PARCIAL — Saldo R$ ${saldoParc.toFixed(2)}</span>`;
         } else if (statusStr === 'PAGO') {
             txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO${detalhePgto}</span>`;
         } else {
@@ -7683,10 +7827,14 @@ window.editarDocumentoCaixa = function(id) {
                 if (subCx) subCx.style.display = 'none';
                 document.getElementById('btnTabCaixa').classList.remove('grupo-aberto');
             }
+            if (window.iniciarMonitorAlertasVencimentoFh) {
+                window.iniciarMonitorAlertasVencimentoFh();
+            }
         };
 
         window.fazerLogout = function() {
             window.usuarioLogado = null;
+            if (window.ocultarPainelAlertasVencimentoFh) window.ocultarPainelAlertasVencimentoFh();
             window.voltarParaPerfis();
             document.getElementById('telaLogin').style.display = 'flex';
             document.getElementById('appSidebar').style.display = 'none';
@@ -8791,11 +8939,16 @@ window.renderizarTabelaCaixa = function() {
         let txtBadge = '';
         let formaPgto = v.formaPagamento ? v.formaPagamento.replace('Cartão de ', '') : '';
         let detalhePgto = formaPgto ? ` - ${formaPgto.toUpperCase()}` : '';
+        const recebidoParc = window._totalRecebidoDoc(v);
+        const saldoParc = window._saldoDevedorDoc(v);
+        const temParcialGaveta = window._listaRecebimentosParciais(v).length > 0 && recebidoParc > 0 && saldoParc > 0.009;
 
         if (v.tipo === 'ENTRADA_CAIXA') {
             txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ ENTRADA MANUAL</span>`;
         } else if (v.tipo === 'ORCAMENTO' || v.tipo === 'DESPESA' || v.tipo === 'FECHAMENTO') {
             txtBadge = '-';
+        } else if (temParcialGaveta) {
+            txtBadge = `<span class="badge-pendente" style="background-color: #f39c12; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">💵 RECEBIDO PARCIAL — Saldo R$ ${saldoParc.toFixed(2)}</span>`;
         } else if (statusStr === 'PAGO') {
             txtBadge = `<span class="badge-pago" style="background-color: #27ae60; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">✅ PAGO${detalhePgto}</span>`;
         } else {
@@ -10169,6 +10322,7 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
         });
         save(K_OBRAS, arr);
         alert('Despesa cadastrada com sucesso!');
+        if (window.monitorarVencimentosObrasFh) window.monitorarVencimentosObrasFh();
         ['d-obra','d-loja','d-nf','d-cheque-boleto','d-vencimento','d-valor','d-desc','d-observacao','d-anexo','d-anexo-base64'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
         window.despLimparCamposEndereco('d');
         document.getElementById('d-lancamento').value = hojeIso();
@@ -10646,6 +10800,7 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
         if(d.status==='pago'){ d.status='pendente'; delete d.data_pagamento; }
         else { d.status='pago'; d.data_pagamento = hojeBr(); }
         save(key, arr); recarrega(tipo);
+        if (window.monitorarVencimentosObrasFh) window.monitorarVencimentosObrasFh();
     };
     window.despExcluir = function(id, tipo){
         if(!confirm('Tem certeza que deseja excluir este registro?')) return;
@@ -10982,6 +11137,332 @@ if (window._garantirLibsPdf && !window._libsPdfProntas()) {
         }
         executarDespExportarExcel(tipo, 'total');
     };
+
+    // =====================================================================
+    // ALERTAS DE VENCIMENTO (despesas) — igual Gestor 360
+    // =====================================================================
+    var K_ALERTA_SOM = 'FH_ALERTA_VENCIMENTO_SOM';
+    var _intervalAlertasFh = null;
+
+    function alertaSomFhAtivo() {
+        return localStorage.getItem(K_ALERTA_SOM) !== '0';
+    }
+
+    function chaveAlertaSilenciadoFh(idDoc, dataStr) {
+        return 'FH_alerta_sil_' + idDoc + '_' + dataStr;
+    }
+
+    function escAttr(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function formatarVencimentoAlertaFh(d) {
+        var ts = vencimentoTsDespesa(d);
+        if (ts != null) return formatTsBr(ts);
+        var t = brDate(d.data_vencimento);
+        return t || '—';
+    }
+
+    function sistemaFhLogado() {
+        if (!window.usuarioLogado) return false;
+        var main = document.getElementById('appMainContent');
+        return main && main.style.display !== 'none';
+    }
+
+    function ensureAlertaStackFh() {
+        var stack = document.getElementById('alerta-stack-global');
+        if (!stack) {
+            stack = document.createElement('div');
+            stack.id = 'alerta-stack-global';
+            document.body.appendChild(stack);
+        }
+        var container = document.getElementById('alerta-container-global');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'alerta-container-global';
+            container.style.cssText = 'padding:0; max-width:100%;';
+            stack.appendChild(container);
+        } else if (container.parentElement !== stack) {
+            stack.appendChild(container);
+        }
+        stack.style.display = 'flex';
+        return stack;
+    }
+
+    function tocarSomAlertaVencimentoFh() {
+        var audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+        audio.play().catch(function () {});
+    }
+
+    function montarPainelAlertaFh(id, loja, obra, desc, titulo, tipo, temNota, valor, vencimento) {
+        var corTema = tipo === 'urgente' ? '#d9534f' : '#f0ad4e';
+        var idEsc = escAttr(id);
+        var lojaEsc = esc(loja);
+        var obraEsc = esc(obra);
+        var descEsc = esc(desc);
+        var valorEsc = esc(valor || '');
+        var vencEsc = esc(vencimento || '');
+        var valorTxt = valorEsc.indexOf('R$') === 0 ? valorEsc : 'R$ ' + valorEsc;
+        var btnNota = temNota
+            ? '<button type="button" onclick="window.visualizarNotaAlertaVencimentoFh(\'' + idEsc + '\')" style="background:#4285F4;color:#fff;border:none;border-radius:6px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;width:100%;">📄 VER NOTA</button>'
+            : '<span style="display:block;font-size:10px;color:#999;text-align:center;padding:4px 0;">Sem nota anexada</span>';
+        return '<div id="card-alerta-' + idEsc + '" class="card-alerta-venc" style="border-left:8px solid ' + corTema + ';">'
+            + '<div style="flex:1; min-width:0;">'
+            + '<b style="color:' + corTema + '; font-size:14px; display:block; margin-bottom:6px;">' + esc(titulo) + '</b>'
+            + '<span style="color:#666; font-size:11px; text-transform:uppercase; font-weight:800; display:block; margin-bottom:2px;">🏗️ OBRA: ' + obraEsc + '</span>'
+            + '<span style="color:#666; font-size:11px; text-transform:uppercase; font-weight:800; display:block; margin-bottom:4px;">🏢 LOJA: ' + lojaEsc + '</span>'
+            + '<span style="color:#d9534f; font-weight:700; font-size:13px; display:block; margin-bottom:2px;">' + valorTxt + '</span>'
+            + '<span style="color:#666; font-size:11px; display:block; margin-bottom:4px;">📅 Venc.: ' + vencEsc + '</span>'
+            + '<span style="color:#1a2a43; font-weight:600; font-size:13px; line-height:1.2; display:block;">' + descEsc + '</span>'
+            + '</div>'
+            + '<div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0; min-width:88px;">'
+            + btnNota
+            + '<button type="button" onclick="window.confirmarLeituraAlertaFh(\'' + idEsc + '\')" style="background:#f8f9fa; border:1px solid #ddd; border-radius:6px; padding:6px 12px; font-weight:700; cursor:pointer; color:#333;">OK</button>'
+            + '</div></div>';
+    }
+
+    function renderizarAlertasNoCantoFh(conteudo, som) {
+        ensureAlertaStackFh();
+        var container = document.getElementById('alerta-container-global');
+        if (!container) return;
+        var qtd = (conteudo.match(/card-alerta-/g) || []).length;
+        var minimizado = sessionStorage.getItem('fh_alertas_painel_minimizado') === '1';
+        container.style.display = 'block';
+        container.innerHTML = ''
+            + '<div class="alerta-barra-minimizada" style="display:' + (minimizado ? 'flex' : 'none') + '; align-items:center; gap:8px; background:#1a2a43; color:#fff; padding:10px 14px; border-radius:10px; box-shadow:0 6px 20px rgba(0,0,0,0.2);">'
+            + '<span style="font-weight:700; font-size:13px; flex:1; cursor:pointer;" onclick="window.togglePainelAlertasMinimizadoFh()" title="Clique para expandir">🔔 <span class="alerta-contagem-qtd">' + qtd + '</span> vencimento(s)</span>'
+            + '<button type="button" class="alerta-btn-imprimir" onclick="event.stopPropagation(); window.imprimirRelatorioAlertasVencimentoFh()" title="Imprimir relatório">🖨️</button>'
+            + '<button type="button" class="alerta-btn-fechar" onclick="window.confirmarLeituraTodosAlertasFh()" title="Silenciar todos">Fechar</button>'
+            + '<button type="button" onclick="window.togglePainelAlertasMinimizadoFh()" style="background:#fff; color:#1a2a43; border:none; border-radius:6px; padding:4px 10px; font-weight:700; font-size:12px; cursor:pointer;">Expandir</button>'
+            + '</div>'
+            + '<div class="alerta-painel-wrapper" style="display:' + (minimizado ? 'none' : 'block') + ';">'
+            + '<div class="alerta-painel-header">'
+            + '<span class="alerta-painel-header-titulo">⚠️ Vencimentos (<span class="alerta-contagem-qtd">' + qtd + '</span>)</span>'
+            + '<div class="alerta-painel-header-acoes">'
+            + '<button type="button" class="alerta-btn-fechar" onclick="window.confirmarLeituraTodosAlertasFh()" title="Silenciar todos os alertas de hoje">Fechar tudo</button>'
+            + '<button type="button" class="alerta-btn-imprimir" onclick="window.imprimirRelatorioAlertasVencimentoFh()" title="Imprimir relatório">🖨️ Imprimir</button>'
+            + '<button type="button" class="alerta-btn-minimizar" onclick="window.togglePainelAlertasMinimizadoFh()" title="Minimizar painel">−</button>'
+            + '</div></div>'
+            + '<div class="alerta-painel-corpo">' + conteudo + '</div>'
+            + '</div>';
+        if (som && alertaSomFhAtivo() && !minimizado) tocarSomAlertaVencimentoFh();
+    }
+
+    function atualizarContagemPainelAlertasFh() {
+        var cards = document.querySelectorAll('#alerta-container-global [id^="card-alerta-"]');
+        if (!cards.length) {
+            var container = document.getElementById('alerta-container-global');
+            if (container) { container.innerHTML = ''; container.style.display = 'none'; }
+            sessionStorage.removeItem('fh_alertas_painel_minimizado');
+            return;
+        }
+        var qtd = cards.length;
+        document.querySelectorAll('.alerta-contagem-qtd').forEach(function (el) {
+            el.textContent = String(qtd);
+        });
+    }
+
+    function monitorarVencimentosObrasFh() {
+        var containerAlerta = document.getElementById('alerta-container-global');
+        if (!sistemaFhLogado()) {
+            if (containerAlerta) containerAlerta.style.display = 'none';
+            var stack = document.getElementById('alerta-stack-global');
+            if (stack) stack.style.display = 'none';
+            return;
+        }
+        ensureAlertaStackFh();
+        if (containerAlerta) containerAlerta.style.display = 'block';
+        window._mapAlertasDespesasFh = {};
+        var hojeFormatado = new Date().toISOString().substring(0, 10);
+        var hojeMeioDia = new Date();
+        hojeMeioDia.setHours(12, 0, 0, 0);
+        var filaAlertas = [];
+        var emitirSom = false;
+        loadDespesasGeralConsolidadas().forEach(function (dados) {
+            var idDoc = dados.id;
+            if (!idDoc || despStatusPago(dados)) return;
+            var tsVenc = vencimentoTsDespesa(dados);
+            if (tsVenc == null) return;
+            var diffMs = tsVenc - hojeMeioDia.getTime();
+            var diasRestantes = Math.round(diffMs / (1000 * 60 * 60 * 24));
+            if (localStorage.getItem(chaveAlertaSilenciadoFh(idDoc, hojeFormatado))) return;
+            var tituloAlerta = '';
+            var classeUrgencia = '';
+            if (diasRestantes === 0) {
+                tituloAlerta = 'VENCE HOJE';
+                classeUrgencia = 'urgente';
+                emitirSom = true;
+            } else if (diasRestantes > 0 && diasRestantes <= 3) {
+                tituloAlerta = 'VENCE EM ' + diasRestantes + ' DIA(S)';
+                classeUrgencia = 'aviso';
+                emitirSom = true;
+            } else if (diasRestantes < 0) {
+                tituloAlerta = 'VENCIDO';
+                classeUrgencia = 'urgente';
+                emitirSom = true;
+            }
+            if (!tituloAlerta) return;
+            var nomeLoja = dados.loja_nome || dados.loja || 'Fornecedor não informado';
+            var nomeObra = dados.obra_nome || dados.obra || 'Obra não informada';
+            var nomeDespesa = dados.descricao || 'Sem descrição';
+            var valorAlerta = dados.valor_string || fmt(dados.valor_numero || 0);
+            var vencAlerta = formatarVencimentoAlertaFh(dados);
+            var temNota = Boolean(dados.foto_recibo);
+            window._mapAlertasDespesasFh[idDoc] = dados;
+            filaAlertas.push({
+                ts: tsVenc,
+                html: montarPainelAlertaFh(idDoc, nomeLoja, nomeObra, nomeDespesa, tituloAlerta, classeUrgencia, temNota, valorAlerta, vencAlerta)
+            });
+        });
+        filaAlertas.sort(function (a, b) { return a.ts - b.ts; });
+        var htmlAlertas = filaAlertas.map(function (a) { return a.html; }).join('');
+        if (htmlAlertas) {
+            renderizarAlertasNoCantoFh(htmlAlertas, emitirSom);
+        } else if (containerAlerta) {
+            containerAlerta.innerHTML = '';
+            containerAlerta.style.display = 'none';
+        }
+    }
+
+    window.monitorarVencimentosObrasFh = monitorarVencimentosObrasFh;
+
+    window.confirmarLeituraAlertaFh = function (id) {
+        var hj = new Date().toISOString().substring(0, 10);
+        localStorage.setItem(chaveAlertaSilenciadoFh(id, hj), 'true');
+        var el = document.getElementById('card-alerta-' + id);
+        if (el) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(50px)';
+            setTimeout(function () {
+                el.remove();
+                atualizarContagemPainelAlertasFh();
+            }, 400);
+        }
+    };
+
+    window.confirmarLeituraTodosAlertasFh = function () {
+        var cards = document.querySelectorAll('#alerta-container-global [id^="card-alerta-"]');
+        if (!cards.length) return;
+        var hj = new Date().toISOString().substring(0, 10);
+        cards.forEach(function (el) {
+            var id = el.id.replace('card-alerta-', '');
+            localStorage.setItem(chaveAlertaSilenciadoFh(id, hj), 'true');
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(50px)';
+        });
+        setTimeout(function () {
+            var container = document.getElementById('alerta-container-global');
+            if (container) { container.innerHTML = ''; container.style.display = 'none'; }
+            sessionStorage.removeItem('fh_alertas_painel_minimizado');
+        }, 400);
+    };
+
+    window.togglePainelAlertasMinimizadoFh = function () {
+        var minimizado = sessionStorage.getItem('fh_alertas_painel_minimizado') === '1';
+        sessionStorage.setItem('fh_alertas_painel_minimizado', minimizado ? '0' : '1');
+        var container = document.getElementById('alerta-container-global');
+        if (!container) return;
+        var barra = container.querySelector('.alerta-barra-minimizada');
+        var painel = container.querySelector('.alerta-painel-wrapper');
+        if (barra) barra.style.display = minimizado ? 'none' : 'flex';
+        if (painel) painel.style.display = minimizado ? 'block' : 'none';
+    };
+
+    window.visualizarNotaAlertaVencimentoFh = function (id) {
+        var d = window._mapAlertasDespesasFh && window._mapAlertasDespesasFh[id];
+        if (!d) { alert('Despesa não encontrada.'); return; }
+        if (!d.foto_recibo) { alert('Esta despesa não tem foto da nota/boleto anexada.'); return; }
+        var w = window.open('', '', 'width=720,height=820');
+        var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Nota / Boleto</title></head><body style="font-family:sans-serif;padding:16px;background:#f5f5f5;">'
+            + '<h2 style="margin:0 0 8px 0;color:#1a2a43;">📄 Nota / Boleto</h2>'
+            + '<p style="margin:0 0 4px 0;"><b>Obra:</b> ' + esc(d.obra_nome || d.obra || '-') + '</p>'
+            + '<p style="margin:0 0 4px 0;"><b>Fornecedor:</b> ' + esc(d.loja_nome || d.loja || '-') + '</p>'
+            + '<p style="margin:0 0 12px 0;"><b>Vencimento:</b> ' + esc(formatarVencimentoAlertaFh(d)) + ' &nbsp; <b>Valor:</b> ' + esc(d.valor_string || fmt(d.valor_numero || 0)) + '</p>'
+            + '<div style="text-align:center;background:#fff;padding:12px;border-radius:8px;border:2px solid #4285F4;">'
+            + '<img src="' + d.foto_recibo + '" style="max-width:100%;max-height:70vh;object-fit:contain;" alt="Nota">'
+            + '</div></body></html>';
+        w.document.write(html);
+        w.document.close();
+    };
+
+    window.imprimirRelatorioAlertasVencimentoFh = function () {
+        var cards = document.querySelectorAll('#alerta-container-global [id^="card-alerta-"]');
+        if (!cards.length) { alert('Não há boletos na lista de vencimentos para imprimir.'); return; }
+        var linhas = [];
+        var totalPagar = 0;
+        function statusAlertaPdf(d) {
+            var tsVenc = vencimentoTsDespesa(d);
+            if (tsVenc == null) return 'PENDENTE';
+            var hojeMeioDia = new Date();
+            hojeMeioDia.setHours(12, 0, 0, 0);
+            var dias = Math.round((tsVenc - hojeMeioDia.getTime()) / (1000 * 60 * 60 * 24));
+            if (dias < 0) return 'VENCIDO';
+            if (dias === 0) return 'VENCE HOJE';
+            if (dias <= 3) return 'VENCE EM ' + dias + ' DIA(S)';
+            return 'PENDENTE';
+        }
+        cards.forEach(function (el) {
+            var id = el.id.replace('card-alerta-', '');
+            var d = window._mapAlertasDespesasFh && window._mapAlertasDespesasFh[id];
+            if (!d) return;
+            var valorNum = parseMoeda(d.valor_string) || Number(d.valor_numero) || 0;
+            totalPagar += valorNum;
+            linhas.push([
+                statusAlertaPdf(d),
+                formatarVencimentoAlertaFh(d),
+                d.obra_nome || d.obra || '',
+                d.loja_nome || d.loja || '',
+                d.valor_string || fmt(valorNum),
+                d.nota_fiscal || '-',
+                String(d.descricao || '').slice(0, 100)
+            ]);
+        });
+        if (!linhas.length) { alert('Não foi possível montar o relatório.'); return; }
+        var thead = '<tr><th>Situação</th><th>Vencimento</th><th>Obra</th><th>Fornecedor</th><th>Valor</th><th>NF</th><th>Descrição</th></tr>';
+        var tbody = linhas.map(function (row) {
+            return '<tr>' + row.map(function (c) { return '<td>' + esc(c) + '</td>'; }).join('') + '</tr>';
+        }).join('');
+        var html = '<html><head><meta charset="UTF-8"><title>Vencimentos</title><style>'
+            + '@page{size:A4 landscape; margin:10mm;} body{font-family:sans-serif;font-size:11px;} h2{margin:0;} table{width:100%;border-collapse:collapse;margin-top:12px;} th,td{border:1px solid #ccc;padding:6px;text-align:left;} th{background:#1a2a43;color:#fff;} .tot{margin-top:14px;font-size:14px;font-weight:bold;text-align:right;} .no-print{margin-top:14px;}'
+            + '</style></head><body>'
+            + '<h2>RELATÓRIO DE CONTAS A PAGAR — VENCIMENTOS</h2>'
+            + '<div style="color:#666;">Gerado em ' + new Date().toLocaleString('pt-BR') + ' · ' + linhas.length + ' conta(s)</div>'
+            + '<div class="tot" style="color:#d9534f;">TOTAL A PAGAR (lista): ' + fmt(totalPagar) + '</div>'
+            + '<table><thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table>'
+            + '<div class="no-print"><button onclick="window.print()" style="padding:10px 16px;font-weight:bold;background:#1a2a43;color:#fff;border:none;border-radius:6px;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button></div>'
+            + '</body></html>';
+        var w = window.open('', '', 'width=1000,height=750');
+        w.document.write(html);
+        w.document.close();
+    };
+
+    window.iniciarMonitorAlertasVencimentoFh = function () {
+        setTimeout(function () { monitorarVencimentosObrasFh(); }, 3000);
+        if (_intervalAlertasFh) clearInterval(_intervalAlertasFh);
+        _intervalAlertasFh = setInterval(monitorarVencimentosObrasFh, 60000);
+    };
+
+    window.ocultarPainelAlertasVencimentoFh = function () {
+        if (_intervalAlertasFh) { clearInterval(_intervalAlertasFh); _intervalAlertasFh = null; }
+        var stack = document.getElementById('alerta-stack-global');
+        if (stack) stack.style.display = 'none';
+        var container = document.getElementById('alerta-container-global');
+        if (container) { container.innerHTML = ''; container.style.display = 'none'; }
+    };
+
+    window.fhSalvarCfgAlertaSom = function (on) {
+        localStorage.setItem(K_ALERTA_SOM, on ? '1' : '0');
+    };
+
+    function fhCarregarCfgAlertaSom() {
+        var el = document.getElementById('cfgAlertaVencimentoSom');
+        if (el) el.checked = alertaSomFhAtivo();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fhCarregarCfgAlertaSom);
+    } else {
+        fhCarregarCfgAlertaSom();
+    }
 })();
 </script>
 </body>
