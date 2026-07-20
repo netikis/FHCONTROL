@@ -2524,6 +2524,7 @@
        <button class="submenu-btn active" id="subBtnBalcao" onclick="abrirSubCaixa('subCaixaBalcao', this)">💰 Caixa / Balcão</button>
        <button class="submenu-btn" id="subBtnBanco" onclick="abrirSubCaixa('subCaixaBanco', this)">🏦 Caixa do Banco (Digital / PIX / Cartões)</button>
        <button class="submenu-btn" id="subBtnPendentes" onclick="abrirSubCaixa('subCaixaPendentes', this)">⏳ Contas a Receber (Pendentes)</button>
+       <button class="submenu-btn" id="subBtnOrcamentos" onclick="abrirSubCaixa('subCaixaOrcamentos', this)">📄 Orçamentos</button>
        <button class="submenu-btn" id="subBtnResumo" onclick="abrirSubCaixa('subCaixaResumo', this)">📄 Relatório Caixa</button>
    </div>
    <button class="menu-btn" id="btnTabRegistro" onclick="toggleGrupoMenu('submenuRegistro', this)">🗂️ Registro Geral</button>
@@ -3431,8 +3432,14 @@ window._htmlPagamentoNotaDoc = function (doc) {
     return html;
 };
 
+// Orçamentos ficam só no menu Orçamentos (não misturam no balcão).
+window.linhaEhOrcamento = function (v) {
+    return !!v && String(v.tipo || '').toUpperCase() === 'ORCAMENTO';
+};
+
 // Linhas que entram na tabela do caixa físico (balcão): sem PIX/cartão/boleto; pendentes sem recebimento em dinheiro ficam só em "Contas a receber".
 window.linhaEhCaixaBalcaoVisivel = function (v) {
+    if (window.linhaEhOrcamento(v)) return false;
     const tiposVenda = v.tipo === 'VENDA' || v.tipo === 'ORDEM DE SERVIÇO' || v.tipo === 'VD';
     const parciais = window._listaRecebimentosParciais(v);
     if (parciais.length && tiposVenda) {
@@ -3889,6 +3896,51 @@ window._vincularDownloadPdfCliente = function (janela, nomeArquivo) {
                        </tbody>
                    </table>
                </div>
+            </div>
+        </div>
+        </div>
+
+        <div id="subCaixaOrcamentos" class="subtab-content">
+        <div class="container" style="border: 1px solid #9b59b6;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; border-bottom: 1px solid rgba(155, 89, 182, 0.5); padding-bottom: 10px;">
+                <div>
+                    <h2 style="border: none; padding: 0; margin: 0; color: #9b59b6;">Orçamentos</h2>
+                    <p style="font-size: 12px; color: #bdc3c7; margin: 6px 0 0 0;">Simulações salvas em <strong>Vendas → Apenas Orçamento</strong>. Não entram no caixa físico nem no banco. Busque por cliente ou Nº do documento.</p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 11px; color: #95a5a6; text-transform: uppercase;">Total orçado (lista)</div>
+                    <div id="totalOrcamentosHead" style="font-size: 20px; font-weight: 800; color: #9b59b6;">R$ 0,00</div>
+                    <div id="qtdOrcamentosHead" style="font-size: 12px; color: #bdc3c7;">0 orçamento(s)</div>
+                </div>
+            </div>
+
+            <div class="toolbar" style="margin-top: 10px;">
+                <input type="search" id="buscaOrcamentos" class="search-bar" autocomplete="off" placeholder="Buscar por cliente ou Nº Doc..." oninput="if(window.filtrarOrcamentos)window.filtrarOrcamentos()">
+                <div class="pagination">
+                    <button type="button" onclick="mudarPaginaOrcamentos(-1)">◀ Ant</button>
+                    <span id="infoPaginaOrcamentos" style="margin: 0 10px;">Pág 1</span>
+                    <button type="button" onclick="mudarPaginaOrcamentos(1)">Próx ▶</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nº Doc</th>
+                            <th>Tipo</th>
+                            <th>Data Lanc.</th>
+                            <th>Cliente</th>
+                            <th>Vencimento</th>
+                            <th>Total</th>
+                            <th>Assinatura</th>
+                            <th style="min-width: 380px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaOrcamentos">
+                        <tr><td colspan="8" style="text-align:center;">Carregando orçamentos…</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
         </div>
@@ -4535,6 +4587,7 @@ window.mudarPaginaProd = function(direcao) {
        if (idSub === 'subCaixaBalcao' && window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
        if (idSub === 'subCaixaBanco' && window.renderizarTabelaBanco) window.renderizarTabelaBanco();
        if (idSub === 'subCaixaPendentes' && window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
+       if (idSub === 'subCaixaOrcamentos' && window.renderizarTabelaOrcamentos) window.renderizarTabelaOrcamentos();
    };
 
    document.addEventListener('keydown', function(evento) { 
@@ -6880,6 +6933,7 @@ window.salvarOrdemDeServico = async function(event) {
     if(window.renderizarTabelaCaixa) window.renderizarTabelaCaixa();
     if(window.renderizarTabelaBanco) window.renderizarTabelaBanco();
     if(window.renderizarTabelaPendentesCaixa) window.renderizarTabelaPendentesCaixa();
+    if(window.renderizarTabelaOrcamentos) window.renderizarTabelaOrcamentos();
     if(window.atualizarPainelBanco) window.atualizarPainelBanco();
 });
        
@@ -8879,6 +8933,10 @@ window.paginaAtualCaixa = 1;
 window.itensPorPaginaCaixa = 20; // Limite de 20 itens por página
 window.termoBuscaCaixa = "";
 
+window.paginaAtualOrcamentos = 1;
+window.itensPorPaginaOrcamentos = 20;
+window.termoBuscaOrcamentos = "";
+
 window.filtrarCaixa = function() {
     window.termoBuscaCaixa = document.getElementById('buscaCaixa').value.toLowerCase();
     window.paginaAtualCaixa = 1;
@@ -8898,6 +8956,88 @@ window.mudarPaginaCaixa = function(direcao) {
         window.paginaAtualCaixa += direcao;
         window.renderizarTabelaCaixa();
     }
+};
+
+window._listaOrcamentosVisiveis = function () {
+    const termo = String(window.termoBuscaOrcamentos || '').trim().toLowerCase();
+    const base = (typeof caixaGlobal !== 'undefined' ? caixaGlobal : []).filter(function (v) {
+        return window.linhaEhOrcamento(v);
+    });
+    if (!termo) return base;
+    return base.filter(function (v) {
+        const nome = String(v.clienteNome || '').toLowerCase();
+        const num = String(v.os || '').toLowerCase();
+        const obs = String(v.observacao || '').toLowerCase();
+        return nome.indexOf(termo) !== -1 || num.indexOf(termo) !== -1 || obs.indexOf(termo) !== -1;
+    });
+};
+
+window.filtrarOrcamentos = function () {
+    const inp = document.getElementById('buscaOrcamentos');
+    window.termoBuscaOrcamentos = inp ? String(inp.value || '').toLowerCase() : '';
+    window.paginaAtualOrcamentos = 1;
+    window.renderizarTabelaOrcamentos();
+};
+
+window.mudarPaginaOrcamentos = function (direcao) {
+    const filtrados = window._listaOrcamentosVisiveis();
+    const max = Math.max(1, Math.ceil(filtrados.length / window.itensPorPaginaOrcamentos) || 1);
+    if (window.paginaAtualOrcamentos + direcao >= 1 && window.paginaAtualOrcamentos + direcao <= max) {
+        window.paginaAtualOrcamentos += direcao;
+        window.renderizarTabelaOrcamentos();
+    }
+};
+
+window.renderizarTabelaOrcamentos = function () {
+    const tabela = document.getElementById('tabelaOrcamentos');
+    if (!tabela) return;
+    const filtrados = window._listaOrcamentosVisiveis();
+    const totalValor = filtrados.reduce(function (s, v) { return s + (parseFloat(v.total) || 0); }, 0);
+    const elTot = document.getElementById('totalOrcamentosHead');
+    const elQtd = document.getElementById('qtdOrcamentosHead');
+    if (elTot) elTot.innerText = 'R$ ' + totalValor.toFixed(2);
+    if (elQtd) elQtd.innerText = filtrados.length + ' orçamento(s)';
+
+    if (!filtrados.length) {
+        tabela.innerHTML = '<tr><td colspan="8" style="text-align:center;">Nenhum orçamento encontrado' +
+            (window.termoBuscaOrcamentos ? ' para esta busca.' : '. Crie em Vendas → Tipo “Apenas Orçamento”.') +
+            '</td></tr>';
+        if (document.getElementById('infoPaginaOrcamentos')) {
+            document.getElementById('infoPaginaOrcamentos').innerText = 'Pág 1 de 1';
+        }
+        return;
+    }
+
+    const maxPag = Math.max(1, Math.ceil(filtrados.length / window.itensPorPaginaOrcamentos));
+    if (window.paginaAtualOrcamentos > maxPag) window.paginaAtualOrcamentos = maxPag;
+    const inicio = (window.paginaAtualOrcamentos - 1) * window.itensPorPaginaOrcamentos;
+    const pagina = filtrados.slice(inicio, inicio + window.itensPorPaginaOrcamentos);
+    if (document.getElementById('infoPaginaOrcamentos')) {
+        document.getElementById('infoPaginaOrcamentos').innerText = 'Pág ' + window.paginaAtualOrcamentos + ' de ' + maxPag;
+    }
+
+    tabela.innerHTML = '';
+    pagina.forEach(function (v) {
+        const tr = document.createElement('tr');
+        const temAss = v.assinaturaBase64
+            ? '<span style="color:#2ecc71;">✍️ OK</span>'
+            : '<span style="color:#e74c3c;">❌ Pend</span>';
+        const vencForm = v.vencimento ? String(v.vencimento).split('-').reverse().join('/') : '-';
+        const dataLanc = (window.dataEfetivaCaixaDia ? window.dataEfetivaCaixaDia(v) : (v.dataStr || '-'));
+        const acoes = window.montarAcoesDocCaixaHtml
+            ? window.montarAcoesDocCaixaHtml(v, { contexto: 'balcao' })
+            : '<button class="btn-acao del" onclick="cancelarVenda(\'' + v.id + '\')">🗑️</button>';
+        tr.innerHTML =
+            '<td style="font-weight:bold;color:#ffffff;">' + (v.os || '-') + '</td>' +
+            '<td><span style="background-color:#9b59b6;color:#fff;padding:2px 4px;border-radius:4px;font-size:10px;font-weight:bold;">ORCAMENTO</span></td>' +
+            '<td style="font-weight:bold;">' + dataLanc + '</td>' +
+            '<td style="font-weight:bold;">' + (v.clienteNome || '-') + '</td>' +
+            '<td style="font-weight:bold;">' + vencForm + '</td>' +
+            '<td style="color:#9b59b6;font-weight:bold;">R$ ' + (parseFloat(v.total) || 0).toFixed(2) + '</td>' +
+            '<td style="font-size:11px;font-weight:bold;">' + temAss + '</td>' +
+            '<td class="celula-acoes"><div class="acoes-flex">' + acoes + '</div></td>';
+        tabela.appendChild(tr);
+    });
 };
 
 window.renderizarTabelaCaixa = function() {
