@@ -7834,6 +7834,34 @@ window.editarDocumentoCaixa = function(id) {
             document.getElementById('botoesPerfil').style.display = 'block';
         };
 
+        // Sessão da aba: sobrevive a F5 / atualizar; some ao fechar o navegador (sessionStorage)
+        window.FH_SESSAO_KEY = 'FH_SESSAO_USUARIO';
+        window._salvarSessaoUsuario = function(user) {
+            if (!user) return;
+            try {
+                sessionStorage.setItem(window.FH_SESSAO_KEY, JSON.stringify({
+                    id: user.id || null,
+                    nome: user.nome || 'Usuário',
+                    role: user.role || 'balcao',
+                    login: user.login || ''
+                }));
+            } catch (e) {}
+        };
+        window._limparSessaoUsuario = function() {
+            try { sessionStorage.removeItem(window.FH_SESSAO_KEY); } catch (e) {}
+        };
+        window._lerSessaoUsuario = function() {
+            try {
+                var raw = sessionStorage.getItem(window.FH_SESSAO_KEY);
+                if (!raw) return null;
+                var u = JSON.parse(raw);
+                if (!u || !u.nome || !u.role) return null;
+                return u;
+            } catch (e) {
+                return null;
+            }
+        };
+
         window.logarAdmin = function() {
             let senhaDigitada = document.getElementById('inputSenhaAdmin').value;
             let adminUser = window.usuariosGlobais.find(u => u.role === 'admin');
@@ -7860,8 +7888,10 @@ window.editarDocumentoCaixa = function(id) {
             }
         };
 
-        window.entrarSistema = function(user) {
+        window.entrarSistema = function(user, opts) {
+            opts = opts || {};
             window.usuarioLogado = user;
+            if (!opts.semSalvarSessao) window._salvarSessaoUsuario(user);
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('appSidebar').style.display = 'flex';
             document.getElementById('appMainContent').style.display = 'block';
@@ -7888,12 +7918,20 @@ window.editarDocumentoCaixa = function(id) {
 
         window.fazerLogout = function() {
             window.usuarioLogado = null;
+            window._limparSessaoUsuario();
             if (window.ocultarPainelAlertasVencimentoFh) window.ocultarPainelAlertasVencimentoFh();
             window.voltarParaPerfis();
             document.getElementById('telaLogin').style.display = 'flex';
             document.getElementById('appSidebar').style.display = 'none';
             document.getElementById('appMainContent').style.display = 'none';
         };
+
+        // Restaura login após F5 / atualizar página (enquanto a aba do navegador estiver aberta)
+        (function tentarRestaurarSessaoFh() {
+            var sessao = window._lerSessaoUsuario();
+            if (!sessao) return;
+            window.entrarSistema(sessao, { semSalvarSessao: true });
+        })();
 
         // --- GESTÃO DE FUNCIONÁRIOS (SALVAR VENDEDORES DO BALCÃO) ---
         window.salvarFuncionario = function() {
