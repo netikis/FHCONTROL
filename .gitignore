@@ -30,6 +30,7 @@ _patch_*.py
 Imagens/
 *.xlsx
 SISTEMA 14-05-2026 CERTO/
+ARQUIVOS QUE NAO SOBE PARA VERCEL E GITHB/
 
 # SO / editor
 .DS_Store

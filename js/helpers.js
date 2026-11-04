@@ -17,7 +17,13 @@ window.parseQtdEstoque = function(v) {
     if (v === '' || v === null || v === undefined) return NaN;
     let s = String(v).trim().replace(/\s/g, '');
     if (s === '') return NaN;
-    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    if (s.includes(',') && s.includes('.')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+    } else if (s.includes(',')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+    } else if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+        s = s.replace(/\./g, '');
+    }
     const n = parseFloat(s);
     if (isNaN(n) || n < 0) return NaN;
     return Math.round(n * 100000) / 100000;
@@ -47,6 +53,78 @@ window.rotuloUnidadeMedida = function(u) {
 window.formatQtdComUnidade = function(q, u) {
     return `${window.formatQtdEstoque(q)} ${window.rotuloUnidadeMedida(u)}`.trim();
 };
+
+/** Tira " — 1000 m" / "(Qtd: 1000)" do nome para a quantidade viver na coluna Qtd/Un. */
+window.nomeDescricaoItem = function(i) {
+    let n = String((i && i.nome) || '');
+    n = n.replace(/\s*[—–-]\s*[\d.,]+\s*(un\.?|m|kg|l)\s*$/i, '');
+    n = n.replace(/\s*\(Qtd:\s*[^)]+\)\s*$/i, '');
+    return n.trim();
+};
+
+window.dadosLinhaItem = function(i) {
+    i = i || {};
+    const total = Number(i.valor) || 0;
+    let qtd = Number(i.qtdBaixa);
+    if (!(qtd > 0)) {
+        const vo = Number(i.valorOriginal);
+        if (vo > 0 && total > 0) qtd = Math.round((total / vo) * 100000) / 100000;
+    }
+    const hasQtd = qtd > 0;
+    let precoUn = Number(i.valorOriginal);
+    if (!(precoUn >= 0) && hasQtd) precoUn = total / qtd;
+    if (!(precoUn >= 0)) precoUn = total;
+    return {
+        nome: window.nomeDescricaoItem(i),
+        qtd: hasQtd ? qtd : null,
+        un: hasQtd ? window.rotuloUnidadeMedida(i.unidadeMedida) : '',
+        precoUn: precoUn,
+        total: total
+    };
+};
+
+window.htmlLinhaItemDoc = function(i, opts) {
+    opts = opts || {};
+    const d = window.dadosLinhaItem(i);
+    const tot = 'R$ ' + (Number(d.total) || 0).toFixed(2);
+    if (opts.simples) {
+        return `<tr><td style="font-size: 9px; padding: 4px 6px;">${d.nome}</td><td class="text-right" style="font-size: 10px; padding: 4px 6px;">${tot}</td></tr>`;
+    }
+    const qtdTxt = d.qtd != null ? window.formatQtdEstoque(d.qtd) : '—';
+    const unTxt = d.qtd != null ? (d.un || 'un.') : '—';
+    const pu = d.qtd != null ? ('R$ ' + (Number(d.precoUn) || 0).toFixed(2)) : '—';
+    return `<tr>
+        <td style="font-size: 9px; padding: 4px 6px;">${d.nome}</td>
+        <td class="text-center" style="font-size: 10px; padding: 4px 6px; white-space:nowrap;">${qtdTxt}</td>
+        <td class="text-center" style="font-size: 10px; padding: 4px 6px;">${unTxt}</td>
+        <td class="text-right" style="font-size: 10px; padding: 4px 6px; white-space:nowrap;">${pu}</td>
+        <td class="text-right" style="font-size: 10px; padding: 4px 6px; white-space:nowrap; font-weight:700;">${tot}</td>
+    </tr>`;
+};
+
+window.htmlCabecalhoItensDoc = function() {
+    return `<tr><th>Descrição</th><th class="text-center">Qtd</th><th class="text-center">Un</th><th class="text-right">Unitário</th><th class="text-right">Total</th></tr>`;
+};
+
+window.htmlRodapeItensDoc = function(total) {
+    return `<tr><th colspan="4" class="text-right">Subtotal:</th><th class="text-right">R$ ${Number(total || 0).toFixed(2)}</th></tr>`;
+};
+
+window.textoDetalheLinhaCarrinho = function(item) {
+    if (!item || item.categoriaOS === 'servico') return '';
+    const d = window.dadosLinhaItem(item);
+    if (d.qtd == null) return '';
+    return `${window.formatQtdEstoque(d.qtd)} ${d.un} × R$ ${(Number(d.precoUn) || 0).toFixed(2)} = R$ ${(Number(d.total) || 0).toFixed(2)}`;
+};
+
+window.atualizarRotuloQtdCampo = function(labelId, unidade) {
+    const lab = document.getElementById(labelId);
+    if (!lab) return;
+    const u = window.normalizarUnidadeMedida(unidade);
+    const map = { m: 'Qtd (m)', kg: 'Qtd (kg)', l: 'Qtd (L)', un: 'Qtd (un.)' };
+    lab.textContent = map[u] || 'Qtd.';
+};
+
 window.unidadeEfetivaVenda = function(p, selectEl) {
     if (!p) return 'un';
     const sel = selectEl && selectEl.value != null ? String(selectEl.value).trim() : '';

@@ -493,7 +493,7 @@
             </div>
             <div id="vendaEstoqueResumo" style="display:none; font-size: 12px; color: #ecf0f1; background: rgba(46,204,113,0.12); border: 1px solid rgba(46,204,113,0.35); border-radius: 6px; padding: 8px 10px; margin: 4px 0 8px 0; line-height: 1.45;"></div>
             <div class="row form-group" style="align-items: flex-end;">
-                <div class="col" style="flex: 0.55;"><label>Unid. na venda</label><select id="vendaUnidadeVenda" onchange="if(window.atualizarResumoEstoqueVenda) window.atualizarResumoEstoqueVenda()" style="width:100%; padding: 6px;">
+                <div class="col" style="flex: 0.55;"><label>Unid. na venda</label><select id="vendaUnidadeVenda" onchange="if(window.atualizarResumoEstoqueVenda) window.atualizarResumoEstoqueVenda(); if(window.atualizarTotalLinhaVendaEstoque) window.atualizarTotalLinhaVendaEstoque();" style="width:100%; padding: 6px;">
                     <option value="">Igual ao cadastro</option>
                     <option value="un">Unidade (un.)</option>
                     <option value="m">Metro (m)</option>
@@ -1822,6 +1822,14 @@ window.excluirTodosProdutos = async function() {
 
        window.atualizarTotalLinhaVendaEstoque = function() {
            const el = document.getElementById('vendaProdutoTotalLinha');
+           const selUn = document.getElementById('vendaUnidadeVenda');
+           let un = selUn && selUn.value;
+           if (!un) {
+               const busca = document.getElementById('vendaProdutoEstoqueBusca');
+               const p = busca && (produtosGlobais || []).find(x => String(x.nome).trim().toLowerCase() === busca.value.trim().toLowerCase() || String(x.codigo).trim() === busca.value.trim());
+               if (p) un = p.unidadeMedida;
+           }
+           if (window.atualizarRotuloQtdCampo) window.atualizarRotuloQtdCampo('vendaProdutoQtdLabel', un || 'un');
            if (!el) return;
            const q = window.parseQtdEstoque(document.getElementById('vendaProdutoQtd') && document.getElementById('vendaProdutoQtd').value);
            const pu = parseFloat(document.getElementById('vendaProdutoPrecoFinal') && document.getElementById('vendaProdutoPrecoFinal').value);
@@ -1834,6 +1842,8 @@ window.excluirTodosProdutos = async function() {
 
        window.atualizarTotalLinhaVendaAvulso = function() {
            const el = document.getElementById('vendaAvulsoTotalLinha');
+           const selUn = document.getElementById('vendaAvulsoUnidade');
+           if (window.atualizarRotuloQtdCampo) window.atualizarRotuloQtdCampo('vendaAvulsoQtdLabel', selUn && selUn.value);
            if (!el) return;
            const q = window.parseQtdEstoque(document.getElementById('vendaAvulsoQtd') && document.getElementById('vendaAvulsoQtd').value);
            const pu = parseFloat(document.getElementById('vendaAvulsoValor') && document.getElementById('vendaAvulsoValor').value);
@@ -1938,7 +1948,7 @@ window.addAoCarrinhoVenda_Estoque = function() {
 
     const selUn = document.getElementById('vendaUnidadeVenda');
     const ue = window.unidadeEfetivaVenda(p, selUn);
-    const nomeExibir = `${p.nome} (Cód: ${p.codigo || '-'}) — ${window.formatQtdComUnidade(qtd, ue)}`;
+    const nomeExibir = `${p.nome} (Cód: ${p.codigo || '-'})`;
 
     carrinhoVenda.push({
         idProd: p.id, nome: nomeExibir, valor: precoUn * qtd, valorOriginal: precoUn, 
@@ -1966,7 +1976,7 @@ window.addAoCarrinhoVenda_Estoque = function() {
            if (!n || isNaN(precoUn)) return alert('Preencha a descrição e o preço de venda (R$).');
            if (isNaN(qtd) || qtd <= 0) return alert('Informe uma quantidade válida maior que zero (ex.: 3,5).');
 
-           const nomeExibir = `${n} — ${window.formatQtdComUnidade(qtd, ue)}`;
+           const nomeExibir = n;
            carrinhoVenda.push({
                nome: nomeExibir,
                valor: precoUn * qtd,
@@ -2067,9 +2077,12 @@ window.addAoCarrinhoVenda_Estoque = function() {
                    if (lista.length === 0) return;
                    div.innerHTML += `<div style="margin-top:10px; font-weight:bold; color:#f1c40f; border-bottom:1px solid rgba(241,196,15,0.35); padding-bottom:4px;">${titulo}</div>`;
                    lista.forEach(({ item, idx }) => {
+                       const d = window.dadosLinhaItem(item);
+                       const det = window.textoDetalheLinhaCarrinho(item);
+                       const detHtml = det ? `<br><small style="color:#bdc3c7;">${det}</small>` : '';
                        div.innerHTML += `
                        <div class="cart-item">
-                           <span>${item.nome}</span>
+                           <span>${d.nome}${detHtml}</span>
                            <span>R$ ${item.valor.toFixed(2)} 
                                <button class="btn-acao edit" style="padding:2px 6px;margin-left:10px;" onclick="editarItemCarrinhoVenda(${idx})" title="Editar Item">✏️</button>
                                <button class="btn-danger" style="padding:2px 6px;margin-left:5px;" onclick="removerDoCarrinhoVenda(${idx})" title="Remover Item">X</button>
@@ -2451,7 +2464,7 @@ window.sincronizarTotaisDoDia = async function() {
            const ueOs = window.unidadeEfetivaVenda(p, selOs);
            carrinhoOS.push({ 
                idProd: p.id, 
-               nome: `[Estoque] ${p.nome} — ${window.formatQtdComUnidade(qtd, ueOs)}`, 
+               nome: `[Estoque] ${p.nome}`, 
                valor: valTotal, 
                valorOriginal: valUn,
                custoOriginal: custoUn,
@@ -2485,7 +2498,7 @@ window.sincronizarTotaisDoDia = async function() {
            if (!n || isNaN(valTotal) || valTotal === 0) return alert("Preencha o Nome e Valor da Compra Externa.");
            if (isNaN(qtd) || qtd <= 0) return alert("Informe uma quantidade válida maior que zero (ex.: 3,5).");
            
-           carrinhoOS.push({ nome: `[Externo] ${n} (Qtd: ${window.formatQtdEstoque(qtd)})`, valor: valTotal, valorOriginal: valUn, qtdBaixa: qtd, percOriginal: perc, ehEstoque: false, categoriaOS: 'material' });
+           carrinhoOS.push({ nome: `[Externo] ${n}`, valor: valTotal, valorOriginal: valUn, qtdBaixa: qtd, percOriginal: perc, ehEstoque: false, categoriaOS: 'material' });
            
            document.getElementById('osMatExternoNome').value = ''; 
            document.getElementById('osMatExternoValor').value = ''; 
@@ -2560,10 +2573,13 @@ window.sincronizarTotaisDoDia = async function() {
            const div = document.getElementById('listaCarrinhoOS'); div.innerHTML = ''; let tItens = 0;
            if (carrinhoOS.length === 0) { div.innerHTML = 'Nenhum material/serviço lançado.'; } else {
                carrinhoOS.forEach((item, i) => { 
-                   tItens += item.valor; 
+                   tItens += item.valor;
+                   const d = window.dadosLinhaItem(item);
+                   const det = window.textoDetalheLinhaCarrinho(item);
+                   const detHtml = det ? `<br><small style="color:#bdc3c7;">${det}</small>` : '';
                    div.innerHTML += `
                    <div class="cart-item">
-                       <span>${item.nome}</span>
+                       <span>${d.nome}${detHtml}</span>
                        <span>R$ ${item.valor.toFixed(2)} 
                            <button class="btn-acao edit" style="padding:2px 6px;margin-left:10px;" onclick="editarItemCarrinhoOS(${i})" title="Editar Item">✏️</button>
                            <button class="btn-danger" style="padding:2px 6px;margin-left:5px;" onclick="removerDoCarrinhoOS(${i})">X</button>

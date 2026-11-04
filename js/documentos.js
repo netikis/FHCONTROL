@@ -81,13 +81,17 @@
 
                if(itensGarantidos.length > 0) {
                    itensGarantidos.forEach(i => {
-                       let tdHtml = `<tr><td style="font-size: 9px; padding: 4px 6px;">${i.nome}</td><td class="text-right" style="font-size: 10px; padding: 4px 6px;">R$ ${i.valor.toFixed(2)}</td></tr>`;
-                       if(i.categoriaOS === 'servico') { servHtml += tdHtml; totalServ += i.valor; } 
-                       else { matHtml += tdHtml; totalMat += i.valor; }
+                       if(i.categoriaOS === 'servico') {
+                           servHtml += window.htmlLinhaItemDoc(i, { simples: true });
+                           totalServ += i.valor;
+                       } else {
+                           matHtml += window.htmlLinhaItemDoc(i);
+                           totalMat += i.valor;
+                       }
                    });
                }
                
-               if(!matHtml) matHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum material lançado.</td></tr>`;
+               if(!matHtml) matHtml = `<tr><td colspan="5" class="text-center text-muted">Nenhum material lançado.</td></tr>`;
                if(!servHtml) servHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum serviço lançado.</td></tr>`;
 
                blocoDados = `
@@ -115,9 +119,9 @@
                        <div class="tabela-box">
                            <div class="card-title">MATERIAIS E PEÇAS</div>
                            <table class="tabela-bonita">
-                              <thead><tr><th>Descrição</th><th class="text-right" style="width: 80px;">Valor</th></tr></thead>
+                              <thead>${window.htmlCabecalhoItensDoc()}</thead>
                               <tbody>${matHtml}</tbody>
-                              <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalMat.toFixed(2)}</th></tr></tfoot>
+                              <tfoot>${window.htmlRodapeItensDoc(totalMat)}</tfoot>
                            </table>
                        </div>
                        <div class="tabela-box">
@@ -138,12 +142,11 @@
                if(itensGarantidos.length > 0) {
                    itensGarantidos.forEach(i => {
                        const isServ = (i.categoriaOS === 'servico') || String(i.nome || '').toLowerCase().includes('mão de obra') || String(i.nome || '').toLowerCase().includes('[mão de obra]') || String(i.nome || '').toLowerCase().includes('[serviço]');
-                       let tdHtml = `<tr><td style="font-size: 9px; padding: 4px 6px;">${i.nome}</td><td class="text-right" style="width: 120px; font-size: 10px; padding: 4px 6px;">R$ ${i.valor.toFixed(2)}</td></tr>`;
-                       if (isServ) { servHtml += tdHtml; totalServ += (Number(i.valor) || 0); }
-                       else { matHtml += tdHtml; totalMat += (Number(i.valor) || 0); }
+                       if (isServ) { servHtml += window.htmlLinhaItemDoc(i, { simples: true }); totalServ += (Number(i.valor) || 0); }
+                       else { matHtml += window.htmlLinhaItemDoc(i); totalMat += (Number(i.valor) || 0); }
                    });
                }
-               if(!matHtml) matHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhum produto/material lançado.</td></tr>`;
+               if(!matHtml) matHtml = `<tr><td colspan="5" class="text-center text-muted">Nenhum produto/material lançado.</td></tr>`;
                if(!servHtml) servHtml = `<tr><td colspan="2" class="text-center text-muted">Nenhuma mão de obra/serviço lançado.</td></tr>`;
 
                blocoDados = `
@@ -161,9 +164,9 @@
                    <div class="tabela-box" style="margin-top: 15px;">
                        <div class="card-title">PRODUTOS / MATERIAIS</div>
                        <table class="tabela-bonita">
-                          <thead><tr><th>Descrição</th><th class="text-right">Valor</th></tr></thead>
+                          <thead>${window.htmlCabecalhoItensDoc()}</thead>
                           <tbody>${matHtml}</tbody>
-                          <tfoot><tr><th class="text-right">Subtotal:</th><th class="text-right">R$ ${totalMat.toFixed(2)}</th></tr></tfoot>
+                          <tfoot>${window.htmlRodapeItensDoc(totalMat)}</tfoot>
                        </table>
                    </div>
                    <div class="tabela-box" style="margin-top: 15px;">
@@ -350,7 +353,11 @@
         
         if (mats.length > 0) {
             itensHtml += `<tr><td colspan="2" class="bold" style="padding-top:10px; padding-bottom:5px;">-- MATERIAIS --</td></tr>`;
-            mats.forEach(i => { itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+            mats.forEach(i => {
+                const d = window.dadosLinhaItem(i);
+                const det = d.qtd != null ? `<br><span style="font-size:10px;">${window.formatQtdEstoque(d.qtd)} ${d.un} x R$ ${(Number(d.precoUn)||0).toFixed(2)}</span>` : '';
+                itensHtml += `<tr><td style="padding-bottom:2px; padding-right: 5px;">${d.nome}${det}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`;
+            });
         }
 
         if (servs.length > 0) {
@@ -364,7 +371,12 @@
         }
 
     } else { 
-        if(itensGarantidos) itensGarantidos.forEach(i => { itensHtml += `<tr><td style="padding-bottom:5px; padding-right: 5px;">${i.nome}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`; });
+        if(itensGarantidos) itensGarantidos.forEach(i => {
+            const d = window.dadosLinhaItem(i);
+            const isServ = (i.categoriaOS === 'servico');
+            const det = (!isServ && d.qtd != null) ? `<br><span style="font-size:10px;">${window.formatQtdEstoque(d.qtd)} ${d.un} x R$ ${(Number(d.precoUn)||0).toFixed(2)}</span>` : '';
+            itensHtml += `<tr><td style="padding-bottom:5px; padding-right: 5px;">${d.nome}${det}</td><td style="text-align:right;">R$ ${i.valor.toFixed(2)}</td></tr>`;
+        });
     }
     
     if(doc.observacao) {
@@ -463,7 +475,11 @@
            msg += `*Resumo dos Itens/Serviços:*\n`;
            
            let itensGarantidos = v.itens ? (Array.isArray(v.itens) ? v.itens : Object.values(v.itens)) : [];
-           if(itensGarantidos) itensGarantidos.forEach(i => { msg += `- ${i.nome}: R$ ${i.valor.toFixed(2)}\n`; });
+           if(itensGarantidos) itensGarantidos.forEach(i => {
+               const d = window.dadosLinhaItem(i);
+               const det = (i.categoriaOS !== 'servico' && d.qtd != null) ? ` (${window.formatQtdEstoque(d.qtd)} ${d.un} × R$ ${(Number(d.precoUn)||0).toFixed(2)})` : '';
+               msg += `- ${d.nome}${det}: R$ ${i.valor.toFixed(2)}\n`;
+           });
            
            msg += `\n*Valor Total: R$ ${parseFloat(v.total).toFixed(2)}*\n`;
            const recebidoWa = window._totalRecebidoDoc(v);
